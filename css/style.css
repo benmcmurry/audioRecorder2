@@ -1,0 +1,26 @@
+
+.bg-byu-navy {
+    background-color:#002E5D;
+}
+
+
+div.volume {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    /* background-color: rgb(129, 245, 129); */
+    /* background-color: yellow; */
+    height: 20px;
+    width: 320px;
+    /* border-left: 5px red solid;
+    outline: 5px yellow solid; */
+    margin: 1em 0em;
+}
+
+div.volume .volbox {
+    border: 1px solid lightgray;
+    height: 20px;
+    width: 10px;
+    border-radius: 5px;
+}
