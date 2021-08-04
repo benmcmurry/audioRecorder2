@@ -1,26 +1,27 @@
-
+/* this shrinks the size of the font in the header for smaller screens */
+@media all and (max-width: 400px) {
+    div#title, div#user {
+        font-size: .8em;
+    }
+}
 .bg-byu-navy {
     background-color:#002E5D;
 }
 
-
+/* These two are for the volume meter */
 div.volume {
     display: flex;
     flex-direction: row;
     justify-content: space-between;
     align-items: center;
-    /* background-color: rgb(129, 245, 129); */
-    /* background-color: yellow; */
     height: 20px;
-    width: 320px;
-    /* border-left: 5px red solid;
-    outline: 5px yellow solid; */
+    width: 300px;
     margin: 1em 0em;
 }
 
 div.volume .volbox {
     border: 1px solid lightgray;
     height: 20px;
-    width: 10px;
-    border-radius: 5px;
+    width: 20px;
+    /* border-radius: 5px; */
 }

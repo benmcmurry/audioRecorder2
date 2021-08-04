@@ -6,7 +6,15 @@ if (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROT
 }
 include_once("cas-go.php");
 include_once('../../connectFiles/connect_ar.php');
-// include_once('addUser.php');
+include_once('addUser.php');
+$prompt_id = $_GET['prompt_id'];
+
+$query = $elc_db->prepare("Select * from Prompts where prompt_id=?");
+$query->bind_param("s", $prompt_id);
+$query->execute();
+$result = $query->get_result();
+$result = $result->fetch_assoc();
+
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -20,17 +28,20 @@ include_once('../../connectFiles/connect_ar.php');
     <link href="css/style.css" rel="stylesheet">
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
-
+    <script type="text/javascript">
+        var prepare_time = <?php echo $result['prepare_time']; ?>;
+        var response_time = <?php echo $result['response_time']; ?>;
+    </script>
 </head>
 
 <body>
     <header id="header" class="p-2 bg-byu-navy text-white fixed-top">
-        <div class="container-fluid">
+        <div class="container">
             <div class="d-flex flex-wrap align-items-center justify-content-between">
-                <div>
+                <div id="title">
                     ELC Audio Recorder
                 </div>
-                <div class="text-end">
+                <div id="user" class="text-end">
                     <?php echo $login; ?>
                 </div>
             </div>
@@ -38,38 +49,48 @@ include_once('../../connectFiles/connect_ar.php');
         </div>
     </header>
     <main role="main">
-        <div class="container-fluid mt-5 mb-5">
-            <div class="d-grid gap-2 col-4 mx-auto mt-5">
-                <button type="button" class="btn btn-success">Test Microphone</button>
-                <button type="button" class="btn btn-danger">Begin Recording</button>
+        <div class="container mt-5 mb-5">
+            <div id="buttons" class="d-grid gap-2 col mx-auto mt-5">
+                <button id="testButton" type="button" class="btn btn-success" onclick="testStartRecording();">Test Microphone</button>
+                <button type="button" class="btn btn-primary" onclick="startRecording();">Begin Recording</button>
+            </div>
+
+            <div id="prompt" class="d-none">
+                <?php
+                echo "<p>" . $result['text'] . "<br /> <br />";
+                echo "You have {$result['prepare_time']} seconds to prepare and {$result['response_time']} seconds to respond.</p>";
+                ?>
             </div>
             <div class="row justify-content-center">
-            <div class='volume'>
-                            <div class='volbox volbox-1'></div>
-                            <div class='volbox volbox-2'></div>
-                            <div class='volbox volbox-3'></div>
-                            <div class='volbox volbox-4'></div>
-                            <div class='volbox volbox-5'></div>
-                            <div class='volbox volbox-6'></div>
-                            <div class='volbox volbox-7'></div>
-                            <div class='volbox volbox-8'></div>
-                            <div class='volbox volbox-9'></div>
-                            <div class='volbox volbox-10'></div>
-                            <div class='volbox volbox-11'></div>
-                            <div class='volbox volbox-12'></div>
-                            <div class='volbox volbox-13'></div>
-                            <div class='volbox volbox-14'></div>
-                            <div class='volbox volbox-15'></div>
-                            <div class='volbox volbox-16'></div>
-                            <div class='volbox volbox-17'></div>
-                            <div class='volbox volbox-18'></div>
-                            <div class='volbox volbox-19'></div>
-                            <div class='volbox volbox-20'></div>
-                        </div>
+                <div id='timer_container' style="width: 300px" class="d-flex row flex-wrap align-items-center justify-content-between d-none">
+                    <img id='type' class="col-2" src='images/lightbulb.jpg' />
+                    <div id='timer' class='col-10 text-end'></div>
+
+                </div>
             </div>
-            <video id="live" controls autoplay playsinline muted></video>
-<script src="js/main.js"></script>
-        </div>
+
+            <div class="row justify-content-center">
+                <div class='volume'>
+                    <div class='volbox' id='volbox-1'></div>
+                    <div class='volbox' id='volbox-2'></div>
+                    <div class='volbox' id='volbox-3'></div>
+                    <div class='volbox' id='volbox-4'></div>
+                    <div class='volbox' id='volbox-5'></div>
+                    <div class='volbox' id='volbox-6'></div>
+                    <div class='volbox' id='volbox-7'></div>
+                    <div class='volbox' id='volbox-8'></div>
+                    <div class='volbox' id='volbox-9'></div>
+                    <div class='volbox' id='volbox-10'></div>
+                    <div class='volbox' id='volbox-11'></div>
+                    <div class='volbox' id='volbox-12'></div>
+
+                </div>
+            </div>
+            <audio id="live" muted></audio>
+            <audio id="playback" autoplay playsinline></audio>
+
+            <script src="js/main.js"></script>
+        </div> <!-- end container -->
     </main>
     <footer class='p-2 bg-byu-navy text-white fixed-bottom'>
         <div class="container-fluid">
