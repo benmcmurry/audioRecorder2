@@ -23,6 +23,9 @@ var count = 0;
 var localStream = null;
 var soundMeter  = null;
 var containerType = "video/webm";
+var analyser;
+var scriptProcessor;
+var input;
 
 if (!navigator.mediaDevices.getUserMedia) {
 	alert('navigator.mediaDevices.getUserMedia not supported on your browser, use the latest version of Firefox or Chrome');
@@ -52,7 +55,7 @@ if (!navigator.mediaDevices.getUserMedia) {
 				try {
 					window.AudioContext = window.AudioContext || window.webkitAudioContext;
 					window.audioContext = new AudioContext();
-                    console.log(audioContext);
+                    console.log(window.audioContext);
                     visualizationOfSound(stream);
 				} catch (e) {
 					console.log('Web Audio API not supported.' + e);
@@ -83,48 +86,55 @@ function visualizationOfSound(stream) {
     scriptProcessor.onaudioprocess = processInput;
 }
 function processInput () {
+    console.log("ProcesInput Started");
+    var recordingStatus = true;
     if (recordingStatus){
-    array = new Uint8Array(analyser.frequencyBinCount);
-
-      analyser.getByteFrequencyData(array);
-      length = array.length;
+    var soundArray = new Uint8Array(analyser.frequencyBinCount);
+var volume;
+      analyser.getByteFrequencyData(soundArray);
+      length = soundArray.length;
       let values = 0;  
       let i = 0;
       for (; i < length; i++) {
-          values +=array[i];
+          values +=soundArray[i];
           }
           volume = (values / length) *3 + 10;
-         
-          $(".volbox").css("background-color", "white");
+          (function() {
+            var elements = document.getElementsByClassName('volbox');
+            for (var i = 0; i < elements.length; i++) {
+                elements[i].style.backgroundColor="white";
+            }
+            // document.getElementsByClassName('volbox').style.backgroundColor = "white";
+        })();
        
         
-          if(volume > 320 ) {$(".volbox-20").css("background-color", "red");}
-          if(volume > 304 ) {$(".volbox-19").css("background-color", "red");}
-          if(volume > 288 ) {$(".volbox-18").css("background-color", "yellow");}
-          if(volume > 272 ) {$(".volbox-17").css("background-color", "yellow");}
-          if(volume > 256 ) {$(".volbox-16").css("background-color", "yellow");}
-          if(volume > 240) {$(".volbox-15").css("background-color", "yellow");}
-          if(volume > 224 ) {$(".volbox-14").css("background-color", "yellow");}
-          if(volume > 208 ) {$(".volbox-13").css("background-color", "rgb(129, 245, 129)");}
-          if(volume > 192 ) {$(".volbox-12").css("background-color", "rgb(129, 245, 129)");}
-          if(volume > 176 ) {$(".volbox-11").css("background-color", "rgb(129, 245, 129)");}
-          if(volume > 160 ) {$(".volbox-10").css("background-color", "rgb(129, 245, 129)");}
-          if(volume > 144 ) {$(".volbox-9").css("background-color", "rgb(129, 245, 129)");}
-          if(volume > 128 ) {$(".volbox-8").css("background-color", "rgb(129, 245, 129)");}
-          if(volume > 112 ) {$(".volbox-7").css("background-color", "rgb(129, 245, 129)");}
-          if(volume > 96 ) {$(".volbox-6").css("background-color", "rgb(129, 245, 129)");}
-          if(volume > 80 ) {$(".volbox-5").css("background-color", "rgb(129, 245, 129)");}
-          if(volume > 64 ) {$(".volbox-4").css("background-color", "rgb(129, 245, 129)");}
-          if(volume > 48 ) {$(".volbox-3").css("background-color", "rgb(129, 245, 129)");}
-          if(volume > 32 ) {$(".volbox-2").css("background-color", "rgb(129, 245, 129)");}
-          if(volume > 16 ) {$(".volbox-1").css("background-color", "rgb(129, 245, 129)");}
+          if(volume > 320 ) {(function() {document.getElementsByClassName('volbox-20').style.backgroundColor = "red";})();}
+          if(volume > 304 ) {(function() {document.getElementsByClassName('volbox-19').style.backgroundColor = "red";})();}
+          if(volume > 288 ) {(function() {document.getElementsByClassName('volbox-18').style.backgroundColor = "yellow";})();}
+          if(volume > 272 ) {(function() {document.getElementsByClassName('volbox-17').style.backgroundColor = "yellow";})();}
+          if(volume > 256 ) {(function() {document.getElementsByClassName('volbox-16').style.backgroundColor = "yellow";})();}
+          if(volume > 240) {(function() {document.getElementsByClassName('volbox-15').style.backgroundColor = "yellow";})();}
+          if(volume > 224 ) {(function() {document.getElementsByClassName('volbox-14').style.backgroundColor = "yellow";})();}
+          if(volume > 208 ) {(function() {document.getElementsByClassName('volbox-13').style.backgroundColor = "green";})();}
+          if(volume > 192 ) {(function() {document.getElementsByClassName('volbox-12').style.backgroundColor = "green";})();}
+          if(volume > 176 ) {(function() {document.getElementsByClassName('volbox-11').style.backgroundColor = "green";})();}
+          if(volume > 160 ) {(function() {document.getElementsByClassName('volbox-10').style.backgroundColor = "green";})();}
+          if(volume > 144 ) {(function() {document.getElementsByClassName('volbox-9').style.backgroundColor = "green";})();}
+          if(volume > 128 ) {(function() {document.getElementsByClassName('volbox-8').style.backgroundColor = "green";})();}
+          if(volume > 112 ) {(function() {document.getElementsByClassName('volbox-7').style.backgroundColor = "green";})();}
+          if(volume > 96 ) {(function() {document.getElementsByClassName('volbox-6').style.backgroundColor = "green";})();}
+          if(volume > 80 ) {(function() {document.getElementsByClassName('volbox-5').style.backgroundColor = "green";})();}
+          if(volume > 64 ) {(function() {document.getElementsByClassName('volbox-4').style.backgroundColor = "green";})();}
+          if(volume > 48 ) {(function() {document.getElementsByClassName('volbox-3').style.backgroundColor = "green";})();}
+          if(volume > 32 ) {(function() {document.getElementsByClassName('volbox-2').style.backgroundColor = "green";})();}
+          if(volume > 16 ) {(function() {document.getElementsByClassName('volbox-1').style.backgroundColor = "green";})();}
 
           
-        //   if (volume < 250) {$("#volume").css("background-color", "rgb(129, 245, 129)");}
-        //   if (volume > 249) { $("#volume").css("background-color", "yellow");}
-        //   if (volume > 320) {volume = 320; $("#volume").css("background-color", "red");}
+        //   if (volume < 250) {$("#volume').style.backgroundColor = "green";}
+        //   if (volume > 249) { $("#volume').style.backgroundColor = "yellow";}
+        //   if (volume > 320) {volume = 320; $("#volume').style.backgroundColor = "red";;}
         //   console.log (volume);
-        //   $("#volume").css("width", volume);
+        //   $("#volume').style.width", volume);
 
     
         }
