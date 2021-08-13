@@ -35,8 +35,50 @@ var repeatRecording = document.querySelector("#repeatRecording");
 var recordTime = 5000;
 var transcription = "blank";
 
+var i = 0;
 
 
+
+
+
+if (alreadyDone) {
+    buttons.classList.add("d-none");
+    visualizer.classList.add("d-none");
+    alreadyDoneBox.classList.remove("d-none");
+    reviewRecording.src = reviewSource;
+    reviewRecording.type = reviewSourceType;
+    console.log(reviewRecording.scr);
+    console.log(reviewRecording.type);
+
+    document.querySelector("#alreadyDoneBox").addEventListener("click", function () {
+        i = i + 1;
+        if (i === 3) {
+            repeatRecording.classList.remove("d-none");
+            repeatPassword.focus();
+        }
+
+    });
+
+    document.querySelector("#repeatPassword").addEventListener("keydown", function (e) {
+
+        if (e.keyCode == 13 && document.getElementById("repeatPassword").value == "repeat") {
+            var fd = new FormData();
+            fd.append('prompt_id', prompt_id);
+            fd.append('netid', netid);
+            var xmlHttp = new XMLHttpRequest();
+            xmlHttp.onreadystatechange = function () {
+                if (xmlHttp.readyState == 4 && xmlHttp.status == 200) {
+                    repeatRecording.innerHTML = xmlHttp.responseText;
+                }
+            }
+            xmlHttp.open("post", "phpScripts/removeDBentry.php");
+            xmlHttp.send(fd);
+            location.reload();
+        }
+
+    });
+
+}
 
 
 //this initializes (is that the right word?) the mediaRecorder
@@ -81,41 +123,6 @@ if (!navigator.mediaDevices.getUserMedia) {
                 console.log('navigator.getUserMedia error: ' + err);
             });
     }
-}
-if (alreadyDone) {
-    buttons.classList.add("d-none");
-    visualizer.classList.add("d-none");
-    alreadyDoneBox.classList.remove("d-none");
-    reviewRecording.src = reviewSource;
-    reviewRecording.type = reviewSourceType;
-    console.log(reviewRecording.scr);
-    console.log(reviewRecording.type);
-    document.querySelector("#reviewRecording").addEventListener("keydown", function (e) {
-        if (e.keyCode == 191 && e.metaKey) {
-            repeatRecording.classList.remove("d-none");
-            repeatPassword.focus();
-        }
-        
-    });
-    document.querySelector("#repeatPassword").addEventListener("keydown", function(e){
-        
-        if (e.keyCode == 13 && document.getElementById("repeatPassword").value == "repeat") {
-            var fd = new FormData();
-            fd.append('prompt_id', prompt_id);
-            fd.append('netid', netid);
-            var xmlHttp = new XMLHttpRequest();
-            xmlHttp.onreadystatechange = function () {
-                if (xmlHttp.readyState == 4 && xmlHttp.status == 200) {
-                    repeatRecording.innerHTML = xmlHttp.responseText;
-                }
-            }
-            xmlHttp.open("post", "phpScripts/removeDBentry.php");
-            xmlHttp.send(fd);
-            location.reload();
-        }
-
-    });
-
 }
 
 //this function starts when test Microphone in pressed
@@ -288,6 +295,7 @@ function uploadRecording(blob, name) {
     xmlHttp.send(fd);
     visualizer.classList.add("d-none");
     prepareAndRecord.classList.add("d-none");
+    alreadyDone = TRUE;
 }
 
 //this function runs the timers

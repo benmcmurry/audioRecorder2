@@ -72,7 +72,7 @@ if (isset($result2)) {
 
         </div>
     </header>
-    <main class="vertical-center" role="main">
+    <main role="main">
         <div class="container mt-5 mb-5">
 
 

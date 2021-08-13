@@ -14,13 +14,10 @@ $fileName = $_POST['name'];
 $targetFile = SITE_ROOT . $targetdir . $_POST['name'] . $_POST['extension'];
 $mp3File = SITE_ROOT . $targetdir . $_POST['name'] . "mp3";
 $fileLocation = "uploads/".$fileName."mp3";
-echo $fileLocation;
 if (move_uploaded_file($_FILES['myBlob']['tmp_name'], $targetFile)) {
     shell_exec("$ffmpeg -i $targetFile $mp3File");
+    shell_exec("rm $targetFile");
 
-    // print_r($output);
-    echo "<br />";
-    echo $targetFile;
     // echo $output;
     echo "<p align='center'>Your response has been saved.</p>";
     if ($_POST['transcription'] == 1) {

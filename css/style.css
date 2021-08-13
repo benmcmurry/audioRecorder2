@@ -1,3 +1,13 @@
+@import url("https://cdn.jsdelivr.net/npm/bootstrap-icons@1.5.0/font/bootstrap-icons.css");
+
+body, html {
+    -webkit-user-select: none; /* Safari */        
+-moz-user-select: none; /* Firefox */
+-ms-user-select: none; /* IE10+/Edge */
+user-select: none; /* Standard */
+}
+
+
 /* this facilitates the animated icon */
 @-webkit-keyframes opacity_change {
     from {
@@ -99,5 +109,10 @@ div.volume .volbox {
 }
 
 #timeOrRecord {
-    width: 32px;
+    width: 64px;
+}
+.promptList {
+    background-color: #efefef;
+    border-radius: 5px;
+    padding: 1em;
 }
