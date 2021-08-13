@@ -8,12 +8,22 @@ include_once("cas-go.php");
 include_once('../../connectFiles/connect_ar.php');
 include_once('addUser.php');
 $prompt_id = $_GET['prompt_id'];
+$alreadyDone = FALSE;
 
 $query = $elc_db->prepare("Select * from Prompts where prompt_id=?");
 $query->bind_param("s", $prompt_id);
 $query->execute();
 $result = $query->get_result();
 $result = $result->fetch_assoc();
+
+$query2 = $elc_db->prepare("Select * from Audio_files where prompt_id=? and netid=?");
+$query2->bind_param("ss", $prompt_id, $netid);
+$query2->execute();
+$result2 = $query2->get_result();
+$result2 = $result2->fetch_assoc();
+if (isset($result2)) {
+    $alreadyDone = TRUE;
+}
 
 ?>
 <!DOCTYPE html>
@@ -31,6 +41,20 @@ $result = $result->fetch_assoc();
     <script type="text/javascript">
         var prepare_time = <?php echo $result['prepare_time']; ?>;
         var response_time = <?php echo $result['response_time']; ?>;
+        var prompt_id = <?php echo $prompt_id; ?>;
+        var netid = "<?php echo $net_id; ?>";
+
+
+
+
+        <?php if ($alreadyDone) {
+            echo "var alreadyDone =  $alreadyDone;";
+            echo "var reviewSource = '" . $result2['filename'] . "';";
+            echo "var reviewSourceType = '" . $result2['filetype'] . "';";
+        } else {
+            echo "var alreadyDone = false;";
+        }
+        ?>
     </script>
 </head>
 
@@ -48,28 +72,52 @@ $result = $result->fetch_assoc();
 
         </div>
     </header>
-    <main role="main">
+    <main class="vertical-center" role="main">
         <div class="container mt-5 mb-5">
-            <div id="buttons" class="d-grid gap-2 col mx-auto mt-5">
+
+
+
+            <!-- AlreadyDone? -->
+            <div id="alreadyDoneBox" class="d-none d-grid gap-2 col mx-auto mt-5">
+                <div class="row">
+                    <p class="text-center">You have already answered this prompt.</p>
+                    <p class="text-center">You can play your answer below.</p>
+                </div>
+                <div class="row">
+                    <audio class="" id="reviewRecording" controls>
+                    </audio>
+                </div>
+                <div id="repeatRecording" class="row bg-danger d-none" style="color: white; padding:2em;">
+                    <p class="text-center">Please enter the password to allow the student to re-record. Please be aware that any previous recordings will be deleted.</p>
+                    <input id='repeatPassword' type='password'></input>
+                </div>
+            </div>
+
+            <!-- Button display -->
+            <div id="buttons" class="row gap-2">
                 <button id="testButton" type="button" class="btn btn-success" onclick="testStartRecording();">Test Microphone</button>
                 <button type="button" class="btn btn-primary" onclick="startRecording();">Begin Recording</button>
             </div>
 
-            <div id="prompt" class="d-none">
+            <!-- prompt display -->
+            <div id="prompt" class="row d-none">
                 <?php
                 echo "<p>" . $result['text'] . "<br /> <br />";
                 echo "You have {$result['prepare_time']} seconds to prepare and {$result['response_time']} seconds to respond.</p>";
                 ?>
             </div>
-            <div class="row justify-content-center">
-                <div id='timer_container' style="width: 300px" class="d-flex row flex-wrap align-items-center justify-content-between d-none">
-                    <img id='type' class="col-2" src='images/lightbulb.jpg' />
+
+            <!-- prepare and record display     -->
+            <div id="prepareAndRecord" class="row justify-content-center">
+                <div id='timer_container'  class="d-flex row flex-wrap align-items-center justify-content-between d-none">
+                    <img id='timeOrRecord' class="col-2 oscillate" src='images/lightbulb.jpg' />
                     <div id='timer' class='col-10 text-end'></div>
 
                 </div>
             </div>
 
-            <div class="row justify-content-center">
+            <!-- visualizer display -->
+            <div id="visualizer" class="row justify-content-center">
                 <div class='volume'>
                     <div class='volbox' id='volbox-1'></div>
                     <div class='volbox' id='volbox-2'></div>
@@ -86,11 +134,15 @@ $result = $result->fetch_assoc();
 
                 </div>
             </div>
-            <audio id="live" muted></audio>
-            <audio id="playback" autoplay playsinline></audio>
 
-            <script src="js/main.js"></script>
+            <!-- audio elements -->
+            <div class="row justify-content-center">
+                <audio id="live" muted></audio>
+                <audio id="playback" autoplay playsinline></audio>
+            </div>
+
         </div> <!-- end container -->
+
     </main>
     <footer class='p-2 bg-byu-navy text-white fixed-bottom'>
         <div class="container-fluid">
@@ -104,6 +156,7 @@ $result = $result->fetch_assoc();
 
             </div>
     </footer>
+    <script src="js/main.js"></script>
 </body>
 
 </html>

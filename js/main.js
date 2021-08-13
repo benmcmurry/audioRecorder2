@@ -2,33 +2,21 @@
 var constraints = {
     audio: true,
     video: false,
-    // video: {
-    //     width: {
-    //         min: 640,
-    //         ideal: 640,
-    //         max: 640
-    //     },
-    //     height: {
-    //         min: 480,
-    //         ideal: 480,
-    //         max: 480
-    //     },
-    //     framerate: 60
-    // }
 };
 var safari;
 if (navigator.userAgent.indexOf('Safari') != -1 && navigator.userAgent.indexOf('Chrome') == -1) {
     safari = true;
 }
-var liveVideoElement = document.querySelector('#live');
-var playbackVideoElement = document.querySelector('#playback');
-liveVideoElement.controls = false;
+var liveAudioElement = document.querySelector('#live');
+var playbackAudioElement = document.querySelector('#playback');
+liveAudioElement.controls = false;
 var mediaRecorder;
 var chunks = [];
 var count = 0;
 var localStream = null;
 var soundMeter = null; //not in use right now
-var containerType = "video/webm";
+var containerType = "audio/webm";
+var extension = "webm";
 var analyser; //variable for visualizing sound
 var scriptProcessor; //variable for visualizing sound
 var input; //variable for visualizing sound
@@ -36,8 +24,22 @@ var recordingStatus;
 var testButton = document.querySelector("#testButton");
 var buttons = document.querySelector("#buttons");
 var prompt = document.querySelector("#prompt");
+var downloadLink = document.querySelector("#downloadLink");
+var prepareAndRecord = document.querySelector("#prepareAndRecord");
 var timerContainer = document.querySelector("#timerContainer");
+var timeOrRecord = document.querySelector("#timeOrRecord");
+var alreadyDoneBox = document.querySelector("#alreadyDoneBox");
+var visualizer = document.querySelector("#visualizer");
+var reviewRecording = document.querySelector("#reviewRecording");
+var repeatRecording = document.querySelector("#repeatRecording");
+var recordTime = 5000;
+var transcription = "blank";
 
+
+
+
+
+//this initializes (is that the right word?) the mediaRecorder
 if (!navigator.mediaDevices.getUserMedia) {
     alert('navigator.mediaDevices.getUserMedia not supported on your browser, use the latest version of Firefox or Chrome');
 } else {
@@ -61,9 +63,8 @@ if (!navigator.mediaDevices.getUserMedia) {
                     }
                 });
 
-                liveVideoElement.srcObject = localStream;
-                liveVideoElement.style.transform = 'scale(-1, 1)';
-                liveVideoElement.play();
+                liveAudioElement.srcObject = localStream;
+                liveAudioElement.play();
 
                 try {
                     window.AudioContext = window.AudioContext || window.webkitAudioContext;
@@ -81,48 +82,96 @@ if (!navigator.mediaDevices.getUserMedia) {
             });
     }
 }
+if (alreadyDone) {
+    buttons.classList.add("d-none");
+    visualizer.classList.add("d-none");
+    alreadyDoneBox.classList.remove("d-none");
+    reviewRecording.src = reviewSource;
+    reviewRecording.type = reviewSourceType;
+    console.log(reviewRecording.scr);
+    console.log(reviewRecording.type);
+    document.querySelector("#reviewRecording").addEventListener("keydown", function (e) {
+        if (e.keyCode == 191 && e.metaKey) {
+            repeatRecording.classList.remove("d-none");
+            repeatPassword.focus();
+        }
+        
+    });
+    document.querySelector("#repeatPassword").addEventListener("keydown", function(e){
+        
+        if (e.keyCode == 13 && document.getElementById("repeatPassword").value == "repeat") {
+            var fd = new FormData();
+            fd.append('prompt_id', prompt_id);
+            fd.append('netid', netid);
+            var xmlHttp = new XMLHttpRequest();
+            xmlHttp.onreadystatechange = function () {
+                if (xmlHttp.readyState == 4 && xmlHttp.status == 200) {
+                    repeatRecording.innerHTML = xmlHttp.responseText;
+                }
+            }
+            xmlHttp.open("post", "phpScripts/removeDBentry.php");
+            xmlHttp.send(fd);
+            location.reload();
+        }
 
+    });
+
+}
+
+//this function starts when test Microphone in pressed
 function testStartRecording() {
+    testButton.innerHTML = "Please Speak";
+    testButton.classList.remove("btn-success");
+    testButton.classList.add("btn-danger");
+    testButton.classList.add("oscillate");
+
+    record("microphoneTest");
+}
+
+//this function starts recording when the Begin button is pressed
+function startRecording() {
+    buttons.classList.add("d-none");
+    prompt.classList.remove("d-none");
+    timer_container.classList.remove("d-none");
+    timer(prepare_time, "Prepare");
+
+    setTimeout(function () {
+        timer(response_time, "Recording");
+        record("recording");
+
+    }, prepare_time * 1000 + 1000);
+
+}
+
+//this function does the actual capturing of the audio.
+function record(typeOfRecording) {
     if (localStream == null) {
         alert('Could not get local stream from mic/camera');
     } else {
-        testButton.innerHTML = "Please Speak";
-        testButton.classList.remove("btn-success");
-        testButton.classList.add("btn-danger");
+
 
         chunks = [];
 
         /* use the stream */
         console.log('Start recording...');
-        if (typeof MediaRecorder.isTypeSupported == 'function') {
-            /*
-            	MediaRecorder.isTypeSupported is a function announced in https://developers.google.com/web/updates/2016/01/mediarecorder and later introduced in the MediaRecorder API spec http://www.w3.org/TR/mediastream-recording/
-            */
-            if (MediaRecorder.isTypeSupported('video/webm;codecs=vp9')) {
-                var options = {
-                    mimeType: 'video/webm;codecs=vp9'
-                };
-            } else if (MediaRecorder.isTypeSupported('video/webm;codecs=h264')) {
-                var options = {
-                    mimeType: 'video/webm;codecs=h264'
-                };
-            } else if (MediaRecorder.isTypeSupported('video/webm')) {
-                var options = {
-                    mimeType: 'video/webm'
-                };
-            } else if (MediaRecorder.isTypeSupported('video/mp4')) {
-                //Safari 14.0.2 has an EXPERIMENTAL version of MediaRecorder enabled by default
-                containerType = "video/mp4";
-                var options = {
-                    mimeType: 'video/mp4'
-                };
-            }
-            console.log('Using ' + options.mimeType);
-            mediaRecorder = new MediaRecorder(localStream, options);
-        } else {
-            console.log('isTypeSupported is not supported, using default codecs for browser');
-            mediaRecorder = new MediaRecorder(localStream);
+        // this will check to see which codec to use
+        if (MediaRecorder.isTypeSupported('audio/webm')) {
+            containerType = "audio/webm";
+            var options = {
+                mimeType: 'audio/webm'
+            };
+            extension = "webm";
+        } else if (MediaRecorder.isTypeSupported('audio/mp4')) {
+            //Safari 14.0.2 has an EXPERIMENTAL version of MediaRecorder enabled by default
+            containerType = "audio/mp4";
+            var options = {
+                mimeType: 'audio/mp4'
+            };
+            extension = "mp4";
         }
+
+        mediaRecorder = new MediaRecorder(localStream, options);
+
         mediaRecorder.ondataavailable = function (e) {
             console.log('mediaRecorder.ondataavailable, e.data.size=' + e.data.size);
             if (e.data && e.data.size > 0) {
@@ -150,34 +199,38 @@ function testStartRecording() {
 
         mediaRecorder.onstop = function () {
             console.log('mediaRecorder.onstop, mediaRecorder.state = ' + mediaRecorder.state);
-            testButton.innerHTML = "Re-Test Microphone";
-            testButton.classList.remove("btn-danger");
-            testButton.classList.add("btn-success");
+            if (typeOfRecording === "microphoneTest") {
+                testButton.innerHTML = "Re-Test Microphone";
+                testButton.classList.remove("btn-danger");
+                testButton.classList.add("btn-success");
+            }
             var recording = new Blob(chunks, {
                 type: mediaRecorder.mimeType
             });
 
-            playbackVideoElement.src = URL.createObjectURL(recording);
+            playbackAudioElement.src = URL.createObjectURL(recording);
 
-            if (safari == true) {
-                playbackVideoElement.controls = true;
+            if (typeOfRecording === "recording") {
+                playbackAudioElement.controls = true;
             } else {
-                playbackVideoElement.play();
+                if (safari == true) {
+                    playbackAudioElement.controls = true;
+                } else {
+                    playbackAudioElement.play();
+                }
+            }
+            var d = Date.now();
+            var name = "prompt_" + prompt_id + "_" + netid + "-" + d + ".";
+
+            console.log(name);
+
+            if (typeOfRecording === 'recording') {
+                uploadRecording(recording, name);
+            } else {
+                testButton.classList.remove("oscillate");
+
             }
 
-            var rand = Math.floor((Math.random() * 10000000));
-            switch (containerType) {
-                case "video/mp4":
-                    var name = "video_" + rand + ".mp4";
-                    break;
-                default:
-                    var name = "video_" + rand + ".webm";
-            }
-
-            // downloadLink.innerHTML = 'Download ' + name;
-
-            // downloadLink.setAttribute("download", name);
-            // downloadLink.setAttribute("name", name);
         };
 
         mediaRecorder.onpause = function () {
@@ -193,7 +246,12 @@ function testStartRecording() {
         };
 
         // pauseResBtn.textContent = "Pause";
+        if (typeOfRecording === 'recording') {
+            recordTime = response_time * 1000 + 500;
+            timeOrRecord.src = "images/record.jpg";
+        } else {
 
+        }
         mediaRecorder.start(1000);
 
         localStream.getTracks().forEach(function (track) {
@@ -205,35 +263,48 @@ function testStartRecording() {
 
                 console.log("stop recording");
                 mediaRecorder.stop();
-            }, 5000);
+            }, recordTime);
 
         })();
     }
 }
-function startRecording() {
-    buttons.classList.add("d-none");
-    prompt.classList.remove("d-none");
-    timer_container.classList.remove("d-none");
-    
-    timer(prepare_time, "Prepare");
 
-    setTimeout(function() {
-timer(response_time, "Recording")
-    }, prepare_time * 1000 +1000);
-
+function uploadRecording(blob, name) {
+    console.log(blob);
+    var fd = new FormData();
+    fd.append('name', name)
+    fd.append('extension', extension);
+    fd.append('myBlob', blob);
+    fd.append('prompt_id', prompt_id);
+    fd.append('netid', netid);
+    fd.append('transcription', transcription);
+    var xmlHttp = new XMLHttpRequest();
+    xmlHttp.onreadystatechange = function () {
+        if (xmlHttp.readyState == 4 && xmlHttp.status == 200) {
+            prompt.innerHTML = xmlHttp.responseText;
+        }
+    }
+    xmlHttp.open("post", "upload.php");
+    xmlHttp.send(fd);
+    visualizer.classList.add("d-none");
+    prepareAndRecord.classList.add("d-none");
 }
+
+//this function runs the timers
 function timer(time, timerType) {
 
     (function move() { // this keeps the counter running in a loop based on changed information
         if (time > -1) {
 
-            document.getElementById("timer").innerHTML =timerType + " " + time + "s";
+            document.getElementById("timer").innerHTML = timerType + " " + time + "s";
             setTimeout(move, 1000);
             time = time - 1;
         }
 
     })();
 }
+
+//this gives us the sound visualization
 function visualizationOfSound(stream) {
     analyser = window.audioContext.createAnalyser();
     scriptProcessor = window.audioContext.createScriptProcessor(2048, 1, 1);
@@ -246,6 +317,7 @@ function visualizationOfSound(stream) {
     scriptProcessor.onaudioprocess = processInput;
 }
 
+//this processes the incoming sound for the visualization
 function processInput() {
     var recordingStatus = true;
     if (recordingStatus) {
@@ -338,6 +410,7 @@ function processInput() {
     }
 }
 
+//this is the callback error function
 function errorCallback(error) {
     console.log('navigator.getUserMedia error: ', error);
 }
