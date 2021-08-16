@@ -28,59 +28,7 @@ include_once('../addUser.php');
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
     <script type="text/javascript"></script>
-    <style>
-        .action-item {
-            /* width: 3em;
-           height: 3em; */
-            /* border-radius: 2em;  */
-
-            border: 0px;
-            /* padding: .2em .5em; */
-        }
-
-        .bi {
-            /* font-size: .3em; */
-        }
-
-        .promptList {
-            background-color: #efefef;
-            border-radius: 5px;
-            padding: 1em;
-        }
-
-        .prompt-toolbar {
-            margin: 0px;
-            padding-right: 0;
-            padding-left: 0;
-        }
-
-        .prompt-information {
-            margin:0px;
-            border: 1px solid black;
-            border-radius: .5em;
-            background-color: white;
-        }
-
-        .prompt-information p {
-            padding-top: .5em;
-            padding-bottom: .5em;
-            padding-left: 0;
-            padding-right: 0;
-            margin: 0;
-        }
-
-        .prompt-title {
-            font-size: 1rem;
-            line-height: 1.5;
-            font-weight: bold;
-
-            padding: .375rem .75rem  .375rem 0rem;
-        }
-
-        .toolbar-button {
-            padding: .375rem .375rem;
-        }
-    </style>
+    
 
 </head>
 
@@ -113,8 +61,8 @@ include_once('../addUser.php');
                         <div class='prompt-title action-item col-sm-auto text-nowrap'><?php echo $row['title']; ?></div>
                         <div class="btn-group col-sm-auto toolbar-buttons">
                             <button class='btn btn-outline-primary action-item toolbar-button ' title='Copy Student Link to Clipboard'><i class='bi bi-clipboard'></i></button>
-                            <a class='btn btn-outline-primary action-item toolbar-button' role='button' title='Edit Prompt' href='responses.php?prompt_id=<?php echo $row[' prompt_id']; ?>'><i class='bi bi-pencil-square'></i></a>
-                            <a class='btn btn-outline-primary action-item toolbar-button' role='button' title='View Responses' href='responses.php?prompt_id=<?php echo $row[' prompt_id']; ?>'><i class='bi bi-eye'></i></a>
+                            <a class='btn btn-outline-primary action-item toolbar-button' role='button' title='Edit Prompt' href='../responses/index.php?prompt_id=<?php echo $row[' prompt_id']; ?>'><i class='bi bi-pencil-square'></i></a>
+                            <a class='btn btn-outline-primary action-item toolbar-button' role='button' title='View Responses' href='../responses/index.php?prompt_id=<?php echo $row[' prompt_id']; ?>'><i class='bi bi-eye'></i></a>
                             <button class='btn btn-outline-primary action-item toolbar-button' title='Archive Prompt' data-promptId='<?php echo $row[' prompt_id'] ?>'><i class='bi bi-archive'></i></button>
                         </div>
                     </div>
