@@ -43,6 +43,7 @@ if (isset($result2)) {
         var response_time = <?php echo $result['response_time']; ?>;
         var prompt_id = <?php echo $prompt_id; ?>;
         var netid = "<?php echo $net_id; ?>";
+        var archiveStatus = <?php echo $result['archive']; ?>;
 
 
 
@@ -73,7 +74,7 @@ if (isset($result2)) {
         </div>
     </header>
     <main role="main">
-        <div class="container mt-5 mb-5">
+        <div id="mainContainer" class="container mt-5 mb-5">
 
 
 
@@ -109,7 +110,7 @@ if (isset($result2)) {
 
             <!-- prepare and record display     -->
             <div id="prepareAndRecord" class="row justify-content-center">
-                <div id='timer_container'  class="d-flex row flex-wrap align-items-center justify-content-between d-none">
+                <div id='timer_container' class="d-flex row flex-wrap align-items-center justify-content-between d-none">
                     <img id='timeOrRecord' class="col-2 oscillate" src='images/lightbulb.jpg' />
                     <div id='timer' class='col-10 text-end'></div>
 
@@ -156,6 +157,17 @@ if (isset($result2)) {
 
             </div>
     </footer>
+    <script>
+        if (archiveStatus === 1) {
+            var message = document.querySelector('#mainContainer');
+            message.innerHTML = "This link is no longer valid.";
+        }
+    </script>
+    <?php 
+    if ($result['archive'] === 1) {
+        die;
+    }
+    ?>
     <script src="js/main.js"></script>
 </body>
 

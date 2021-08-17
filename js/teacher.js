@@ -26,16 +26,16 @@ function archiveToggle() {
 }
 
 function archive(prompt_id, archiveStatus) {
-    // promptInQuestion = document.querySelector(`#${CSS.escape(prompt_id)}`);
-    // icon = document.querySelector(`#icon-${CSS.escape(prompt_id)}`);
-    // promptInQuestion.classList.toggle("current");
-    // promptInQuestion.classList.toggle("archived");
+    promptInQuestion = document.querySelector(`#${CSS.escape(prompt_id)}`);
+    icon = document.querySelector(`#icon-${CSS.escape(prompt_id)}`);
+    promptInQuestion.classList.toggle("current");
+    promptInQuestion.classList.toggle("archived");
 
-    // icon.classList.toggle("bi-archive-fill");
-    // icon.classList.toggle("bi-archive");
-    // if (!showArchivedPrompts) {
-    //     promptInQuestion.classList.toggle("d-none");
-    // }
+    icon.classList.toggle("bi-archive-fill");
+    icon.classList.toggle("bi-archive");
+    if (!showArchivedPrompts) {
+        promptInQuestion.classList.toggle("d-none");
+    }
 
     var fd = new FormData();
     fd.append('prompt_id', prompt_id);
@@ -46,9 +46,9 @@ function archive(prompt_id, archiveStatus) {
     xmlHttp.onreadystatechange = function () {
         if (xmlHttp.readyState == 4 && xmlHttp.status == 200) {
             abc.innerHTML = xmlHttp.responseText;
-            // abc.innerHTML = "Maybe done?";
+            console.log(xmlHttp.responseText);
         } else {
-            // abc.innerHTML = "done";
+            console.log("failed");
         }
     }
     xmlHttp.open("post", "../phpScripts/archiveToggle.php");
@@ -57,3 +57,21 @@ function archive(prompt_id, archiveStatus) {
 
 
 }
+
+// function copyLink(prompt_id, server) {
+//     var link = document.querySelector(`#link-${CSS.escape(prompt_id)}`);
+//     var linkText = link.textContent;
+//     copyText(linkText);
+//     // alert("Link Copied: " + linkText);
+
+//     // document.execCommand("copy");
+// //   copyText.select();
+// //   document.execCommand("copy");
+// }
+
+// function copyText(text) {
+//     navigator.clipboard.writeText(text);
+//     alert(text);
+    
+//   }
+
