@@ -1,8 +1,8 @@
 <?php
 include_once('../../connectFiles/connect_ar.php');
 if ($_SERVER['REMOTE_ADDR'] == '127.0.0.1') {
-    // $ffmpeg = "/usr/local/bin/ffmpeg";
-    $ffmpeg = "/opt/homebrew/bin/ffmpeg";
+    $ffmpeg = "/usr/local/bin/ffmpeg";
+    // $ffmpeg = "/opt/homebrew/bin/ffmpeg";
 } else {
     $ffmpeg = "/usr/bin/ffmpeg";
 }
@@ -13,7 +13,7 @@ $targetdir = '/uploads/';
 $time = date('Y-m-d-His');
 $fileName = $_POST['name'];
 $targetFile = SITE_ROOT . $targetdir . $_POST['name'] . $_POST['extension'];
-echo $_FILES['myBlob']['tmp_name'];
+// echo $_FILES['myBlob']['tmp_name'];
 $mp3File = SITE_ROOT . $targetdir . $_POST['name'] . "mp3";
 $fileLocation = "uploads/".$fileName."mp3";
 if (move_uploaded_file($_FILES['myBlob']['tmp_name'], $targetFile)) {
