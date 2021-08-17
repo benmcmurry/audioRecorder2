@@ -296,7 +296,7 @@ function uploadRecording(blob, name) {
     xmlHttp.send(fd);
     visualizer.classList.add("d-none");
     prepareAndRecord.classList.add("d-none");
-    alreadyDone = TRUE;
+    alreadyDone = true;
 }
 
 //this function runs the timers

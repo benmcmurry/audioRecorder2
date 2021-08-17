@@ -28,7 +28,7 @@ include_once('../addUser.php');
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
     <script type="text/javascript"></script>
-    
+
 
 </head>
 
@@ -46,32 +46,55 @@ include_once('../addUser.php');
 
         </div>
     </header>
-    <main role="main">
+    <nav class="container mt-5">
+        <button id="archiveToggleButton" class='btn btn-primary' onclick="archiveToggle();">Show Archived Prompts</button>
+        <div id='abc'>abc</div>
+    </nav>
+    <main role="main" class="m-0 p-0">
         <div class="container-sm mt-5 mb-5">
             <?php
 
-            $query = $elc_db->prepare("Select * from Prompts where netid=? and archive=0 order by date_created DESC");
+            $query = $elc_db->prepare("Select * from Prompts where netid=? order by date_created DESC");
             $query->bind_param("s", $netid);
             $query->execute();
             $result = $query->get_result();
             while ($row = $result->fetch_assoc()) {
+                if ($row['archive'] == 0) {
+                    $archiveIcon = "bi-archive";
+                    $archiveTitle = "Archive Prompt";
+                    $archiveStatus = "current";
+                    $archiveHideClass = "";
+                } else {
+                    $archiveIcon = "bi-archive-fill";
+                    $archiveTitle = "Un-Archive Prompt";
+                    $archiveStatus = "archived";
+                    $archiveHideClass = 'd-none';
+                }
+                $prompt_id = $row['prompt_id'];
             ?>
-                <div class='row promptList' id='<?php echo $row['prompt_id']; ?>'>
-                    <div class='row prompt-toolbar justify-content-between'>
-                        <div class='prompt-title action-item col-sm-auto text-nowrap'><?php echo $row['title']; ?></div>
-                        <div class="btn-group col-sm-auto toolbar-buttons">
-                            <button class='btn btn-outline-primary action-item toolbar-button ' title='Copy Student Link to Clipboard'><i class='bi bi-clipboard'></i></button>
-                            <a class='btn btn-outline-primary action-item toolbar-button' role='button' title='Edit Prompt' href='../responses/index.php?prompt_id=<?php echo $row[' prompt_id']; ?>'><i class='bi bi-pencil-square'></i></a>
-                            <a class='btn btn-outline-primary action-item toolbar-button' role='button' title='View Responses' href='../responses/index.php?prompt_id=<?php echo $row[' prompt_id']; ?>'><i class='bi bi-eye'></i></a>
-                            <button class='btn btn-outline-primary action-item toolbar-button' title='Archive Prompt' data-promptId='<?php echo $row[' prompt_id'] ?>'><i class='bi bi-archive'></i></button>
+                <div class='row promptList m-0 mb-4 p-0 <?php echo $archiveStatus . " " . $archiveHideClass; ?>' id='<?php echo $row['prompt_id']; ?>'>
+                    <div class="card  m-0 p-0">
+                        <div class='card-header row prompt-toolbar justify-content-between p-0 m-0'>
+                            <div class='prompt-title action-item col-sm-auto text-nowrap'><?php echo $row['title']; ?></div>
+                            <div class="btn-group col-sm-auto toolbar-buttons">
+                                <button class='btn btn-outline-primary action-item toolbar-button ' title='Copy Student Link to Clipboard'><i class='bi bi-clipboard'></i></button>
+                                <a class='btn btn-outline-primary action-item toolbar-button' role='button' title='Edit Prompt' href='../responses/index.php?prompt_id=<?php echo $row['prompt_id']; ?>'><i class='bi bi-pencil-square'></i></a>
+                                <a class='btn btn-outline-primary action-item toolbar-button' role='button' title='View Responses' href='../responses/index.php?prompt_id=<?php echo $row['prompt_id']; ?>'><i class='bi bi-eye'></i></a>
+                                <button class='btn btn-outline-primary action-item toolbar-button' title='<?php echo $archiveTitle; ?>' onclick="archive('<?php echo $prompt_id; ?>', '<?php echo $archiveStatus; ?>')"><i id='icon-<?php echo $prompt_id; ?>' class='bi <?php echo $archiveIcon; ?>'></i></button>
+                            </div>
+                        </div>
+
+                        <div class='card-body prompt-information'>
+                            <p class='card-text'>
+                                You have <?php echo $row['prepare_time']; ?> seconds to prepare and <?php echo $row['response_time']; ?> seconds to respond.
+                            </p>
+                            <p class='card-text'>
+                                <Strong>Prompt: </strong> <?php echo $row['text']; ?>
+                            </p>
                         </div>
                     </div>
-
-                    <div class='row prompt-information' style='border: 1px solid black;'>
-                        <p>You have <?php echo $row['prepare_time']; ?> seconds to prepare and <?php echo $row['response_time']; ?> seconds to respond.</p>
-                        <p><Strong>Prompt: </strong> <?php echo $row['text']; ?>
-                    </div>
                 </div>
+
             <?php
             }
 
@@ -90,6 +113,8 @@ include_once('../addUser.php');
 
             </div>
     </footer>
+    <script src="../js/teacher.js"></script>
+
 </body>
 
 </html>
