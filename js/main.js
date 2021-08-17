@@ -216,6 +216,7 @@ function record(typeOfRecording) {
             });
 
             playbackAudioElement.src = URL.createObjectURL(recording);
+            console.log(playbackAudioElement.src);
 
             if (typeOfRecording === "recording") {
                 playbackAudioElement.controls = true;

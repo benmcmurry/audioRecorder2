@@ -155,3 +155,4 @@ div.volume .volbox {
 .toolbar-button {
     padding: .375rem .375rem;
 }
+audio { width: 100%; }
