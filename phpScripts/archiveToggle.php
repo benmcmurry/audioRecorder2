@@ -11,7 +11,6 @@ if ($_POST['archiveStatus'] == "current") {
 } else {
     $archiveStatus = 0;
 }
-echo "Prompt " . $_POST['prompt_id'] . " has a status of $archiveStatus.";
 $query = $elc_db->prepare("Update Prompts set archive=? where prompt_id=?");
 $query->bind_param("ss", $archiveStatus, $_POST['prompt_id']);
 $query->execute();

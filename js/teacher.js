@@ -46,7 +46,6 @@ function archive(prompt_id, archiveStatus) {
     xmlHttp.onreadystatechange = function () {
         if (xmlHttp.readyState == 4 && xmlHttp.status == 200) {
             abc.innerHTML = xmlHttp.responseText;
-            console.log(xmlHttp.responseText);
         } else {
             console.log("failed");
         }

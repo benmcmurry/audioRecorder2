@@ -49,6 +49,9 @@ include_once('../addUser.php');
             $promptResult = $promptQuery->get_result();
             $promptRow = $promptResult->fetch_assoc();
             ?>
+            <div class='row' id="response">
+            
+</div>
             <div class="row">
                 <div class="col-4 m-0 p-0">
                     Title
@@ -96,9 +99,7 @@ include_once('../addUser.php');
                 </div>
             </div>
 
-            <div class='row' id="response">
-
-            </div>
+        
 
             <div class='row'>
                 <button class='btn btn-primary' id='save' onclick="save('<?php echo $prompt_id;?>');">Save</button>
