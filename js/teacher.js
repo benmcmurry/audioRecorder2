@@ -58,6 +58,10 @@ function archive(prompt_id, archiveStatus) {
 
 }
 
+function createPrompt(){
+    console.log("CreatePrompt Function Activites");
+}
+
 // function copyLink(prompt_id, server) {
 //     var link = document.querySelector(`#link-${CSS.escape(prompt_id)}`);
 //     var linkText = link.textContent;

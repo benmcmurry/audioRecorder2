@@ -39,16 +39,24 @@ if (isset($result2)) {
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
     <script type="text/javascript">
-        var prepare_time = <?php echo $result['prepare_time']; ?>;
-        var response_time = <?php echo $result['response_time']; ?>;
-        var prompt_id = <?php echo $prompt_id; ?>;
-        var netid = "<?php echo $net_id; ?>";
-        var archiveStatus = <?php echo $result['archive']; ?>;
+        <?php if ($prompt_id) { ?>
+            
+            var prepare_time = <?php echo $result['prepare_time']; ?>;
+
+            var response_time = <?php echo $result['response_time']; ?>;
+            var prompt_id = <?php echo $prompt_id; ?>;
+            var netid = "<?php echo $net_id; ?>";
+            var archiveStatus = <?php echo $result['archive']; ?>;
+            <?php
+            
+        } else {
+            ?>var archiveStatus = 1;
+        <?php }
 
 
 
 
-        <?php if ($alreadyDone) {
+        if ($alreadyDone) {
             echo "var alreadyDone =  $alreadyDone;";
             echo "var reviewSource = '" . $result2['filename'] . "';";
             echo "var reviewSourceType = '" . $result2['filetype'] . "';";
@@ -161,14 +169,15 @@ if (isset($result2)) {
         if (archiveStatus === 1) {
             var message = document.querySelector('#mainContainer');
             message.innerHTML = "This link is no longer valid.";
+        } else {
+            let myScript = document.createElement("script");
+            myScript.setAttribute("src", "js/main.js");
+            document.body.appendChild(myScript);
+
         }
     </script>
-    <?php 
-    if ($result['archive'] === 1) {
-        die;
-    }
-    ?>
-    <script src="js/main.js"></script>
+
+
 </body>
 
 </html>

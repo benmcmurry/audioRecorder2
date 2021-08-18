@@ -18,9 +18,9 @@ include_once('../addUser.php');
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
     <script type="text/javascript"></script>
-<style>
-   
-</style>
+    <style>
+
+    </style>
 
 </head>
 
@@ -54,7 +54,7 @@ include_once('../addUser.php');
                     Title
                 </div>
                 <div class="col-8 m-0 p-0">
-                    <div id='title' contenteditable='true' class='editable'><?php echo $promptRow['title']; ?></div>
+                    <div id='prompt_title' contenteditable='true' class='editable'><?php echo $promptRow['title']; ?></div>
                 </div>
             </div>
             <div class="row">
@@ -96,10 +96,12 @@ include_once('../addUser.php');
                 </div>
             </div>
 
+            <div class='row' id="response">
 
+            </div>
 
             <div class='row'>
-                <a class='button btn btn-primary' id='save'>Save</a>
+                <button class='btn btn-primary' id='save' onclick="save('<?php echo $prompt_id;?>');">Save</button>
             </div>
 
             <?php
@@ -143,4 +145,7 @@ include_once('../addUser.php');
 
             </div>
     </footer>
+    <script src='../js/responses.js'></script>
 </body>
+
+</html>

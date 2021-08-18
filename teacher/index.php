@@ -47,6 +47,8 @@ include_once('../addUser.php');
         </div>
     </header>
     <nav class="container mt-5">
+        <button id="createPrompt" class='btn btn-primary me-3' onclick='createPrompt()'>New Prompt</button>
+
         <button id="archiveToggleButton" class='btn btn-primary' onclick="archiveToggle();">Show Archived Prompts</button>
         <div id='abc'>abc</div>
     </nav>
