@@ -47,10 +47,12 @@ include_once('../addUser.php');
         </div>
     </header>
     <nav class="container mt-5">
-        <button id="createPrompt" class='btn btn-primary me-3' onclick='createPrompt()'>New Prompt</button>
-
-        <button id="archiveToggleButton" class='btn btn-primary' onclick="archiveToggle();">Show Archived Prompts</button>
-        <div id='abc'></div>
+      
+                <button id="createPrompt" class='btn btn-primary me-3' onclick='createPrompt()'>New Prompt</button>
+   
+                <button id="archiveToggleButton" class='btn btn-primary' onclick="archiveToggle();">Show Archived Prompts</button>
+          
+        <div class="row" id='response'></div>
     </nav>
     <main role="main" class="m-0 p-0">
         <div class="container-sm mt-5 mb-5">

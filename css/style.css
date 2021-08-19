@@ -6,7 +6,7 @@ header, button, h1, h2, h3, h4, h5, p, a, .promptList, #alreadyDoneBox, #prompt,
 -ms-user-select: none; /* IE10+/Edge */
 user-select: none; /* Standard */
 } 
-.card-text {
+.card-text, #transcription {
     -webkit-user-select: all; /* Safari */        
 -moz-user-select: all; /* Firefox */
 -ms-user-select: all; /* IE10+/Edge */

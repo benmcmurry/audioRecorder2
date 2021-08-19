@@ -40,15 +40,16 @@ if (isset($result2)) {
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
     <script type="text/javascript">
         <?php if ($prompt_id) { ?>
-            
+
             var prepare_time = <?php echo $result['prepare_time']; ?>;
 
             var response_time = <?php echo $result['response_time']; ?>;
             var prompt_id = <?php echo $prompt_id; ?>;
             var netid = "<?php echo $net_id; ?>";
             var archiveStatus = <?php echo $result['archive']; ?>;
+
             <?php
-            
+
         } else {
             ?>var archiveStatus = 1;
         <?php }
@@ -88,14 +89,25 @@ if (isset($result2)) {
 
             <!-- AlreadyDone? -->
             <div id="alreadyDoneBox" class="d-none d-grid gap-2 col mx-auto mt-5">
-                <div class="row">
-                    <p class="text-center">You have already answered this prompt.</p>
+                <div class="row" id="alreadyAnswered">
                     <p class="text-center">You can play your answer below.</p>
                 </div>
                 <div class="row">
                     <audio class="" id="reviewRecording" controls>
                     </audio>
                 </div>
+
+                <?php if ($result['transcription'] === 1) { ?>
+                <div id="transcriptionRow" class="row">
+                    <div class="form-floating">
+                        <textarea class="form-control" id='transcriptionBox' placeholder="" id="floatingTextarea"><?php
+                            if(isset($result2['transcription_text'])) {echo $result2['transcription_text'];} 
+                            ?></textarea>
+                        <label for="floatingTextarea">You can update your transcription here. </label>
+                    </div>
+                </div>
+            <?php } ?>
+
                 <div id="repeatRecording" class="row bg-danger d-none" style="color: white; padding:2em;">
                     <p class="text-center">Please enter the password to allow the student to re-record. Please be aware that any previous recordings will be deleted.</p>
                     <input id='repeatPassword' type='password'></input>
@@ -149,6 +161,10 @@ if (isset($result2)) {
                 <audio id="live" muted></audio>
                 <audio id="playback" autoplay playsinline></audio>
             </div>
+            <div class="row" id="response">
+
+            </div>
+            
 
         </div> <!-- end container -->
 
@@ -158,12 +174,12 @@ if (isset($result2)) {
             <div class="d-flex flex-wrap align-items-center justify-content-around">
                 <div class="text-center small">
                     <div>Developed by Ben McMurry</div>
-                    <div> <a href="https://elc.byu.edu">English Language Center</a>, <a href="https://www.byu.edu">BYU</a>
+                    <div>
+                        <a href="https://elc.byu.edu">English Language Center</a>, <a href="https://www.byu.edu">BYU</a>
                     </div>
-
                 </div>
-
             </div>
+        </div>
     </footer>
     <script>
         if (archiveStatus === 1) {

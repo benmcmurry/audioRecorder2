@@ -2,7 +2,7 @@
 var archiveToggleButton = document.querySelector("#archiveToggleButton");
 var showArchivedPrompts = false;
 var archived = document.getElementsByClassName("archived");
-var abc = document.querySelector("#abc");
+var response = document.querySelector("#response");
 
 var promptInQuestion;
 var icon;
@@ -45,7 +45,7 @@ function archive(prompt_id, archiveStatus) {
     console.log(xmlHttp);
     xmlHttp.onreadystatechange = function () {
         if (xmlHttp.readyState == 4 && xmlHttp.status == 200) {
-            abc.innerHTML = xmlHttp.responseText;
+            response.innerHTML = xmlHttp.responseText;
         } else {
             console.log("failed");
         }
@@ -59,6 +59,18 @@ function archive(prompt_id, archiveStatus) {
 
 function createPrompt(){
     console.log("CreatePrompt Function Activites");
+    var xmlHttp = new XMLHttpRequest();
+    xmlHttp.onreadystatechange = function () {
+        if (xmlHttp.readyState == 4 && xmlHttp.status == 200) {
+            window.location.href = xmlHttp.responseText;
+        } else {
+            console.log("failed");
+        }
+    }
+    xmlHttp.open("post", "../phpScripts/createPrompt.php");
+    xmlHttp.send();
+    
+
 }
 
 // function copyLink(prompt_id, server) {

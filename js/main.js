@@ -29,16 +29,53 @@ var prepareAndRecord = document.querySelector("#prepareAndRecord");
 var timerContainer = document.querySelector("#timerContainer");
 var timeOrRecord = document.querySelector("#timeOrRecord");
 var alreadyDoneBox = document.querySelector("#alreadyDoneBox");
+var alreadyAnswered = document.querySelector("#alreadyAnswered");
+var transcriptionBox = document.querySelector("#transcriptionBox");
 var visualizer = document.querySelector("#visualizer");
 var reviewRecording = document.querySelector("#reviewRecording");
 var repeatRecording = document.querySelector("#repeatRecording");
 var recordTime = 5000;
-var transcription = "blank";
+var response = document.querySelector("#response");
+var transcriptionRow = document.querySelector("#transcriptionRow");
+var transcription;
 
 var i = 0;
 
 
+transcriptionBox.addEventListener("keyup", function (e) {
+    if (e.keyCode == 32) { 
+        saveTranscription(netid, prompt_id);
+    }
 
+});
+
+document.querySelector("#alreadyAnswered").addEventListener("click", function () {
+    i = i + 1;
+    if (i === 3) {
+        repeatRecording.classList.remove("d-none");
+        repeatPassword.focus();
+    }
+
+});
+
+document.querySelector("#repeatPassword").addEventListener("keydown", function (e) {
+
+    if (e.keyCode == 13 && document.getElementById("repeatPassword").value == "repeat") {
+        var fd = new FormData();
+        fd.append('prompt_id', prompt_id);
+        fd.append('netid', netid);
+        var xmlHttp = new XMLHttpRequest();
+        xmlHttp.onreadystatechange = function () {
+            if (xmlHttp.readyState == 4 && xmlHttp.status == 200) {
+                repeatRecording.innerHTML = xmlHttp.responseText;
+            }
+        }
+        xmlHttp.open("post", "phpScripts/removeDBentry.php");
+        xmlHttp.send(fd);
+        location.reload();
+    }
+
+});
 
 
 if (alreadyDone) {
@@ -49,35 +86,6 @@ if (alreadyDone) {
     reviewRecording.type = reviewSourceType;
     console.log(reviewRecording.scr);
     console.log(reviewRecording.type);
-
-    document.querySelector("#alreadyDoneBox").addEventListener("click", function () {
-        i = i + 1;
-        if (i === 3) {
-            repeatRecording.classList.remove("d-none");
-            repeatPassword.focus();
-        }
-
-    });
-
-    document.querySelector("#repeatPassword").addEventListener("keydown", function (e) {
-
-        if (e.keyCode == 13 && document.getElementById("repeatPassword").value == "repeat") {
-            var fd = new FormData();
-            fd.append('prompt_id', prompt_id);
-            fd.append('netid', netid);
-            var xmlHttp = new XMLHttpRequest();
-            xmlHttp.onreadystatechange = function () {
-                if (xmlHttp.readyState == 4 && xmlHttp.status == 200) {
-                    repeatRecording.innerHTML = xmlHttp.responseText;
-                }
-            }
-            xmlHttp.open("post", "phpScripts/removeDBentry.php");
-            xmlHttp.send(fd);
-            location.reload();
-        }
-
-    });
-
 }
 
 
@@ -141,6 +149,8 @@ function startRecording() {
     prompt.classList.remove("d-none");
     timer_container.classList.remove("d-none");
     timer(prepare_time, "Prepare");
+    playbackAudioElement.controls = false;
+
 
     setTimeout(function () {
         timer(response_time, "Recording");
@@ -297,8 +307,30 @@ function uploadRecording(blob, name) {
     visualizer.classList.add("d-none");
     prepareAndRecord.classList.add("d-none");
     alreadyDone = true;
+    alreadyDoneBox.classList.remove("d-none");
+
 }
 
+function saveTranscription(netid, prompt_id){
+    // transcription = document.querySelector("#transcriptionBox").innerHTML;
+    transcription = transcriptionBox.value;
+    // console.log("netid: " + netid);
+    // console.log("prompt_id: " + prompt_id);
+    // console.log("transcription: " + transcription);
+    var fd = new FormData();
+    fd.append('netid', netid)
+    fd.append('prompt_id', prompt_id);
+    fd.append('transcription', transcription);
+    var xmlHttp = new XMLHttpRequest();
+    xmlHttp.onreadystatechange = function () {
+        if (xmlHttp.readyState == 4 && xmlHttp.status == 200) {
+            response.innerHTML = xmlHttp.responseText;
+        }
+    }
+    xmlHttp.open("post", "phpScripts/saveTranscription.php");
+    xmlHttp.send(fd);
+
+}
 //this function runs the timers
 function timer(time, timerType) {
 
@@ -407,13 +439,6 @@ function processInput() {
                 document.getElementById('volbox-1').style.backgroundColor = "lightgreen";
             })();
         }
-
-
-        //   if (volume < 250) {$("#volume').style.backgroundColor = "lightgreen";}
-        //   if (volume > 249) { $("#volume').style.backgroundColor = "yellow";}
-        //   if (volume > 320) {volume = 320; $("#volume').style.backgroundColor = "red";;}
-        //   console.log (volume);
-        //   $("#volume').style.width", volume);
 
 
     }

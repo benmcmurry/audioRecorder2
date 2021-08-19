@@ -38,6 +38,11 @@ include_once('../addUser.php');
 
         </div>
     </header>
+    <nav class="container mt-5">
+        <div class="row">
+        <a id="createPrompt" class='button btn btn-primary me-3' href="../teacher/">Return to Prompt list</a>
+</div>
+</nav>
     <main role="main">
         <div class="container mt-5 mb-5">
             <!-- <div class='row'>
@@ -48,61 +53,61 @@ include_once('../addUser.php');
             $promptQuery->execute();
             $promptResult = $promptQuery->get_result();
             $promptRow = $promptResult->fetch_assoc();
+            if ($promptRow['transcription'] == 1) {
+                $checked = "checked";
+            } else {
+                $checked = "";
+            }
             ?>
-            <div class='row' id="response">
-            
-</div>
-            <div class="row">
-                <div class="col-4 m-0 p-0">
-                    Title
-                </div>
-                <div class="col-8 m-0 p-0">
-                    <div id='prompt_title' contenteditable='true' class='editable'><?php echo $promptRow['title']; ?></div>
-                </div>
-            </div>
-            <div class="row">
-                <div class="col-4 m-0 p-0">
-                    Prompt
-                </div>
-                <div class="col-8 m-0 p-0">
-                    <div id='text' contenteditable='true' class='editable'><?php echo $promptRow['text']; ?></div>
-                </div>
-            </div>
-            <div class="row">
-                <div class="col-4 m-0 p-0">
-                    Preparation Time (in seconds)
-                </div>
-                <div class="col-8 m-0 p-0">
-                    <div id='prepare_time' contenteditable='true' class='editable'><?php echo $promptRow['prepare_time']; ?></div>
-                </div>
-            </div>
-            <div class="row">
-                <div class="col-4 m-0 p-0">
-                    Response Time (in seconds)
-                </div>
-                <div class="col-8 m-0 p-0">
-                    <div id='response_time' contenteditable='true' class='editable'><?php echo $promptRow['response_time']; ?></div>
-                </div>
-            </div>
-            <div class="row">
-                <div class="col-4 m-0 p-0">
-                    Are students required to transcribe their recording?
-                </div>
-                <div class="col-8 m-0 p-0">
-                    <?php
-                    if ($promptRow['transcription'] == 1) { ?>
-                        Yes <input type='radio' value='1' name='transcriptionReq' checked> &nbsp; &nbsp; No <input type='radio' value='0' name='transcriptionReq'>
-                    <?php } else { ?>
-                        Yes <input type='radio' value='1' name='transcriptionReq'> &nbsp; &nbsp; No <input type='radio' value='0' name='transcriptionReq' checked>
-                    <?php
-                    } ?>
-                </div>
-            </div>
 
-        
+            <form id="updateForm">
+                <div class="row">
+                    <div class="mb-3">
+                        <label for="prompt_title" class="form-label">Title</label>
+                        <input type="text" class="form-control" id="prompt_title" aria-describedby="prompt_titleHelp" value="<?php echo $promptRow['title']; ?>">
+                        <div id="prompt_titleHelp" class="form-text">Please enter a title for this prompt</div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="mb-3">
+                        <label for="text" class="form-label">Prompt Text</label>
+                        <input type="text" class="form-control" id="text" aria-describedby="textHelp" value="<?php echo $promptRow['text']; ?>">
+                        <div id="textHelp" class="form-text">Please write your prompt here.</div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col mb-3">
+                        <label for="prepare_time" class="form-label">Prepare Time</label>
+                        <input type="text" class="form-control" id="prepare_time" aria-describedby="prepare_timeHelp" value="<?php echo $promptRow['prepare_time']; ?>">
+                        <div id="prepare_timeHelp" class="form-text">Please enter a title for this prompt</div>
+                    </div>
+
+                    <div class="col mb-3">
+                        <label for="response_time" class="form-label">Response Time</label>
+                        <input type="text" class="form-control" id="response_time" aria-describedby="response_timeHelp" value="<?php echo $promptRow['response_time']; ?>">
+                        <div id="response_timeHelp" class="form-text">Please enter a title for this prompt</div>
+                    </div>
+
+                    <div class="col form-check">
+                        <input class="form-check-input" type="checkbox" value="1" id="transcriptionReq" <?php echo $checked; ?>>
+                        <label class="form-check-label" for="transcriptionReq">
+                            Allow or Require Students to Transcribe their recording
+                        </label>
+                    </div>
+                </div>
+
+            </form>
+
+
+
+
 
             <div class='row'>
-                <button class='btn btn-primary' id='save' onclick="save('<?php echo $prompt_id;?>');">Save</button>
+                <button class='btn btn-primary' id='save' onclick="save('<?php echo $prompt_id; ?>');">Save</button>
+
+            </div>
+            <div class='row' id="response">
+
             </div>
 
             <?php

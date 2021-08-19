@@ -1,12 +1,15 @@
 var response = document.querySelector("#response");
+var updateForm = document.getElementById("updateForm");
 
 function save(prompt_id) {
-    var prompt_title = document.querySelector('#prompt_title').innerHTML;
-    var text = document.querySelector('#text').innerHTML;
-    var prepare_time = document.querySelector('#prepare_time').innerHTML;
-    var response_time = document.querySelector('#response_time').innerHTML;
+   
+    console.log(prompt_title);
+    var prompt_title = document.querySelector('#prompt_title').value;
+    var text = document.querySelector('#text').value;
+    var prepare_time = document.querySelector('#prepare_time').value;
+    var response_time = document.querySelector('#response_time').value;
 
-    var transcription = document.querySelector('input[name="transcriptionReq"]:checked').value;
+    var transcription = document.querySelector('#transcriptionReq').checked;
 
     var fd = new FormData();
     fd.append('title', prompt_title);
@@ -15,6 +18,9 @@ function save(prompt_id) {
     fd.append('response_time', response_time);
     fd.append('transcription', transcription);
     fd.append('prompt_id', prompt_id);
+
+   
+
 
     var xmlHttp = new XMLHttpRequest();
     xmlHttp.onreadystatechange = function () {

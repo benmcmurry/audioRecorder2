@@ -22,13 +22,11 @@ if (move_uploaded_file($_FILES['myBlob']['tmp_name'], $targetFile)) {
 
     // echo $output;
     echo "<p align='center'>Your response has been saved.</p>";
-    if ($_POST['transcription'] == 1) {
-
-        echo "<p>Now, please transcribe what you recorded. You can refer back to the audio above.</p>";
-        echo "<div id='transcription1' contenteditable='true' class='transcription'></div>";
-        echo "<a align='center' class='button saveTranscription' id='saveTranscription' onClick='saveTranscription({$_POST['prompt_id']}, \"{$_POST['netid']}\", 1)'>Save Transcription</a>";
-        echo "<div id='saveStatus' class='saveStatus'></div>";
-    }
+    if ($_POST['transcription'] == 1) { ?>
+        <p>Now, please transcribe what you recorded. You can refer back to the audio above.</p>";
+        <textarea class="form-control" id='transcriptionBox' placeholder="" id="floatingTextarea"></textarea>
+        <label for="floatingTextarea">You can update your transcription here. </label>
+    <?php } 
 } else {
     echo "There was an error. Please refresh and try again.";
 }
