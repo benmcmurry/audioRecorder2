@@ -74,12 +74,27 @@ function createPrompt() {
 }
 
 function copyLink(prompt_id, server) {
+    var copyButton = document.querySelector(`#link-${CSS.escape(prompt_id)}`);
+
+    var copyIcon = document.querySelector(`#link-${CSS.escape(prompt_id)}`).childNodes;
+    console.log(copyIcon[0]);
+    copyIcon[0].classList.toggle("bi-clipboard");
+    copyIcon[0].classList.toggle("bi-clipboard-check");
+    copyButton.classList.toggle("btn-outline-primary");
+    copyButton.classList.toggle("btn-primary");
+
     var link = server + "?prompt_id=" + prompt_id;
     navigator.clipboard.writeText(link).then(function () {
         console.log("copied: " + link);
     }, function () {
         console.log("copy failed");
     });
+    setTimeout(function () {
+        copyIcon[0].classList.toggle("bi-clipboard");
+    copyIcon[0].classList.toggle("bi-clipboard-check");
+    copyButton.classList.toggle("btn-outline-primary");
+    copyButton.classList.toggle("btn-primary");
 
+    }, 3000);
 }
 

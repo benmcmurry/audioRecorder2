@@ -83,7 +83,7 @@ include_once('../addUser.php');
                         <div class='card-header row prompt-toolbar justify-content-between p-0 m-0'>
                             <div class='prompt-title action-item col-sm-auto text-nowrap'><?php echo $row['title']; ?></div>
                             <div class="btn-group col-sm-auto toolbar-buttons">
-                                <button class='btn btn-outline-primary action-item toolbar-button ' title='Copy Student Link to Clipboard' onClick="copyLink('<?php echo $prompt_id; ?>', '<?php echo $server; ?>');"><i class='bi bi-clipboard'></i></button>
+                                <button id="link-<?php echo $prompt_id; ?>" class='btn btn-outline-primary action-item toolbar-button ' title='Copy Student Link to Clipboard' onClick="copyLink('<?php echo $prompt_id; ?>', '<?php echo $server; ?>');"><i class='bi bi-clipboard'></i></button>
                                 <a class='btn btn-outline-primary action-item toolbar-button' role='button' title='Edit Prompt' href='../responses/index.php?prompt_id=<?php echo $row['prompt_id']; ?>'><i class='bi bi-pencil-square'></i></a>
                                 <a class='btn btn-outline-primary action-item toolbar-button' role='button' title='View Responses' href='../responses/index.php?prompt_id=<?php echo $row['prompt_id']; ?>'><i class='bi bi-eye'></i></a>
                                 <button class='btn btn-outline-primary action-item toolbar-button' title='<?php echo $archiveTitle; ?>' onclick="archive('<?php echo $prompt_id; ?>', '<?php echo $archiveStatus; ?>')"><i id='icon-<?php echo $prompt_id; ?>' class='bi <?php echo $archiveIcon; ?>'></i></button>
@@ -97,7 +97,6 @@ include_once('../addUser.php');
                             <p class='card-text'>
                                 <Strong>Prompt: </strong> <?php echo $row['text']; ?>
                             </p>
-                            <p id="link-<?php echo $prompt_id; ?>" class='card-text'><?php echo "Student Link: <a href='$server/audioRecorder/?prompt_id=$prompt_id'>$server/audioRecorder/?prompt_id=$prompt_id</a>"; ?></p>
 
                         </div>
                     </div>
