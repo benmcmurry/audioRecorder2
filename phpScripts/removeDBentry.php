@@ -10,6 +10,6 @@ $result = $query->get_result();
 $prompt_id = $query->insert_id;
 
 
-echo "Refreshing . . . ";
+echo "Please refresh this page to re-record your response.";
 
 ?>

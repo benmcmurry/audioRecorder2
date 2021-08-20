@@ -70,7 +70,6 @@ document.querySelector("#repeatPassword").addEventListener("keydown", function (
         }
         xmlHttp.open("post", "phpScripts/removeDBentry.php");
         xmlHttp.send(fd);
-        location.reload();
     }
 
 });
