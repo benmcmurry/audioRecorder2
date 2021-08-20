@@ -125,7 +125,7 @@ include_once('../addUser.php');
                         </div>
                         <div class='card-body'>
                             <audio style='padding: 0em 0em 2em;' controls>
-                                <source src='<?php echo $row['filename']; ?>' type='<?php echo $row['filetype']; ?>'>
+                                <source src='<?php echo "../".$row['filename']; ?>' type='<?php echo $row['filetype']; ?>'>
                             </audio>
 
                             <p class="card-text">
