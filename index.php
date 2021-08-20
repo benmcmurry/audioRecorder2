@@ -9,6 +9,8 @@ include_once('../../connectFiles/connect_ar.php');
 include_once('addUser.php');
 $prompt_id = $_GET['prompt_id'];
 $alreadyDone = FALSE;
+// $transcriptionRequired = $result['transcription'];
+if (empty($result['transcription'])) {$transcriptionRequired = 0; } else {$transcriptionRequired = $result['transcription'];}
 
 $query = $elc_db->prepare("Select * from Prompts where prompt_id=?");
 $query->bind_param("s", $prompt_id);
@@ -40,14 +42,12 @@ if (isset($result2)) {
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
     <script type="text/javascript">
         <?php if ($prompt_id) { ?>
-
             var prepare_time = <?php echo $result['prepare_time']; ?>;
-
             var response_time = <?php echo $result['response_time']; ?>;
             var prompt_id = <?php echo $prompt_id; ?>;
             var netid = "<?php echo $net_id; ?>";
             var archiveStatus = <?php echo $result['archive']; ?>;
-
+            var transcriptionRequired = <?php echo $transcriptionRequired; ?>;
             <?php
 
         } else {
@@ -90,6 +90,8 @@ if (isset($result2)) {
             <!-- AlreadyDone? -->
             <div id="alreadyDoneBox" class="d-none d-grid gap-2 col mx-auto mt-5">
                 <div class="row" id="alreadyAnswered">
+                <p class="text-center">You chave already answered this prompt.</p>
+
                     <p class="text-center">You can play your answer below.</p>
                 </div>
                 <div class="row">
@@ -97,7 +99,7 @@ if (isset($result2)) {
                     </audio>
                 </div>
 
-                <?php if ($result['transcription'] === 1) { ?>
+                <?php if ($transcriptionRequired = 1) { ?>
                 <div id="transcriptionRow" class="row">
                     <div class="form-floating">
                         <textarea class="form-control" id='transcriptionBox' placeholder="" id="floatingTextarea"><?php

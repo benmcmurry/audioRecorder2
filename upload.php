@@ -1,8 +1,8 @@
 <?php
 include_once('../../connectFiles/connect_ar.php');
 if ($_SERVER['REMOTE_ADDR'] == '127.0.0.1') {
-    $ffmpeg = "/usr/local/bin/ffmpeg";
-    // $ffmpeg = "/opt/homebrew/bin/ffmpeg";
+    // $ffmpeg = "/usr/local/bin/ffmpeg";
+    $ffmpeg = "/opt/homebrew/bin/ffmpeg";
 } else {
     $ffmpeg = "/usr/bin/ffmpeg";
 }

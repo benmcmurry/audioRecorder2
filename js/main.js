@@ -38,44 +38,43 @@ var recordTime = 5000;
 var response = document.querySelector("#response");
 var transcriptionRow = document.querySelector("#transcriptionRow");
 var transcription;
-
 var i = 0;
 
+if (transcriptionRequired = 1) {
 
-transcriptionBox.addEventListener("keyup", function (e) {
-    if (e.keyCode == 32) { 
-        saveTranscription(netid, prompt_id);
-    }
-
-});
-
-document.querySelector("#alreadyAnswered").addEventListener("click", function () {
-    i = i + 1;
-    if (i === 3) {
-        repeatRecording.classList.remove("d-none");
-        repeatPassword.focus();
-    }
-
-});
-
-document.querySelector("#repeatPassword").addEventListener("keydown", function (e) {
-
-    if (e.keyCode == 13 && document.getElementById("repeatPassword").value == "repeat") {
-        var fd = new FormData();
-        fd.append('prompt_id', prompt_id);
-        fd.append('netid', netid);
-        var xmlHttp = new XMLHttpRequest();
-        xmlHttp.onreadystatechange = function () {
-            if (xmlHttp.readyState == 4 && xmlHttp.status == 200) {
-                repeatRecording.innerHTML = xmlHttp.responseText;
-            }
+    document.querySelector("#transcriptionBox").addEventListener("keyup", function (e) {
+        if (e.keyCode == 32) {
+            saveTranscription(netid, prompt_id);
         }
-        xmlHttp.open("post", "phpScripts/removeDBentry.php");
-        xmlHttp.send(fd);
-        location.reload();
-    }
+    });
+}
+    document.querySelector("#alreadyAnswered").addEventListener("click", function () {
+        i = i + 1;
+        if (i === 3) {
+            repeatRecording.classList.remove("d-none"); 
+            repeatPassword.focus();
+        }
+    });
 
-});
+    document.querySelector("#repeatPassword").addEventListener("keydown", function (e) {
+
+        if (e.keyCode == 13 && document.getElementById("repeatPassword").value == "repeat") {
+            var fd = new FormData();
+            fd.append('prompt_id', prompt_id);
+            fd.append('netid', netid);
+            var xmlHttp = new XMLHttpRequest();
+            xmlHttp.onreadystatechange = function () {
+                if (xmlHttp.readyState == 4 && xmlHttp.status == 200) {
+                    repeatRecording.innerHTML = xmlHttp.responseText;
+                }
+            }
+            xmlHttp.open("post", "phpScripts/removeDBentry.php");
+            xmlHttp.send(fd);
+            location.reload();
+        }
+
+    });
+
 
 
 if (alreadyDone) {
@@ -84,8 +83,6 @@ if (alreadyDone) {
     alreadyDoneBox.classList.remove("d-none");
     reviewRecording.src = reviewSource;
     reviewRecording.type = reviewSourceType;
-    console.log(reviewRecording.scr);
-    console.log(reviewRecording.type);
 }
 
 
@@ -225,16 +222,16 @@ function record(typeOfRecording) {
                 type: mediaRecorder.mimeType
             });
 
-            playbackAudioElement.src = URL.createObjectURL(recording);
+            reviewRecording.src = URL.createObjectURL(recording);
             console.log(playbackAudioElement.src);
 
             if (typeOfRecording === "recording") {
-                playbackAudioElement.controls = true;
+                reviewRecording.controls = true;
             } else {
                 if (safari == true) {
-                    playbackAudioElement.controls = true;
+                    reviewRecording.controls = true;
                 } else {
-                    playbackAudioElement.play();
+                    reviewRecording.play();
                 }
             }
             var d = Date.now();
@@ -288,6 +285,7 @@ function record(typeOfRecording) {
 }
 
 function uploadRecording(blob, name) {
+    prompt.classList.add("d-none");
     console.log(blob);
     var fd = new FormData();
     fd.append('name', name)
@@ -299,7 +297,7 @@ function uploadRecording(blob, name) {
     var xmlHttp = new XMLHttpRequest();
     xmlHttp.onreadystatechange = function () {
         if (xmlHttp.readyState == 4 && xmlHttp.status == 200) {
-            prompt.innerHTML = xmlHttp.responseText;
+            alreadyAnswered.innerHTML = xmlHttp.responseText;
         }
     }
     xmlHttp.open("post", "upload.php");
@@ -311,12 +309,8 @@ function uploadRecording(blob, name) {
 
 }
 
-function saveTranscription(netid, prompt_id){
-    // transcription = document.querySelector("#transcriptionBox").innerHTML;
+function saveTranscription(netid, prompt_id) {
     transcription = transcriptionBox.value;
-    // console.log("netid: " + netid);
-    // console.log("prompt_id: " + prompt_id);
-    // console.log("transcription: " + transcription);
     var fd = new FormData();
     fd.append('netid', netid)
     fd.append('prompt_id', prompt_id);
