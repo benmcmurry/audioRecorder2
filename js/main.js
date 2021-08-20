@@ -48,32 +48,32 @@ if (transcriptionRequired = 1) {
         }
     });
 }
-    document.querySelector("#alreadyAnswered").addEventListener("click", function () {
-        i = i + 1;
-        if (i === 3) {
-            repeatRecording.classList.remove("d-none"); 
-            repeatPassword.focus();
-        }
-    });
+document.querySelector("#alreadyAnswered").addEventListener("click", function () {
+    i = i + 1;
+    if (i === 3) {
+        repeatRecording.classList.remove("d-none");
+        repeatPassword.focus();
+    }
+});
 
-    document.querySelector("#repeatPassword").addEventListener("keydown", function (e) {
+document.querySelector("#repeatPassword").addEventListener("keydown", function (e) {
 
-        if (e.keyCode == 13 && document.getElementById("repeatPassword").value == "repeat") {
-            var fd = new FormData();
-            fd.append('prompt_id', prompt_id);
-            fd.append('netid', netid);
-            var xmlHttp = new XMLHttpRequest();
-            xmlHttp.onreadystatechange = function () {
-                if (xmlHttp.readyState == 4 && xmlHttp.status == 200) {
-                    repeatRecording.innerHTML = xmlHttp.responseText;
-                }
+    if (e.keyCode == 13 && document.getElementById("repeatPassword").value == "repeat") {
+        var fd = new FormData();
+        fd.append('prompt_id', prompt_id);
+        fd.append('netid', netid);
+        var xmlHttp = new XMLHttpRequest();
+        xmlHttp.onreadystatechange = function () {
+            if (xmlHttp.readyState == 4 && xmlHttp.status == 200) {
+                repeatRecording.innerHTML = xmlHttp.responseText;
             }
-            xmlHttp.open("post", "phpScripts/removeDBentry.php");
-            xmlHttp.send(fd);
-            location.reload();
         }
+        xmlHttp.open("post", "phpScripts/removeDBentry.php");
+        xmlHttp.send(fd);
+        location.reload();
+    }
 
-    });
+});
 
 
 
@@ -221,8 +221,15 @@ function record(typeOfRecording) {
             var recording = new Blob(chunks, {
                 type: mediaRecorder.mimeType
             });
+            if (typeOfRecording === "microphoneTest") {
+                playbackAudioElement.src = URL.createObjectURL(recording);
+                if (safari == true) {
+                    playbackAudioElement.controls = true;
 
-            reviewRecording.src = URL.createObjectURL(recording);
+                }
+            } else {
+                reviewRecording.src = URL.createObjectURL(recording);
+            }
             console.log(playbackAudioElement.src);
 
             if (typeOfRecording === "recording") {
