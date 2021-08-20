@@ -6,10 +6,12 @@ if (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROT
 }
 
 if ($_SERVER['SERVER_NAME'] == 'localhost.byu.edu') {
-    $server = $_SERVER['SERVER_NAME'] . "/~benmcmurry";
+    $serverName = $_SERVER['SERVER_NAME'] . $_SERVER['PHP_SELF'];
 } else {
-    $server = " https://" . $_SERVER['SERVER_NAME'];
+    $serverName = " https://" . $_SERVER['SERVER_NAME']. $_SERVER['PHP_SELF'];
 }
+
+$server = str_replace("/teacher/index.php","/",$serverName);
 
 include_once("../cas-go.php");
 include_once('../../../connectFiles/connect_ar.php');

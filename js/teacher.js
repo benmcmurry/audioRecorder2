@@ -57,7 +57,7 @@ function archive(prompt_id, archiveStatus) {
 
 }
 
-function createPrompt(){
+function createPrompt() {
     console.log("CreatePrompt Function Activites");
     var xmlHttp = new XMLHttpRequest();
     xmlHttp.onreadystatechange = function () {
@@ -69,24 +69,17 @@ function createPrompt(){
     }
     xmlHttp.open("post", "../phpScripts/createPrompt.php");
     xmlHttp.send();
-    
+
 
 }
 
-// function copyLink(prompt_id, server) {
-//     var link = document.querySelector(`#link-${CSS.escape(prompt_id)}`);
-//     var linkText = link.textContent;
-//     copyText(linkText);
-//     // alert("Link Copied: " + linkText);
+function copyLink(prompt_id, server) {
+    var link = server + "?prompt_id=" + prompt_id;
+    navigator.clipboard.writeText(link).then(function () {
+        console.log("copied: " + link);
+    }, function () {
+        console.log("copy failed");
+    });
 
-//     // document.execCommand("copy");
-// //   copyText.select();
-// //   document.execCommand("copy");
-// }
-
-// function copyText(text) {
-//     navigator.clipboard.writeText(text);
-//     alert(text);
-    
-//   }
+}
 
