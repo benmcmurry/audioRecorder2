@@ -55,7 +55,7 @@ include_once('../addUser.php');
         <div class="row" id='response'></div>
     </nav>
     <main role="main" class="m-0 p-0">
-        <div class="container-sm mt-5 mb-5">
+        <div class="container-sm mt-5 mb-5 pb-3">
             <?php
 
             $query = $elc_db->prepare("Select * from Prompts where netid=? order by date_created DESC");

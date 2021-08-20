@@ -83,7 +83,7 @@ if (isset($result2)) {
         </div>
     </header>
     <main role="main">
-        <div id="mainContainer" class="container mt-5 mb-5">
+        <div id="mainContainer" class="container mt-5 mb-5 pb-3">
 
 
 
