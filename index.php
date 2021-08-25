@@ -90,7 +90,7 @@ if (isset($result2)) {
             <!-- AlreadyDone? -->
             <div id="alreadyDoneBox" class="d-none d-grid gap-2 col mx-auto mt-5">
                 <div class="row" id="alreadyAnswered">
-                <p class="text-center">You chave already answered this prompt.</p>
+                <p class="text-center">You have already answered this prompt.</p>
 
                     <p class="text-center">You can play your answer below.</p>
                 </div>
@@ -105,7 +105,7 @@ if (isset($result2)) {
                         <textarea class="form-control" id='transcriptionBox' placeholder="" id="floatingTextarea"><?php
                             if(isset($result2['transcription_text'])) {echo $result2['transcription_text'];} 
                             ?></textarea>
-                        <label for="floatingTextarea">You can update your transcription here. </label>
+                        <label for="floatingTextarea">Update your transcription here. </label>
                     </div>
                 </div>
             <?php } ?>
