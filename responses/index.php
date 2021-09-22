@@ -94,6 +94,9 @@ include_once('../addUser.php');
                             Allow or Require Students to Transcribe their recording
                         </label>
                     </div>
+                    <div class="">
+                        
+                    </div>
                 </div>
 
             </form>
@@ -104,21 +107,25 @@ include_once('../addUser.php');
 
             <div class='row'>
                 <button class='btn btn-primary' id='save' onclick="save('<?php echo $prompt_id; ?>');">Save</button>
-
+            </div>
+            <div class='row'>
+            <a href="transcripts.php?prompt_id=<?php echo $prompt_id; ?>" target="_blank" id="copyAllTranscripts" class="btn btn-primary">View all Transcripts</a>
             </div>
             <div class='row' id="response">
 
             </div>
 
             <?php
-            $transcription_text = "<h2>Transcripts for copy and paste</h2>";
+            $transcription_text = "<h2>Transcripts</h2>";
             $query = $elc_db->prepare("Select * from Audio_files natural join Users where prompt_id=? order by date_created DESC");
             $query->bind_param("s", $prompt_id);
             $query->execute();
             $result = $query->get_result();
 
-            while ($row = $result->fetch_assoc()) { ?>
-                <div class='row '>
+            while ($row = $result->fetch_assoc()) { 
+                $transcription_text = "<h3>".$row['name']."</h3><p>".$row['transcription_text']."</p>";
+                ?>
+                <div class='row'>
                     <div class="card  m-0 p-0" id='<?php echo $row['prompt_id']; ?>'>
                         <div class='card-header'>
                             <?php echo $row['name']; ?>
@@ -138,6 +145,7 @@ include_once('../addUser.php');
 
             } ?>
         </div>
+       
     </main>
     <footer class='p-2 bg-byu-navy text-white fixed-bottom'>
         <div class="container-fluid">
@@ -152,6 +160,7 @@ include_once('../addUser.php');
             </div>
     </footer>
     <script src='../js/responses.js'></script>
+  
 </body>
 
 </html>
