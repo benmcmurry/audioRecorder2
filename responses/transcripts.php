@@ -52,7 +52,7 @@ $result = $query->get_result();
                         while ($row = $result->fetch_assoc()) {
                         ?>
                             <h4 class="card-text"><?php echo $row['name']; ?></h4>
-                            <p class="card-text"><?php echo $row['transcription_text']; ?>
+                            <p class="card-text"><?php echo $row['transcription_text']; ?></p>
                         <?php   } ?></p>
                 </div>
             </div>
