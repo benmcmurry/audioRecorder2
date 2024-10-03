@@ -137,3 +137,10 @@ div.volume .volbox {
     border-radius: 0;
 }
 audio { width: 100%; }
+
+.form-check-input {    
+    /* position: relative;
+    top: 3;
+    vertical-align: middle; */
+}   
+    
