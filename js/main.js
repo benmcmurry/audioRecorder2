@@ -339,14 +339,16 @@ function record(typeOfRecording) {
     (function () {
       setTimeout(function () {
         console.log("stop recording");
+
         mediaRecorder.stop();
+        if (recognizing) {recognition.stop();}
       }, recordTime);
     })();
   }
 }
 
 function uploadRecording(blob, name) {
-  if (recognizing) {recognition.stop();}
+
   prompt.classList.add("d-none");
   console.log(blob);
   var fd = new FormData();
