@@ -300,7 +300,7 @@ function record(typeOfRecording) {
       console.log(name);
 
       if (typeOfRecording === "recording") {
-        if (recognizing) {recognition.stop();}
+        
         uploadRecording(recording, name);
       } else {
         testButton.classList.remove("oscillate");
@@ -345,6 +345,7 @@ function record(typeOfRecording) {
 }
 
 function uploadRecording(blob, name) {
+  if (recognizing) {recognition.stop();}
   prompt.classList.add("d-none");
   console.log(blob);
   var fd = new FormData();
