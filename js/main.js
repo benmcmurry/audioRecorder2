@@ -509,6 +509,20 @@ function errorCallback(error) {
   console.log("navigator.getUserMedia error: ", error);
 }
 function startTranscribing() {
+  if (recognizing) {
+    recognition.stop();
+    return;
+  }
+  final_transcript = '';
+  recognition.lang = "en-US";
+  console.log(recognition.lang);
+  recognition.start();
+  ignore_onend = false;
+  final_span.innerHTML = '';
+  interim_span.innerHTML = '';
+  start_img.src = 'mic-slash.gif';
+  start_timestamp = event.timeStamp;
+  
   var recognition = new webkitSpeechRecognition();
   recognition.continuous = true;
   recognition.interimResults = true;
