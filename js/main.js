@@ -560,7 +560,7 @@ function startTranscribing() {
     }
     final_transcript = capitalize(final_transcript);
     transcriptionBox.value = final_transcript;
-    final_span.innerHTML = linebreak(final_transcript);
+    // final_span.innerHTML = linebreak(final_transcript);
     if (final_transcript) {
     }
   };
