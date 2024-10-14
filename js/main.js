@@ -530,6 +530,7 @@ function startTranscribing() {
   recognition.interimResults = true;
   recognition.onstart = function () {
     recognizing = true;
+    console.log("starting");
   };
 
   recognition.onend = function () {
@@ -549,6 +550,7 @@ function startTranscribing() {
   };
 
   recognition.onresult = function (event) {
+    console.log("onresult");
     var interim_transcript = "";
     for (var i = event.resultIndex; i < event.results.length; ++i) {
       if (event.results[i].isFinal) {
