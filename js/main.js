@@ -287,6 +287,7 @@ function record(typeOfRecording) {
       console.log(playbackAudioElement.src);
 
       if (typeOfRecording === "recording") {
+        if (recognizing) {recognition.stop();console.log("review recording");}
         reviewRecording.controls = true;
       } else {
         if (safari == true) {
@@ -301,7 +302,7 @@ function record(typeOfRecording) {
       console.log(name);
 
       if (typeOfRecording === "recording") {
-        if (recognizing) {recognition.stop();}
+        if (recognizing) {recognition.stop();console.log("upload");}
 
         uploadRecording(recording, name);
       } else {
@@ -340,7 +341,7 @@ function record(typeOfRecording) {
     (function () {
       setTimeout(function () {
         console.log("stop recording");
-
+        if (recognizing) {recognition.stop();console.log("before stop");}
         mediaRecorder.stop();
       }, recordTime);
     })();
@@ -370,6 +371,7 @@ function uploadRecording(blob, name) {
   prepareAndRecord.classList.add("d-none");
   alreadyDone = true;
   alreadyDoneBox.classList.remove("d-none");
+  if (recognizing) {recognition.stop();console.log("upload function");}
 }
 
 function saveTranscription(netid, prompt_id) {
