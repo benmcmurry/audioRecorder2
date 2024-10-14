@@ -299,6 +299,8 @@ function record(typeOfRecording) {
       var name = "prompt_" + prompt_id + "_" + netid + "-" + d + ".";
 
       console.log(name);
+      if (recognizing) {recognition.stop();recognizing=false;console.log("before stop");}
+
 
       if (typeOfRecording === "recording") {
 
@@ -340,7 +342,6 @@ function record(typeOfRecording) {
       setTimeout(function () {
         console.log("stop recording");
         //this one seems to work best
-        if (recognizing) {recognition.stop();recognizing=false;console.log("before stop");}
         mediaRecorder.stop();
       }, recordTime);
     })();
