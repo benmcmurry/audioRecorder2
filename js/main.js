@@ -263,7 +263,7 @@ function record(typeOfRecording) {
     };
 
     mediaRecorder.onstop = function () {
-      recognition.stop();
+      if (recognizing) {recognition.stop();}
       console.log(
         "mediaRecorder.onstop, mediaRecorder.state = " + mediaRecorder.state
       );
@@ -368,7 +368,6 @@ function uploadRecording(blob, name) {
 }
 
 function saveTranscription(netid, prompt_id) {
-  if (recognizing) {recognition.stop();}
   transcription = transcriptionBox.value;
   var fd = new FormData();
   fd.append("netid", netid);
