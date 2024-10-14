@@ -47,7 +47,7 @@ var i = 0;
 var final_transcript = "";
 var recognizing = false;
 var ignore_onend;
-var recognition = new webkitSpeechRecognition();
+ var recognition = new webkitSpeechRecognition();
 
 if ((transcriptionRequired = 1)) {
   document
@@ -557,7 +557,7 @@ function startTranscribing() {
     }
     final_transcript = capitalize(final_transcript);
     transcriptionBox.value = final_transcript;
-    // saveTranscription(netid, prompt_id);
+    final_span.innerHTML = linebreak(final_transcript);
     if (final_transcript) {
     }
   };
