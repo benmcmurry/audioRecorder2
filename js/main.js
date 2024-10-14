@@ -175,11 +175,11 @@ function startRecording() {
   timer_container.classList.remove("d-none");
   speakPrompt(promptText, prepare_time, response_time);
   setTimeout(function () {
-    startTranscribing();
     timer(prepare_time, "Prepare");
   }, promptText.length * 100);
 
   setTimeout(function () {
+    startTranscribing();
     timer(response_time, "Recording");
     record("recording");
   }, prepare_time * 1000 + 1000 + promptText.length * 100);
@@ -522,11 +522,7 @@ function startTranscribing() {
   recognition.lang = "en-US";
   recognition.start();
   ignore_onend = false;
-  final_span.innerHTML = '';
-  interim_span.innerHTML = '';
-  // start_timestamp = event.timeStamp;
   recognition.continuous = true;
-  recognition.interimResults = true;
   recognition.onstart = function () {
     recognizing = true;
     console.log("starting");
@@ -550,19 +546,16 @@ function startTranscribing() {
 
   recognition.onresult = function (event) {
     console.log("onresult");
-    var interim_transcript = "";
     for (var i = event.resultIndex; i < event.results.length; ++i) {
       if (event.results[i].isFinal) {
         final_transcript += event.results[i][0].transcript;
       } else {
-        interim_transcript += event.results[i][0].transcript;
       }
     }
     final_transcript = capitalize(final_transcript);
     transcriptionBox.value = final_transcript;
     final_span.innerHTML = linebreak(final_transcript);
-    interim_span.innerHTML = linebreak(interim_transcript);
-    if (final_transcript || interim_transcript) {
+    if (final_transcript) {
     }
   };
 }
