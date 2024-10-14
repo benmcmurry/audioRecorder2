@@ -47,6 +47,7 @@ var i = 0;
 var final_transcript = "";
 var recognizing = false;
 var ignore_onend;
+var recognition = new webkitSpeechRecognition();
 
 if ((transcriptionRequired = 1)) {
   document
@@ -519,7 +520,7 @@ function startTranscribing() {
   }
   
   
-  var recognition = new webkitSpeechRecognition();
+ 
   final_transcript = '';
   recognition.lang = "en-US";
   recognition.start();
