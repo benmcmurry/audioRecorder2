@@ -263,7 +263,7 @@ function record(typeOfRecording) {
     };
 
     mediaRecorder.onstop = function () {
-      if (recognizing) {recognition.stop();}
+      
       console.log(
         "mediaRecorder.onstop, mediaRecorder.state = " + mediaRecorder.state
       );
@@ -300,6 +300,7 @@ function record(typeOfRecording) {
       console.log(name);
 
       if (typeOfRecording === "recording") {
+        if (recognizing) {recognition.stop();}
         uploadRecording(recording, name);
       } else {
         testButton.classList.remove("oscillate");
