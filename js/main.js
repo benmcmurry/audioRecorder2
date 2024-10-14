@@ -301,6 +301,7 @@ function record(typeOfRecording) {
       console.log(name);
 
       if (typeOfRecording === "recording") {
+        if (recognizing) {recognition.stop();}
 
         uploadRecording(recording, name);
       } else {
@@ -339,7 +340,6 @@ function record(typeOfRecording) {
     (function () {
       setTimeout(function () {
         console.log("stop recording");
-        if (recognizing) {recognition.stop();}
 
         mediaRecorder.stop();
       }, recordTime);
