@@ -517,7 +517,7 @@ function startTranscribing() {
   }
   final_transcript = '';
   // recognition.lang = "en-US";
-  console.log(recognition.lang);
+  // console.log(recognition.lang);
   recognition.start();
   ignore_onend = false;
   final_span.innerHTML = '';
