@@ -515,17 +515,18 @@ function startTranscribing() {
     recognition.stop();
     return;
   }
+  
+  
+  var recognition = new webkitSpeechRecognition();
   final_transcript = '';
-  // recognition.lang = "en-US";
-  // console.log(recognition.lang);
+  recognition.lang = "en-US";
+  console.log(recognition.lang);
   recognition.start();
   ignore_onend = false;
   final_span.innerHTML = '';
   interim_span.innerHTML = '';
   start_img.src = 'mic-slash.gif';
   start_timestamp = event.timeStamp;
-  
-  var recognition = new webkitSpeechRecognition();
   recognition.continuous = true;
   recognition.interimResults = true;
   recognition.onstart = function () {
