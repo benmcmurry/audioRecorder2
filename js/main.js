@@ -525,7 +525,6 @@ function startTranscribing() {
   ignore_onend = false;
   final_span.innerHTML = '';
   interim_span.innerHTML = '';
-  start_img.src = 'mic-slash.gif';
   start_timestamp = event.timeStamp;
   recognition.continuous = true;
   recognition.interimResults = true;
@@ -538,7 +537,6 @@ function startTranscribing() {
     if (ignore_onend) {
       return;
     }
-    start_img.src = "mic.gif";
     if (!final_transcript) {
       return;
     }
