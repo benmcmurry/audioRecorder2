@@ -271,7 +271,7 @@ function record(typeOfRecording) {
       if (typeOfRecording === "microphoneTest") {
         playbackAudioElement.src = URL.createObjectURL(recording);
         if (safari == true) {
-          playbackAudioElement.controls = false;
+          playbackAudioElement.controls = true;
         }
       } else {
         reviewRecording.src = URL.createObjectURL(recording);
