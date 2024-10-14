@@ -169,7 +169,15 @@ if (isset($result2)) {
             
 
         </div> <!-- end container -->
+       
+        <div id="results">
+  <span id="final_span" class="final"></span>
+  <span id="interim_span" class="interim"></span>
+  <p>
 
+  <p>
+  
+</div>
     </main>
     <footer class='p-2 bg-byu-navy text-white fixed-bottom'>
         <div class="container-fluid">
