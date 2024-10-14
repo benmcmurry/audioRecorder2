@@ -263,6 +263,7 @@ function record(typeOfRecording) {
     };
 
     mediaRecorder.onstop = function () {
+      recognition.stop();
       console.log(
         "mediaRecorder.onstop, mediaRecorder.state = " + mediaRecorder.state
       );
