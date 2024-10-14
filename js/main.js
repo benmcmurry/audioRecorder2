@@ -167,6 +167,7 @@ function testStartRecording() {
 
 //this function starts recording when the Begin button is pressed
 function startRecording() {
+  startTranscribing();
   buttons.classList.add("d-none");
   prompt.classList.remove("d-none");
   playbackAudioElement.src = "";
@@ -366,6 +367,7 @@ function uploadRecording(blob, name) {
 }
 
 function saveTranscription(netid, prompt_id) {
+  recognition.stop();
   transcription = transcriptionBox.value;
   var fd = new FormData();
   fd.append("netid", netid);
