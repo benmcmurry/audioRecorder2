@@ -557,7 +557,7 @@ function startTranscribing() {
     }
     final_transcript = capitalize(final_transcript);
     transcriptionBox.value = final_transcript;
-    saveTranscription(netid, prompt_id);
+    // saveTranscription(netid, prompt_id);
     if (final_transcript) {
     }
   };
