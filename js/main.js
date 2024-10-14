@@ -164,11 +164,13 @@ function testStartRecording() {
 function startRecording() {
   buttons.classList.add("d-none");
   prompt.classList.remove("d-none");
+  playbackAudioElement.src ="";
+  playbackAudioElement.controls = false;
 
   timer_container.classList.remove("d-none");
   speakPrompt(promptText, prepare_time, response_time);
   setTimeout(function() {timer(prepare_time, "Prepare");
-  playbackAudioElement.controls = false;}, promptText.length* 100);
+  }, promptText.length* 100);
 
   
 
