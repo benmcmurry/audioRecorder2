@@ -539,7 +539,12 @@ function startTranscribing() {
     if (!final_transcript) {
       return;
     }
-    
+    if (window.getSelection) {
+      window.getSelection().removeAllRanges();
+      var range = document.createRange();
+      range.selectNode(document.getElementById("final_span"));
+      window.getSelection().addRange(range);
+    }
   };
 
   recognition.onresult = function (event) {
@@ -552,9 +557,7 @@ function startTranscribing() {
     }
     final_transcript = capitalize(final_transcript);
     transcriptionBox.value = final_transcript;
-    // saveTranscription(netid, prompt_id);
-
-    
+    saveTranscription(netid, prompt_id);
     if (final_transcript) {
     }
   };
