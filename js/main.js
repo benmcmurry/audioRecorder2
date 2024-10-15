@@ -527,11 +527,11 @@ function startTranscribing() {
   final_transcript = '';
   recognition.lang = "en-US";
   recognition.start();
-  ignore_onend = false;
+  ignore_onend = false; 
   recognition.continuous = true;
   recognition.onstart = function () {
     recognizing = true;
-    console.log("starting");
+    console.log("starting transcription");
   };
 
   recognition.onend = function () {
@@ -557,6 +557,7 @@ function startTranscribing() {
       if (event.results[i].isFinal) {
         final_transcript += event.results[i][0].transcript;
       } else {
+
       }
     }
     final_transcript = capitalize(final_transcript);
