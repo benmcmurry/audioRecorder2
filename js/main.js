@@ -545,7 +545,7 @@ function startTranscribing() {
     if (window.getSelection) {
       window.getSelection().removeAllRanges();
       var range = document.createRange();
-      range.selectNode(document.getElementById("final_span"));
+      range.selectNode(document.getElementById("transcriptionBox"));
       window.getSelection().addRange(range);
     }
   };
@@ -561,7 +561,7 @@ function startTranscribing() {
     final_transcript = capitalize(final_transcript);
     transcriptionBox.value = final_transcript;
     console.log(final_transcript);
-    // final_span.innerHTML = linebreak(final_transcript);
+    transcriptionBox.innerHTML = linebreak(final_transcript);
     if (final_transcript) {
     }
   };
