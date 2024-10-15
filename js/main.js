@@ -534,6 +534,7 @@ function startTranscribing() {
   };
 
   recognition.onend = function () {
+    console.log("onend");
     recognizing = false;
     if (ignore_onend) {
       return;
