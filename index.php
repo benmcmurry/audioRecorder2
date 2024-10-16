@@ -99,7 +99,7 @@ if (isset($result2)) {
                 <div id="transcriptionRow" class="row">
                     <h4>Transcription</h4> 
                     <div class="">
-                        <textarea class="form-control" id='transcriptionBox' placeholder="P" id="floatingTextarea"><?php
+                        <textarea class="form-control" id='transcriptionBox' placeholder="Please wait for your transcription . . . ." id="floatingTextarea"><?php
                             if(isset($result2['transcription_text'])) {echo $result2['transcription_text'];} 
                             ?></textarea>
                     </div>
