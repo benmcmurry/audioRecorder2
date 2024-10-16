@@ -50,7 +50,7 @@ var thisLine = "";
 document
   .querySelector("#transcriptionBox")
   .addEventListener("keyup", function (e) {
-    if (e.keyCode == 32 || e.keyCode == 190 || e.keyCode == 13) {
+    if (e.keyCode == 32 || e.keyCode == 190 || e.keyCode == 13 || e.keyCode == 191 || e.keyCode == 49) {
       saveTranscription(netid, prompt_id);
     }
   });
