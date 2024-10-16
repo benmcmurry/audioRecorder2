@@ -9,6 +9,6 @@ $query->bind_param("sss", $_POST['transcription'], $_POST['prompt_id'], $_POST['
 $query->execute();
 $result = $query->get_result();
 $time = date('F jS\, Y h:i:s A');
-echo "Saved on $time";
-
+// echo "Saved on $time";
+echo "Saving . . .";
 ?>

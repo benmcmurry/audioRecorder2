@@ -44,17 +44,20 @@ var transcription;
 var i = 0;
 
 //transcript variables
-var recognition = new webkitSpeechRecognition();
-var transcript = "";
-var thisLine = "";
-document
-  .querySelector("#transcriptionBox")
-  .addEventListener("keyup", function (e) {
-    if (e.keyCode == 32 || e.keyCode == 190 || e.keyCode == 13) {
-      saveTranscription(netid, prompt_id);
-    }
-  });
+var final_transcript = "";
+var recognizing = false;
+var ignore_onend;
+ var recognition = new webkitSpeechRecognition();
 
+if ((transcriptionRequired = 1)) {
+  document
+    .querySelector("#transcriptionBox")
+    .addEventListener("keyup", function (e) {
+      if (e.keyCode == 32 || e.keyCode == 190 || e.keyCode == 13) {
+        saveTranscription(netid, prompt_id);
+      }
+    });
+}
 document
   .querySelector("#alreadyAnswered")
   .addEventListener("click", function () {
@@ -83,9 +86,7 @@ document
       };
       xmlHttp.open("post", "phpScripts/removeDBentry.php");
       xmlHttp.send(fd);
-      location.reload();
     }
-    
   });
 
 if (alreadyDone) {
@@ -166,6 +167,7 @@ function testStartRecording() {
 
 //this function starts recording when the Begin button is pressed
 function startRecording() {
+  
   buttons.classList.add("d-none");
   prompt.classList.remove("d-none");
   playbackAudioElement.src = "";
@@ -226,7 +228,7 @@ function record(typeOfRecording) {
     mediaRecorder = new MediaRecorder(localStream, options);
 
     mediaRecorder.ondataavailable = function (e) {
-      // console.log("mediaRecorder.ondataavailable, e.data.size=" + e.data.size);
+      console.log("mediaRecorder.ondataavailable, e.data.size=" + e.data.size);
       if (e.data && e.data.size > 0) {
         chunks.push(e.data);
       }
@@ -237,9 +239,9 @@ function record(typeOfRecording) {
     };
 
     mediaRecorder.onstart = function () {
-      // console.log(
-      //   "mediaRecorder.onstart, mediaRecorder.state = " + mediaRecorder.state
-      // );
+      console.log(
+        "mediaRecorder.onstart, mediaRecorder.state = " + mediaRecorder.state
+      );
 
       localStream.getTracks().forEach(function (track) {
         if (track.kind == "audio") {
@@ -262,6 +264,7 @@ function record(typeOfRecording) {
     };
 
     mediaRecorder.onstop = function () {
+      
       console.log(
         "mediaRecorder.onstop, mediaRecorder.state = " + mediaRecorder.state
       );
@@ -298,6 +301,7 @@ function record(typeOfRecording) {
       console.log(name);
 
       if (typeOfRecording === "recording") {
+        
         uploadRecording(recording, name);
       } else {
         testButton.classList.remove("oscillate");
@@ -335,15 +339,16 @@ function record(typeOfRecording) {
     (function () {
       setTimeout(function () {
         console.log("stop recording");
-        
+
         mediaRecorder.stop();
-        stopTranscribing();
+        
       }, recordTime);
     })();
   }
 }
 
 function uploadRecording(blob, name) {
+
   prompt.classList.add("d-none");
   console.log(blob);
   var fd = new FormData();
@@ -365,11 +370,10 @@ function uploadRecording(blob, name) {
   prepareAndRecord.classList.add("d-none");
   alreadyDone = true;
   alreadyDoneBox.classList.remove("d-none");
+  if (recognizing) {recognition.stop();console.log("recognition.stop");}
 }
 
 function saveTranscription(netid, prompt_id) {
-  document.getElementById("response").classList.remove("d-none");
-
   transcription = transcriptionBox.value;
   var fd = new FormData();
   fd.append("netid", netid);
@@ -383,9 +387,6 @@ function saveTranscription(netid, prompt_id) {
   };
   xmlHttp.open("post", "phpScripts/saveTranscription.php");
   xmlHttp.send(fd);
-  setTimeout(function () {
-    document.getElementById("response").classList.add("d-none");
-  }, 2000);
 }
 
 //this function reads the prompt
@@ -516,36 +517,63 @@ function errorCallback(error) {
   console.log("navigator.getUserMedia error: ", error);
 }
 function startTranscribing() {
-  console.log("Transcribing started . . . ");
-  recognition.continuous = true;
-  recognition.start();
+  if (recognizing) {
+    recognition.stop();
+    return;
+  }
   
+  
+ 
+  final_transcript = '';
+  recognition.lang = "en-US";
+  recognition.start();
+  ignore_onend = false; 
+  recognition.continuous = true;
+  recognition.onstart = function () {
+    recognizing = true;
+    console.log("starting transcription");
+  };
+
+  recognition.onend = function () {
+    console.log("onend");
+    recognizing = false;
+    if (ignore_onend) {
+      return;
+    }
+    if (!final_transcript) {
+      return;
+    }
+    if (window.getSelection) {
+      window.getSelection().removeAllRanges();
+      var range = document.createRange();
+      range.selectNode(document.getElementById("final_span"));
+      window.getSelection().addRange(range);
+    }
+  };
+
   recognition.onresult = function (event) {
+    console.log("onresult");
     for (var i = event.resultIndex; i < event.results.length; ++i) {
       if (event.results[i].isFinal) {
-        thisLine = capitalize(event.results[i][0].transcript);
-        transcript += thisLine + ". ";
-        console.log("Still going . . . " + transcript);
-      
+        final_transcript += event.results[i][0].transcript;
+      } else {
+
       }
+    }
+    final_transcript = capitalize(final_transcript);
+    transcriptionBox.value = final_transcript;
+    final_span.innerHTML = linebreak(final_transcript);
+    if (final_transcript) { console.log(final_transcript);
     }
   };
 }
+var two_line = /\n\n/g;
+  var one_line = /\n/g;
+  function linebreak(s) {
+    return s.replace(two_line, '<p></p>').replace(one_line, '<br>');
+  }
 
-function stopTranscribing() {
-  setTimeout(function () {
-    console.log("stoppping transcription");
-    recognition.stop();
-  console.log(transcript);
-  document.getElementById("transcriptionBox").value = transcript;
-  saveTranscription(netid, prompt_id);
-  }, 3000);
-
-  
-
-}
-
-var first_char = /\S/;
+  var first_char = /\S/;
   function capitalize(s) {
     return s.replace(first_char, function (m) { return m.toUpperCase(); });
   }

@@ -9,8 +9,6 @@ include_once('../../connectFiles/connect_ar.php');
 include_once('addUser.php');
 $prompt_id = $_GET['prompt_id'];
 $alreadyDone = FALSE;
-// $transcriptionRequired = $result['transcription'];
-if (empty($result['transcription'])) {$transcriptionRequired = 0; } else {$transcriptionRequired = $result['transcription'];}
 
 $query = $elc_db->prepare("Select * from Prompts where prompt_id=?");
 $query->bind_param("s", $prompt_id);
@@ -46,7 +44,6 @@ if (isset($result2)) {
             var prompt_id = <?php echo $prompt_id; ?>;
             var netid = "<?php echo $net_id; ?>";
             var archiveStatus = <?php echo $result['archive']; ?>;
-            var transcriptionRequired = <?php echo $transcriptionRequired; ?>;
             var promptText = "<?php echo $result['text']; ?>";
             <?php
 
@@ -99,16 +96,15 @@ if (isset($result2)) {
                     </audio>
                 </div>
 
-                <?php if ($transcriptionRequired = 1) { ?>
                 <div id="transcriptionRow" class="row">
-                    <div class="form-floating">
-                        <textarea class="form-control" id='transcriptionBox' placeholder="" id="floatingTextarea"><?php
+                    <h4>Transcription</h4> 
+                    <div class="">
+                        <textarea class="form-control" id='transcriptionBox' placeholder="P" id="floatingTextarea"><?php
                             if(isset($result2['transcription_text'])) {echo $result2['transcription_text'];} 
                             ?></textarea>
-                        <label for="floatingTextarea">Update your transcription here. </label>
                     </div>
                 </div>
-            <?php } ?>
+                <div class="row justify-content-end" id="response"></div>
 
                 <div id="repeatRecording" class="row bg-danger d-none" style="color: white; padding:2em;">
                     <p class="text-center">Please enter the password to allow the student to re-record. Please be aware that any previous recordings will be deleted.</p>
@@ -163,21 +159,12 @@ if (isset($result2)) {
                 <audio id="live" muted></audio>
                 <audio id="playback" autoplay playsinline></audio>
             </div>
-            <div class="row" id="response">
-
-            </div>
+           
             
 
         </div> <!-- end container -->
        
-        <div id="results">
-  <span id="final_span" class="final"></span>
-  <span id="interim_span" class="interim"></span>
-  <p>
-
-  <p>
-  
-</div>
+     
     </main>
     <footer class='p-2 bg-byu-navy text-white fixed-bottom'>
         <div class="container-fluid">
