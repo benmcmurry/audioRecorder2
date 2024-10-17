@@ -175,17 +175,18 @@ function startRecording() {
   speakPrompt(promptText, prepare_time, response_time);
   setTimeout(function () {
     timer(prepare_time, "Prepare");
-  }, promptText.length * 100);
+  }, countSpaces(promptText) * 400);
 
   setTimeout(function () {
     startTranscribing();
     timer(response_time, "Recording");
     record("recording");
-  }, prepare_time * 1000 + 1000 + promptText.length * 100);
+  }, prepare_time * 1000 + 1000 + countSpaces(promptText) * 400);
 }
 
 //
 async function speakPrompt(promptText, prepare_time, response_time) {
+  console.log(countSpaces(promptText));
   var msg = new SpeechSynthesisUtterance();
   msg.lang = "en";
   msg.text =
@@ -548,4 +549,14 @@ function stopTranscribing() {
 var first_char = /\S/;
   function capitalize(s) {
     return s.replace(first_char, function (m) { return m.toUpperCase(); });
+  }
+
+  function countSpaces(str) {
+    let count = 0;
+    for (let i = 0; i < str.length; i++) {
+      if (str[i] === ' ') {
+        count++;
+      }
+    }
+    return count;
   }
