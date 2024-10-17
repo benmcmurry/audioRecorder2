@@ -186,7 +186,6 @@ function startRecording() {
 
 //
 async function speakPrompt(promptText, prepare_time, response_time) {
-  console.log(countSpaces(promptText));
   var msg = new SpeechSynthesisUtterance();
   msg.lang = "en";
   msg.text =
