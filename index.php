@@ -182,7 +182,7 @@ $result3 = $query3->get_result();
                             <?php
                             echo "<p class='card-text'><strong>Prompt: </strong>". $row['text']." </p><p>You have ".$row['prepare_time']." seconds to prepare and ".$row['response_time']." seconds to record.</p>";?>
                             <audio style='padding: 0em 0em 2em;' controls>
-                                <source src='<?php echo $row['filename']; ?>' type='<?php echo $row['filetype']; ?>'>
+                                <source src='<?php echo "/".$row['filename']; ?>' type='<?php echo $row['filetype']; ?>'>
                             </audio> 
                             <?php 
                             if ($row['transcription_text']) {
