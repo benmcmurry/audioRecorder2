@@ -1,4 +1,6 @@
 <?php
+$alreadyDone = false;
+$prompt_id = 0;
 error_reporting(E_ALL & ~E_NOTICE);
 ini_set("display_errors", 1);
 if (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] == 'https') {
@@ -7,7 +9,7 @@ if (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROT
 include_once("cas-go.php");
 include_once('../../connectFiles/connect_ar.php');
 include_once('addUser.php');
-$prompt_id = $_GET['prompt_id'];
+if (isset($_GET['prompt_id'])) {$prompt_id = $_GET['prompt_id'];
 $alreadyDone = FALSE;
 
 $query = $elc_db->prepare("Select * from Prompts where prompt_id=?");
@@ -24,7 +26,11 @@ $result2 = $result2->fetch_assoc();
 if (isset($result2)) {
     $alreadyDone = TRUE;
 }
-
+}
+$query3 = $elc_db->prepare("SELECT * FROM Audio_files NATURAL JOIN Users JOIN Prompts ON Audio_files.prompt_id = Prompts.prompt_id WHERE Audio_files.netid = ? ORDER BY name ASC");
+$query3->bind_param("s", $netid);
+$query3->execute();
+$result3 = $query3->get_result();
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -48,7 +54,8 @@ if (isset($result2)) {
             <?php
 
         } else {
-            ?>var archiveStatus = 1;
+            ?>var prompt_id = 0;
+            var archiveStatus = 2
         <?php }
 
 
@@ -61,6 +68,7 @@ if (isset($result2)) {
         } else {
             echo "var alreadyDone = false;";
         }
+        echo "console.log(prompt_id);";
         ?>
     </script>
 </head>
@@ -163,7 +171,29 @@ if (isset($result2)) {
             
 
         </div> <!-- end container -->
-       
+        <div id="allRecordings"  style="display:none;" class="container mt-5 mb-5 pb-3">
+            <?php
+            echo "<p> Recordings for $name. </p>";
+            while ($row = $result3->fetch_assoc()) { ?>
+                <div class="row">
+                    <div class="card  m-0 p-0" id='<?php echo $row['prompt_id']; ?>'>
+                        <div class='card-header'> <?php echo $row['title']; ?> </div>
+                        <div class='card-body'> 
+                            <?php
+                            echo "<p class='card-text'>(".$row['prepare_time']."/".$row['response_time'].") - ". $row['text']."</p>";?>
+                            <audio style='padding: 0em 0em 2em;' controls>
+                                <source src='<?php echo "../".$row['filename']; ?>' type='<?php echo $row['filetype']; ?>'>
+                            </audio> 
+                            <?php 
+                            if ($row['transcription_text']) {
+                                echo "<p class='card-text'>Transcript: ".$row['transcription_text']." </p>";
+                            }
+                            ?>
+                        </div>
+                    </div>
+                </div>
+                <?php } ?>
+       </div>
      
     </main>
     <footer class='p-2 bg-byu-navy text-white fixed-bottom'>
@@ -187,6 +217,11 @@ if (isset($result2)) {
             myScript.setAttribute("src", "js/main.js");
             document.body.appendChild(myScript);
 
+        }
+        if (prompt_id === 0) {
+            document.getElementById("mainContainer").style.display = "none";
+            document.getElementById("allRecordings").style.display = "block";
+           
         }
     </script>
 </body>
