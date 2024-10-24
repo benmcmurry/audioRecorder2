@@ -27,7 +27,7 @@ if (isset($result2)) {
     $alreadyDone = TRUE;
 }
 }
-$query3 = $elc_db->prepare("SELECT * FROM Audio_files NATURAL JOIN Users JOIN Prompts ON Audio_files.prompt_id = Prompts.prompt_id WHERE Audio_files.netid = ? ORDER BY name ASC");
+$query3 = $elc_db->prepare("SELECT * FROM Audio_files NATURAL JOIN Users JOIN Prompts ON Audio_files.prompt_id = Prompts.prompt_id WHERE Audio_files.netid = ? ORDER BY Audio_files.date_created DESC");
 $query3->bind_param("s", $netid);
 $query3->execute();
 $result3 = $query3->get_result();
@@ -177,10 +177,10 @@ $result3 = $query3->get_result();
             while ($row = $result3->fetch_assoc()) { ?>
                 <div class="row">
                     <div class="card  m-0 p-0" id='<?php echo $row['prompt_id']; ?>'>
-                        <div class='card-header'> <?php echo $row['title']; ?> </div>
+                        <div class='card-header'> <h5 style="margin:0;padding:0;"><?php echo $row['title']."</h5>".$row['date_created']; ?> </div>
                         <div class='card-body'> 
                             <?php
-                            echo "<p class='card-text'>(".$row['prepare_time']."/".$row['response_time'].") - ". $row['text']."</p>";?>
+                            echo "<p class='card-text'><strong>Prompt: </strong>". $row['text']." </p><p>You have ".$row['prepare_time']." seconds to prepare and ".$row['response_time']." seconds to record.</p>";?>
                             <audio style='padding: 0em 0em 2em;' controls>
                                 <source src='<?php echo "../".$row['filename']; ?>' type='<?php echo $row['filetype']; ?>'>
                             </audio> 
