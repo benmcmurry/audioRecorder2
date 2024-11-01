@@ -38,11 +38,15 @@ function save(prompt_id) {
 }
 function playAudio(event) {
     if (currentAudio && currentAudio !==event.target) {
+        console.log("Stopping current audio:", currentAudio.src);
+
         currentAudio.Audio.pause();
     }
     currentAudio = event.target;
+    console.log("Playing new audio:", currentAudio.src);
+
 }
 
 document.querySelectorAll('.audio-control').forEach(audio => {
-    audio.addEventListener('plap', playAudio);
+    audio.addEventListener('play', playAudio);
 });
