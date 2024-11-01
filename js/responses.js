@@ -43,6 +43,6 @@ function playAudio(event) {
     currentAudio = event.target;
 }
 
-document.querySelectorAll('.audio-control').forEach(audio ==> {
+document.querySelectorAll('.audio-control').forEach(audio => {
     audio.addEventListener('plap', playAudio);
 });
