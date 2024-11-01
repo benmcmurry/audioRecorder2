@@ -1,6 +1,6 @@
 var response = document.querySelector("#response");
 var updateForm = document.getElementById("updateForm");
-
+let currentAudio = null;
 function save(prompt_id) {
    
     console.log(prompt_title);
@@ -36,3 +36,13 @@ function save(prompt_id) {
         console.log(pair[0] + ', ' + pair[1]);
     }
 }
+function playAudio(event) {
+    if (currentAudio && currentAudio !==event.target) {
+        currentAudio.Audio.pause();
+    }
+    currentAudio = event.target;
+}
+
+document.querySelectorAll('.audio-control').forEach(audio ==> {
+    audio.addEventListener('plap', playAudio);
+});

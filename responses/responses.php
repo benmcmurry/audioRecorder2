@@ -107,7 +107,7 @@ $promptList = explode(",", $prompts);
                 <?php } ?>
                     
                                 <?php echo "<p>".$row['title']." (".$row['prepare_time']."/".$row['response_time'].") - ". $row['text']."</p>"; ?>
-                                <audio style='padding: 0em 0em 2em;' controls>
+                                <audio class="audio-controls" style='padding: 0em 0em 2em;' controls>
                                     <source src='<?php echo "../".$row['filename']; ?>' type='<?php echo $row['filetype']; ?>'>
                                 </audio>
                                 <p class="card-text"> <?php echo $row['transcription_text']; ?> </p>
