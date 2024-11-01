@@ -40,7 +40,7 @@ function playAudio(event) {
     if (currentAudio && currentAudio !==event.target) {
         console.log("Stopping current audio:", currentAudio.src);
 
-        currentAudio.audio.pause();
+        currentAudio.pause();
     }
     currentAudio = event.target;
     console.log("Playing new audio:", currentAudio.src);
