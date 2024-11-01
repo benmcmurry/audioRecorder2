@@ -47,6 +47,6 @@ function playAudio(event) {
 
 }
 
-document.querySelectorAll('.audio-control').forEach(audio => {
+document.querySelectorAll('.audio-controls').forEach(audio => {
     audio.addEventListener('play', playAudio);
 });
