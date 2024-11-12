@@ -27,7 +27,7 @@ if (isset($result2)) {
     $alreadyDone = TRUE;
 }
 }
-$query3 = $elc_db->prepare("SELECT * FROM Audio_files NATURAL JOIN Users JOIN Prompts ON Audio_files.prompt_id = Prompts.prompt_id WHERE Audio_files.netid = ? ORDER BY Users.name ASC");
+$query3 = $elc_db->prepare("SELECT * FROM Audio_files NATURAL JOIN Users JOIN Prompts ON Audio_files.prompt_id = Prompts.prompt_id WHERE Audio_files.netid = ? ORDER BY Audio_files.date_created DESC");
 $query3->bind_param("s", $netid);
 $query3->execute();
 $result3 = $query3->get_result();

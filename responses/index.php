@@ -117,7 +117,7 @@ include_once('../addUser.php');
 
             <?php
             $transcription_text = "<h2>Transcripts</h2>";
-            $query = $elc_db->prepare("Select * from Audio_files natural join Users where prompt_id=? order by date_created DESC");
+            $query = $elc_db->prepare("Select * from Audio_files natural join Users where prompt_id=? order by Users.name ASC");
             $query->bind_param("s", $prompt_id);
             $query->execute();
             $result = $query->get_result();
