@@ -1,8 +1,8 @@
 <?php
 $prompt_id = $_GET['prompt_id'];
-include_once("../../../cas-go.php");
-include_once('../../../../../connectFiles/connect_ar.php');
-include_once('../../../addUser.php');
+include_once("../cas-go.php");
+include_once('../../../connectFiles/connect_ar.php');
+include_once('../addUser.php');
 
 $query = $elc_db->prepare("Select * from Audio_files natural join Users where prompt_id=? order by date_created DESC");
 $query->bind_param("s", $prompt_id);

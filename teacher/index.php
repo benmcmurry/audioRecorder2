@@ -13,8 +13,8 @@ if ($_SERVER['SERVER_NAME'] == 'localhost.byu.edu') {
 
 $server = str_replace("/teacher/index.php","/",$serverName);
 
-include_once("../../../cas-go.php");
-include_once('../../../../../connectFiles/connect_ar.php');
+include_once("../cas-go.php");
+include_once('../../../connectFiles/connect_ar.php');
 include_once('../addUser.php');
 ?>
 <!DOCTYPE html>

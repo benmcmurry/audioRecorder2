@@ -1,8 +1,8 @@
 <?php
 $prompts = $_GET['prompts'];
-include_once("../../../cas-go.php");
-include_once('../../../../../connectFiles/connect_ar.php');
-include_once('../../../addUser.php');
+include_once("../cas-go.php");
+include_once('../../../connectFiles/connect_ar.php');
+include_once('../addUser.php');
 $promptCount = substr_count($prompts, ",") + 1;
 $promptList = explode(",", $prompts);
 
