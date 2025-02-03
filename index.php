@@ -172,9 +172,13 @@ $result3 = $query3->get_result();
 
         </div> <!-- end container -->
         <div id="allRecordings"  style="display:none;" class="container mt-5 mb-5 pb-3">
+        <nav class="container mt-5">
+      
+      <a id="createPrompt" class='btn btn-primary me-3' href='teacher/index.php'>Teacher Area</a></nav>
             <?php
             echo "<p> Recordings for $name. </p>";
             while ($row = $result3->fetch_assoc()) { ?>
+
                 <div class="row">
                     <div class="card  m-0 p-0" id='<?php echo $row['prompt_id']; ?>'>
                         <div class='card-header'> <h5 style="margin:0;padding:0;"><?php echo $row['title']."</h5>".$row['date_created']; ?> </div>
