@@ -1,8 +1,8 @@
 <?php
 // Load the settings from the central config file
-require_once '../../config.php';
+require_once dirname($_SERVER['DOCUMENT_ROOT']) .'/config.php';
 // Load the CAS lib
-require_once '../../CAS.php';
+require_once dirname($_SERVER['DOCUMENT_ROOT']) .'/CAS.php';
 // Enable debugging
 phpCAS::setDebug();
 // Enable verbose error messages. Disable in production!
