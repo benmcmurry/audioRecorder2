@@ -2,8 +2,8 @@
 include_once("../cas-go.php");
 include_once('../../../connectFiles/connect_ar.php');
 $prompt_id = $_POST['prompt_id'];
-$title = $_POST['title'];
-$text = $_POST['text'];
+$title = htmlspecialchars($_POST['title'], ENT_QUOTES, 'UTF-8');
+$text = htmlspecialchars($_POST['text'], ENT_QUOTES, 'UTF-8');
 $prepare_time = $_POST['prepare_time'];
 $response_time = $_POST['response_time'];
 if($_POST['transcription'] == "true") {$transcription = 1;} else {$transcription = 0;}
