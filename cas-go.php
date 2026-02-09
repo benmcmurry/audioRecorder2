@@ -1,41 +1,24 @@
 <?php
-// Load the settings from the central config file
-require_once dirname($_SERVER['DOCUMENT_ROOT']) .'/config.php';
-// Load the CAS lib
-require_once dirname($_SERVER['DOCUMENT_ROOT']) .'/CAS.php';
-// Enable debugging
-phpCAS::setDebug();
-// Enable verbose error messages. Disable in production!
-phpCAS::setVerbose(true);
+include_once __DIR__ . '/auth/common.php';
 
-// Initialize phpCAS
-phpCAS::client(CAS_VERSION_2_0, $cas_host, $cas_port, $cas_context);
-phpCAS::setNoCasServerValidation();
+$app_root = ar_web_root();
+
 if (isset($_REQUEST['logout'])) {
-  if ($_SERVER['SERVER_NAME'] == 'localhost') {
-    $redirect = $_SERVER['SERVER_NAME']."/~Ben/curriculum/editors/";
-  } else {$redirect = $_SERVER['SERVER_NAME']."/curriculum/editors/";}
-    phpCAS::logout();
-}
-if (isset($_REQUEST['logout'])) {
-  phpCAS::logout();
+    ar_redirect($app_root . '/auth/logout.php');
 }
 
-$auth = phpCAS::checkAuthentication();
-if (isset($prompt_id)) {
-  $additional ="&prompt_id=$prompt_id";
-} else {
-  $additional="";
+$user = ar_get_session_user();
+if (!$user) {
+    ar_auth_required_redirect();
 }
 
-if ($auth) {$net_id = phpCAS::getUser();
-  $netid = phpCAS::getUser();
-  $name = phpCAS::getAttributes()['name'];
-  $login = $name." | <a href='?logout='>Logout</a>";
-} else {    
-  phpCAS::forceAuthentication();
-  $id = '';
-}
+$auth_provider = isset($user['provider']) ? $user['provider'] : '';
+$netid = isset($user['netid']) ? $user['netid'] : '';
+$net_id = $netid;
+$name = isset($user['name']) ? $user['name'] : $netid;
+$email = isset($user['email']) ? $user['email'] : '';
 
-$name = phpCAS::getAttributes()['name'];
+$loginName = htmlspecialchars($name, ENT_QUOTES, 'UTF-8');
+$providerTag = strtoupper($auth_provider);
+$login = $loginName . " ({$providerTag}) | <a href='" . $app_root . "/profile.php'>Profile</a> | <a href='" . $app_root . "/auth/logout.php'>Logout</a>";
 ?>
