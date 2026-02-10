@@ -165,37 +165,116 @@ function testStartRecording() {
 }
 
 //this function starts recording when the Begin button is pressed
-function startRecording() {
+async function startRecording() {
   buttons.classList.add("d-none");
   prompt.classList.remove("d-none");
   playbackAudioElement.src = "";
   playbackAudioElement.controls = false;
 
   timer_container.classList.remove("d-none");
-  speakPrompt(promptText, prepare_time, response_time);
-  setTimeout(function () {
-    timer(prepare_time, "Prepare");
-  }, countSpaces(promptText) * 400);
+  await speakPrompt(promptText, prepare_time, response_time);
+  timer(prepare_time, "Prepare");
 
   setTimeout(function () {
     startTranscribing();
     timer(response_time, "Recording");
     record("recording");
-  }, prepare_time * 1000 + 1000 + countSpaces(promptText) * 400);
+  }, prepare_time * 1000 + 1000);
 }
 
 //
 async function speakPrompt(promptText, prepare_time, response_time) {
-  var msg = new SpeechSynthesisUtterance();
-  msg.lang = "en";
-  msg.text =
+  var promptMessage =
     promptText +
-    " You have" +
+    " You have " +
     prepare_time +
     " seconds to prepare and " +
     response_time +
     " seconds to respond.";
-  window.speechSynthesis.speak(msg);
+
+  try {
+    var promptAudioBlob = await fetchPromptAudio(promptMessage);
+    await playPromptAudio(promptAudioBlob);
+  } catch (error) {
+    console.error("OpenAI TTS failed, using browser speechSynthesis fallback.", error);
+    await speakWithBrowserFallback(promptMessage);
+  }
+}
+
+async function fetchPromptAudio(promptMessage) {
+  var response = await fetch("phpScripts/generateTTS.php", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      text: promptMessage,
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error("TTS request failed with status " + response.status);
+  }
+
+  return await response.blob();
+}
+
+function playPromptAudio(audioBlob) {
+  return new Promise(function (resolve, reject) {
+    var audioUrl = URL.createObjectURL(audioBlob);
+
+    function cleanup() {
+      playbackAudioElement.onended = null;
+      playbackAudioElement.onerror = null;
+      URL.revokeObjectURL(audioUrl);
+    }
+
+    playbackAudioElement.src = audioUrl;
+    playbackAudioElement.onended = function () {
+      cleanup();
+      resolve();
+    };
+    playbackAudioElement.onerror = function () {
+      cleanup();
+      reject(new Error("Could not play generated prompt audio."));
+    };
+
+    var playPromise = playbackAudioElement.play();
+    if (playPromise && typeof playPromise.then === "function") {
+      playPromise.catch(function (error) {
+        cleanup();
+        reject(error);
+      });
+    }
+  });
+}
+
+function speakWithBrowserFallback(promptMessage) {
+  return new Promise(function (resolve) {
+    var msg = new SpeechSynthesisUtterance();
+    var timeoutId;
+    var resolved = false;
+
+    function finish() {
+      if (resolved) {
+        return;
+      }
+      resolved = true;
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+      resolve();
+    }
+
+    msg.lang = "en-US";
+    msg.text = promptMessage;
+    msg.onend = finish;
+    msg.onerror = finish;
+    timeoutId = setTimeout(finish, Math.max(2000, countSpaces(promptMessage) * 450));
+
+    window.speechSynthesis.cancel();
+    window.speechSynthesis.speak(msg);
+  });
 }
 
 //this function does the actual capturing of the audio.
