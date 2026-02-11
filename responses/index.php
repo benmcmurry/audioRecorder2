@@ -42,6 +42,20 @@ include_once('../addUser.php');
         <div class="row">
         <a id="createPrompt" class='button btn btn-primary me-3' href="../teacher/">Return to Prompt list</a>
 </div>
+<?php
+    $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+    $host = $_SERVER['HTTP_HOST'];
+    $promptUrl = $scheme . '://' . $host . ar_web_root() . '/index.php?prompt_id=' . urlencode($prompt_id);
+?>
+<div class="row mt-3">
+    <div class="col">
+        <label for="promptLink" class="form-label">Prompt Link</label>
+        <div class="input-group">
+            <input id="promptLink" type="text" class="form-control" readonly value="<?php echo htmlspecialchars($promptUrl, ENT_QUOTES, 'UTF-8'); ?>">
+            <a class="btn btn-outline-primary" href="<?php echo htmlspecialchars($promptUrl, ENT_QUOTES, 'UTF-8'); ?>" target="_blank" rel="noopener">Open Prompt</a>
+        </div>
+    </div>
+</div>
 </nav>
     <main role="main">
         <div class="container mt-5 mb-5 pb-3">

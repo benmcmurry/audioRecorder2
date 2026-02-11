@@ -1,6 +1,7 @@
 <?php
 $alreadyDone = false;
 $prompt_id = 0;
+$isPromptOwner = false;
 error_reporting(E_ALL & ~E_NOTICE);
 ini_set("display_errors", 1);
 if (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] == 'https') {
@@ -12,21 +13,24 @@ include_once('addUser.php');
 if (isset($_GET['prompt_id'])) {$prompt_id = $_GET['prompt_id'];
 $alreadyDone = FALSE;
 
-$query = $elc_db->prepare("Select * from Prompts where prompt_id=?");
-$query->bind_param("s", $prompt_id);
-$query->execute();
-$result = $query->get_result();
-$result = $result->fetch_assoc();
+	$query = $elc_db->prepare("Select * from Prompts where prompt_id=?");
+	$query->bind_param("s", $prompt_id);
+	$query->execute();
+	$result = $query->get_result();
+	$result = $result->fetch_assoc();
+	if (isset($result['netid']) && $result['netid'] == $netid) {
+	    $isPromptOwner = true;
+	}
 
 $query2 = $elc_db->prepare("Select * from Audio_files where prompt_id=? and netid=?");
 $query2->bind_param("ss", $prompt_id, $netid);
 $query2->execute();
 $result2 = $query2->get_result();
 $result2 = $result2->fetch_assoc();
-if (isset($result2)) {
-    $alreadyDone = TRUE;
-}
-}
+	if (isset($result2) && !$isPromptOwner) {
+	    $alreadyDone = TRUE;
+	}
+	}
 $query3 = $elc_db->prepare("SELECT * FROM Audio_files NATURAL JOIN Users JOIN Prompts ON Audio_files.prompt_id = Prompts.prompt_id WHERE Audio_files.netid = ? ORDER BY Audio_files.date_created DESC");
 $query3->bind_param("s", $netid);
 $query3->execute();
@@ -95,6 +99,15 @@ $result3 = $query3->get_result();
 
 
             <!-- AlreadyDone? -->
+            <div id="processingScreen" class="d-none mt-5">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <div class="spinner-border text-primary mb-3" role="status" aria-hidden="true"></div>
+                        <h5 class="card-title">Please wait</h5>
+                        <p class="card-text mb-0">We are saving your recording and transcription. Do not close this page.</p>
+                    </div>
+                </div>
+            </div>
             <div id="alreadyDoneBox" class="d-none d-grid gap-2 col mx-auto mt-5">
                 <div class="row" id="alreadyAnswered">
                 <p class="text-center">You have already answered this prompt.</p>
@@ -112,6 +125,7 @@ $result3 = $query3->get_result();
                         <textarea class="form-control" id='transcriptionBox' placeholder="Please wait for your transcription . . . ." id="floatingTextarea"><?php
                             if(isset($result2['transcription_text'])) {echo $result2['transcription_text'];} 
                             ?></textarea>
+                        <div id="transcriptionNotice" class="form-text">Transcribed by browser</div>
                     </div>
                 </div>
                 <div class="row justify-content-end" id="response"></div>

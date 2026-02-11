@@ -40,12 +40,19 @@ var repeatRecording = document.querySelector("#repeatRecording");
 var recordTime = 5000;
 var response = document.querySelector("#response");
 var transcriptionRow = document.querySelector("#transcriptionRow");
+var processingScreen = document.querySelector("#processingScreen");
+var transcriptionNotice = document.querySelector("#transcriptionNotice");
 var transcription;
 var i = 0;
 var selectedTtsVoice = null;
+var pendingUploadPromise = null;
+var pendingTranscriptionSavePromise = null;
 
 //transcript variables
-var recognition = new webkitSpeechRecognition();
+var recognition = null;
+if ("webkitSpeechRecognition" in window) {
+  recognition = new webkitSpeechRecognition();
+}
 var transcript = "";
 var thisLine = "";
 document
@@ -238,6 +245,10 @@ function pickPreferredVoice() {
 
 //this function starts recording when the Begin button is pressed
 async function startRecording() {
+  pendingUploadPromise = null;
+  pendingTranscriptionSavePromise = null;
+  transcript = "";
+  thisLine = "";
   buttons.classList.add("d-none");
   prompt.classList.remove("d-none");
   playbackAudioElement.src = "";
@@ -250,7 +261,6 @@ async function startRecording() {
   timer(prepare_time, "Prepare");
 
   setTimeout(function () {
-    startTranscribing();
     timer(response_time, "Recording");
     record("recording");
   }, prepare_time * 1000 + 1000);
@@ -494,7 +504,24 @@ function record(typeOfRecording) {
       console.log(name);
 
       if (typeOfRecording === "recording") {
-        uploadRecording(recording, name);
+        setProcessingState(true);
+        pendingUploadPromise = uploadRecording(recording, name);
+        Promise.all([
+          pendingUploadPromise,
+          pendingTranscriptionSavePromise || Promise.resolve(""),
+        ])
+          .then(function (results) {
+            var uploadResponse = results[0];
+            showCompletedRecording(uploadResponse);
+            setProcessingState(false);
+          })
+          .catch(function (error) {
+            console.error("Could not complete save flow.", error);
+            setProcessingState(false);
+            response.classList.remove("d-none");
+            response.innerHTML =
+              "There was a problem saving your response. Please refresh and try again.";
+          });
       } else {
         testButton.classList.remove("oscillate");
       }
@@ -528,12 +555,11 @@ function record(typeOfRecording) {
       console.log(track.kind + ":" + JSON.stringify(track.getSettings()));
       console.log(track.getSettings());
     });
-    (function () {
-      setTimeout(function () {
+	(function () {
+	      setTimeout(function () {
         console.log("stop recording");
         
         mediaRecorder.stop();
-        stopTranscribing();
       }, recordTime);
     })();
   }
@@ -549,39 +575,68 @@ function uploadRecording(blob, name) {
   fd.append("prompt_id", prompt_id);
   fd.append("netid", netid);
   fd.append("transcription", transcription);
-  var xmlHttp = new XMLHttpRequest();
-  xmlHttp.onreadystatechange = function () {
-    if (xmlHttp.readyState == 4 && xmlHttp.status == 200) {
-      alreadyAnswered.innerHTML = xmlHttp.responseText;
-    }
-  };
-  xmlHttp.open("post", "upload.php");
-  xmlHttp.send(fd);
-  visualizer.classList.add("d-none");
-  prepareAndRecord.classList.add("d-none");
-  alreadyDone = true;
-  alreadyDoneBox.classList.remove("d-none");
+  return new Promise(function (resolve, reject) {
+    var xmlHttp = new XMLHttpRequest();
+    xmlHttp.onreadystatechange = function () {
+      if (xmlHttp.readyState == 4) {
+        if (xmlHttp.status == 200) {
+          try {
+            var uploadPayload = JSON.parse(xmlHttp.responseText);
+            resolve(uploadPayload);
+          } catch (parseError) {
+            reject(new Error("Upload response was not valid JSON."));
+          }
+        } else {
+          reject(new Error("Upload failed with status " + xmlHttp.status + ": " + xmlHttp.responseText));
+        }
+      }
+    };
+    xmlHttp.onerror = function () {
+      reject(new Error("Upload request failed."));
+    };
+    xmlHttp.open("post", "upload.php");
+    xmlHttp.send(fd);
+  });
 }
 
-function saveTranscription(netid, prompt_id) {
-  document.getElementById("response").classList.remove("d-none");
+function saveTranscription(netid, prompt_id, options) {
+  options = options || {};
+  var showStatus = options.showStatus !== false;
+  if (showStatus) {
+    document.getElementById("response").classList.remove("d-none");
+  }
 
   transcription = transcriptionBox.value;
   var fd = new FormData();
   fd.append("netid", netid);
   fd.append("prompt_id", prompt_id);
   fd.append("transcription", transcription);
-  var xmlHttp = new XMLHttpRequest();
-  xmlHttp.onreadystatechange = function () {
-    if (xmlHttp.readyState == 4 && xmlHttp.status == 200) {
-      response.innerHTML = xmlHttp.responseText;
+  return new Promise(function (resolve, reject) {
+    var xmlHttp = new XMLHttpRequest();
+    xmlHttp.onreadystatechange = function () {
+      if (xmlHttp.readyState == 4) {
+        if (xmlHttp.status == 200) {
+          if (showStatus) {
+            response.innerHTML = xmlHttp.responseText;
+          }
+          resolve(xmlHttp.responseText);
+        } else {
+          reject(new Error("Transcription save failed with status " + xmlHttp.status));
+        }
+      }
+    };
+    xmlHttp.onerror = function () {
+      reject(new Error("Transcription save request failed."));
+    };
+    xmlHttp.open("post", "phpScripts/saveTranscription.php");
+    xmlHttp.send(fd);
+  }).finally(function () {
+    if (showStatus) {
+      setTimeout(function () {
+        document.getElementById("response").classList.add("d-none");
+      }, 2000);
     }
-  };
-  xmlHttp.open("post", "phpScripts/saveTranscription.php");
-  xmlHttp.send(fd);
-  setTimeout(function () {
-    document.getElementById("response").classList.add("d-none");
-  }, 2000);
+  });
 }
 
 //this function reads the prompt
@@ -710,6 +765,10 @@ function errorCallback(error) {
   console.log("navigator.getUserMedia error: ", error);
 }
 function startTranscribing() {
+  if (!recognition) {
+    pendingTranscriptionSavePromise = Promise.resolve("");
+    return pendingTranscriptionSavePromise;
+  }
   console.log("Transcribing started . . . ");
   recognition.continuous = true;
   recognition.start();
@@ -727,16 +786,84 @@ function startTranscribing() {
 }
 
 function stopTranscribing() {
-  setTimeout(function () {
-    console.log("stoppping transcription");
-    recognition.stop();
-  console.log(transcript);
-  document.getElementById("transcriptionBox").value = transcript;
-  saveTranscription(netid, prompt_id);
-  }, 3000);
+  if (!recognition) {
+    pendingTranscriptionSavePromise = Promise.resolve("");
+    return pendingTranscriptionSavePromise;
+  }
+  pendingTranscriptionSavePromise = new Promise(function (resolve, reject) {
+    setTimeout(function () {
+      console.log("stoppping transcription");
+      recognition.stop();
+      console.log(transcript);
+      document.getElementById("transcriptionBox").value = transcript;
+      saveTranscription(netid, prompt_id, { showStatus: false })
+        .then(resolve)
+        .catch(reject);
+    }, 3000);
+  });
+  return pendingTranscriptionSavePromise;
+}
 
-  
+function setProcessingState(isProcessing) {
+  if (!processingScreen) {
+    return;
+  }
 
+  if (isProcessing) {
+    alreadyDoneBox.classList.add("d-none");
+    response.classList.add("d-none");
+    processingScreen.classList.remove("d-none");
+  } else {
+    processingScreen.classList.add("d-none");
+  }
+}
+
+function showCompletedRecording(uploadResponseData) {
+  visualizer.classList.add("d-none");
+  prepareAndRecord.classList.add("d-none");
+  alreadyDone = true;
+  if (uploadResponseData && uploadResponseData.message) {
+    var answerHtml = "<p align='center'>" + escapeHtml(uploadResponseData.message) + "</p>";
+    if (uploadResponseData.transcription_error) {
+      answerHtml += "<p class='text-warning'>Automatic transcription was unavailable: " +
+        escapeHtml(uploadResponseData.transcription_error) + "</p>";
+    } else if (uploadResponseData.transcription_required == 1) {
+      answerHtml += "<p>Now, please review your transcription below. You can edit it if needed.</p>";
+    }
+    alreadyAnswered.innerHTML = answerHtml;
+  }
+
+  if (
+    uploadResponseData &&
+    typeof uploadResponseData.transcription_text === "string" &&
+    document.getElementById("transcriptionBox")
+  ) {
+    document.getElementById("transcriptionBox").value = uploadResponseData.transcription_text;
+  }
+
+  setTranscriptionNotice(uploadResponseData ? uploadResponseData.transcription_source : "browser");
+  alreadyDoneBox.classList.remove("d-none");
+}
+
+function escapeHtml(value) {
+  return String(value)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+function setTranscriptionNotice(source) {
+  if (!transcriptionNotice) {
+    return;
+  }
+
+  if (source === "openai") {
+    transcriptionNotice.innerHTML = "Transcribed by OpenAI";
+  } else {
+    transcriptionNotice.innerHTML = "Transcribed by browser";
+  }
 }
 
 var first_char = /\S/;
