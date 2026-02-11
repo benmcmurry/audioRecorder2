@@ -84,7 +84,7 @@ $result3 = $query3->get_result();
         <div class="container">
                 <div class="d-flex flex-wrap align-items-center justify-content-between">
                     <div id="title">
-                        ELC Audio Recorder
+                    <?php echo "<a href='" . $app_root . "/index.php'>ELC Audio Recorder</a>" ?>
                     </div>
                 <div id="user" class="text-end">
                     <?php echo $login; ?>
