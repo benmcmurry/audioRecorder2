@@ -12,13 +12,25 @@ $targetdir = '/uploads/';
 // name of the directory where the files should be stored
 $time = date('Y-m-d-His');
 $fileName = $_POST['name'];
-$targetFile = SITE_ROOT . $targetdir . $_POST['name'] . $_POST['extension'];
+$uploadsPath = SITE_ROOT . $targetdir;
+
+if (!is_dir($uploadsPath)) {
+    mkdir($uploadsPath, 0755, true);
+}
+
+if (!is_dir($uploadsPath) || !is_writable($uploadsPath)) {
+    http_response_code(500);
+    echo "Upload directory is missing or not writable.";
+    exit;
+}
+
+$targetFile = $uploadsPath . $_POST['name'] . $_POST['extension'];
 // echo $_FILES['myBlob']['tmp_name'];
-$mp3File = SITE_ROOT . $targetdir . $_POST['name'] . "mp3";
+$mp3File = $uploadsPath . $_POST['name'] . "mp3";
 $fileLocation = "uploads/".$fileName."mp3";
 if (move_uploaded_file($_FILES['myBlob']['tmp_name'], $targetFile)) {
-    shell_exec("$ffmpeg -i $targetFile $mp3File");
-    shell_exec("rm $targetFile");
+    shell_exec("$ffmpeg -i " . escapeshellarg($targetFile) . " " . escapeshellarg($mp3File));
+    shell_exec("rm " . escapeshellarg($targetFile));
 
     // echo $output;
     echo "<p align='center'>Your response has been saved.</p>";

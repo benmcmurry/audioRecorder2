@@ -9,7 +9,8 @@ function save(prompt_id) {
     var prepare_time = document.querySelector('#prepare_time').value;
     var response_time = document.querySelector('#response_time').value;
 
-    var transcription = document.querySelector('#transcriptionReq').checked;
+    var transcription = document.querySelector('#transcriptionReq').checked ? 1 : 0;
+    var read_prompt = document.querySelector('#readPromptAloud').checked ? 1 : 0;
 
     var fd = new FormData();
     fd.append('title', prompt_title);
@@ -17,6 +18,7 @@ function save(prompt_id) {
     fd.append('prepare_time', prepare_time);
     fd.append('response_time', response_time);
     fd.append('transcription', transcription);
+    fd.append('read_prompt', read_prompt);
     fd.append('prompt_id', prompt_id);
 
    

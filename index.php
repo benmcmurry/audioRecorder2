@@ -51,11 +51,13 @@ $result3 = $query3->get_result();
             var netid = "<?php echo $net_id; ?>";
             var archiveStatus = <?php echo $result['archive']; ?>;
             var promptText = "<?php echo $result['text']; ?>";
+            var shouldReadPrompt = <?php echo (isset($result['read_prompt']) ? (int)$result['read_prompt'] : 1); ?>;
             <?php
 
         } else {
             ?>var prompt_id = 0;
             var archiveStatus = 2
+            var shouldReadPrompt = 1
         <?php }
 
 
@@ -76,10 +78,10 @@ $result3 = $query3->get_result();
 <body>
     <header id="header" class="p-2 bg-byu-navy text-white fixed-top">
         <div class="container">
-            <div class="d-flex flex-wrap align-items-center justify-content-between">
-                <div id="title">
-                    ELC Audio Recorder
-                </div>
+                <div class="d-flex flex-wrap align-items-center justify-content-between">
+                    <div id="title">
+                        ELC Audio Recorder
+                    </div>
                 <div id="user" class="text-end">
                     <?php echo $login; ?>
                 </div>

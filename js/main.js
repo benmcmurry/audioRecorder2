@@ -42,6 +42,7 @@ var response = document.querySelector("#response");
 var transcriptionRow = document.querySelector("#transcriptionRow");
 var transcription;
 var i = 0;
+var selectedTtsVoice = null;
 
 //transcript variables
 var recognition = new webkitSpeechRecognition();
@@ -164,6 +165,77 @@ function testStartRecording() {
   record("microphoneTest");
 }
 
+if ("speechSynthesis" in window) {
+  window.speechSynthesis.onvoiceschanged = refreshVoiceSelection;
+  refreshVoiceSelection();
+}
+
+function refreshVoiceSelection() {
+  selectedTtsVoice = pickPreferredVoice();
+}
+
+function getAutoPreferredVoice(voices) {
+  var orderedNames = [
+    "Alex",
+    "Ava (Enhanced)",
+    "Samantha (Enhanced)",
+    "Google US English",
+    "Microsoft Aria Online (Natural)",
+    "Microsoft Aria",
+    "Samantha",
+  ];
+
+  for (var i = 0; i < orderedNames.length; i++) {
+    var exactVoice = voices.find(function (voice) {
+      return voice.name === orderedNames[i];
+    });
+    if (exactVoice) {
+      return exactVoice;
+    }
+  }
+
+  var enhancedOrNaturalVoice = voices.find(function (voice) {
+    return (
+      voice.lang === "en-US" &&
+      (/enhanced/i.test(voice.name) || /natural/i.test(voice.name))
+    );
+  });
+  if (enhancedOrNaturalVoice) {
+    return enhancedOrNaturalVoice;
+  }
+
+  return null;
+}
+
+function getEnglishFallbackVoice(voices) {
+  var usEnglishVoice = voices.find(function (voice) {
+    return voice.lang === "en-US";
+  });
+  if (usEnglishVoice) {
+    return usEnglishVoice;
+  }
+
+  return voices.find(function (voice) {
+    return voice.lang.indexOf("en") === 0;
+  }) || null;
+}
+
+function pickPreferredVoice() {
+  if (!("speechSynthesis" in window)) {
+    return null;
+  }
+
+  var voices = window.speechSynthesis.getVoices();
+  if (!voices || voices.length === 0) {
+    return null;
+  }
+
+  return (
+    getAutoPreferredVoice(voices) ||
+    getEnglishFallbackVoice(voices)
+  );
+}
+
 //this function starts recording when the Begin button is pressed
 async function startRecording() {
   buttons.classList.add("d-none");
@@ -172,7 +244,9 @@ async function startRecording() {
   playbackAudioElement.controls = false;
 
   timer_container.classList.remove("d-none");
-  await speakPrompt(promptText, prepare_time, response_time);
+  if (typeof shouldReadPrompt === "undefined" || Number(shouldReadPrompt) === 1) {
+    await speakPrompt(promptText, prepare_time, response_time);
+  }
   timer(prepare_time, "Prepare");
 
   setTimeout(function () {
@@ -182,7 +256,7 @@ async function startRecording() {
   }, prepare_time * 1000 + 1000);
 }
 
-//
+//this function reads the prompt and instructions
 async function speakPrompt(promptText, prepare_time, response_time) {
   var promptMessage =
     promptText +
@@ -191,35 +265,36 @@ async function speakPrompt(promptText, prepare_time, response_time) {
     " seconds to prepare and " +
     response_time +
     " seconds to respond.";
-
   try {
-    var promptAudioBlob = await fetchPromptAudio(promptMessage);
-    await playPromptAudio(promptAudioBlob);
+    var promptAudioBlob = await fetchSavedPromptAudio(prompt_id);
+    await playGeneratedPromptAudio(promptAudioBlob);
+    showAiVoiceNotice();
   } catch (error) {
-    console.error("OpenAI TTS failed, using browser speechSynthesis fallback.", error);
-    await speakWithBrowserFallback(promptMessage);
+    console.error("Saved prompt audio unavailable, using browser speech fallback.", error);
+    await speakWithBrowserTts(promptMessage);
   }
 }
 
-async function fetchPromptAudio(promptMessage) {
-  var response = await fetch("phpScripts/generateTTS.php", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      text: promptMessage,
-    }),
+async function fetchSavedPromptAudio(activePromptId) {
+  var ttsResponse = await fetch("phpScripts/getPromptAudio.php?prompt_id=" + encodeURIComponent(activePromptId), {
+    method: "GET",
   });
 
-  if (!response.ok) {
-    throw new Error("TTS request failed with status " + response.status);
+  var contentType = ttsResponse.headers.get("content-type") || "";
+  if (!ttsResponse.ok) {
+    var errorText = await readTtsErrorText(ttsResponse, contentType);
+    throw new Error("TTS request failed (" + ttsResponse.status + "): " + errorText);
   }
 
-  return await response.blob();
+  if (contentType.indexOf("audio/") !== 0) {
+    var nonAudioText = await readTtsErrorText(ttsResponse, contentType);
+    throw new Error("TTS endpoint did not return audio: " + nonAudioText);
+  }
+
+  return await ttsResponse.blob();
 }
 
-function playPromptAudio(audioBlob) {
+function playGeneratedPromptAudio(audioBlob) {
   return new Promise(function (resolve, reject) {
     var audioUrl = URL.createObjectURL(audioBlob);
 
@@ -236,7 +311,7 @@ function playPromptAudio(audioBlob) {
     };
     playbackAudioElement.onerror = function () {
       cleanup();
-      reject(new Error("Could not play generated prompt audio."));
+      reject(new Error("Generated prompt audio could not be played."));
     };
 
     var playPromise = playbackAudioElement.play();
@@ -249,8 +324,41 @@ function playPromptAudio(audioBlob) {
   });
 }
 
-function speakWithBrowserFallback(promptMessage) {
+async function readTtsErrorText(ttsResponse, contentType) {
+  try {
+    var rawBody = await ttsResponse.text();
+    if (!rawBody) {
+      return "Empty error response.";
+    }
+
+    if (contentType.indexOf("application/json") !== -1) {
+      try {
+        return JSON.stringify(JSON.parse(rawBody));
+      } catch (jsonError) {
+        return rawBody;
+      }
+    }
+    return rawBody;
+  } catch (error) {
+    return "Could not parse error response.";
+  }
+}
+
+function showAiVoiceNotice() {
+  if (!response) {
+    return;
+  }
+  response.classList.remove("d-none");
+  response.innerHTML = "Prompt voice is AI-generated.";
+}
+
+function speakWithBrowserTts(promptMessage) {
   return new Promise(function (resolve) {
+    if (!("speechSynthesis" in window)) {
+      resolve();
+      return;
+    }
+
     var msg = new SpeechSynthesisUtterance();
     var timeoutId;
     var resolved = false;
@@ -266,7 +374,16 @@ function speakWithBrowserFallback(promptMessage) {
       resolve();
     }
 
+    if (!selectedTtsVoice) {
+      selectedTtsVoice = pickPreferredVoice();
+    }
     msg.lang = "en-US";
+    if (selectedTtsVoice) {
+      msg.voice = selectedTtsVoice;
+    }
+    msg.rate = 0.92;
+    msg.pitch = 1.0;
+    msg.volume = 1.0;
     msg.text = promptMessage;
     msg.onend = finish;
     msg.onerror = finish;
@@ -470,9 +587,7 @@ function saveTranscription(netid, prompt_id) {
 //this function reads the prompt
 
 function read(prompt) {
-  var msg = new SpeechSynthesisUtterance();
-  msg.text = prompt;
-  window.speechSynthesis.speak(msg);
+  speakWithBrowserTts(prompt);
 }
 //this function runs the timers
 function timer(time, timerType) {

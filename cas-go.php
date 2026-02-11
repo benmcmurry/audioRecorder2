@@ -20,5 +20,5 @@ $email = isset($user['email']) ? $user['email'] : '';
 
 $loginName = htmlspecialchars($name, ENT_QUOTES, 'UTF-8');
 $providerTag = strtoupper($auth_provider);
-$login = $loginName . " ({$providerTag}) | <a href='" . $app_root . "/profile.php'>Profile</a> | <a href='" . $app_root . "/auth/logout.php'>Logout</a>";
+$login = $loginName . " ({$providerTag}) | <a href='" . $app_root . "/profile.php'>Profile</a> | <a href='" . $app_root . "/index.php'>Home</a> | <a href='" . $app_root . "/auth/logout.php'>Logout</a>";
 ?>

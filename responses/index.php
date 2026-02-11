@@ -58,6 +58,11 @@ include_once('../addUser.php');
             } else {
                 $checked = "";
             }
+            if (!isset($promptRow['read_prompt']) || $promptRow['read_prompt'] == 1) {
+                $readPromptChecked = "checked";
+            } else {
+                $readPromptChecked = "";
+            }
             ?>
 
             <form id="updateForm">
@@ -92,6 +97,12 @@ include_once('../addUser.php');
                         <input class="form-check-input" type="checkbox" value="1" id="transcriptionReq" <?php echo $checked; ?>>
                         <label class="form-check-label" for="transcriptionReq">
                             Allow or Require Students to Transcribe their recording
+                        </label>
+                    </div>
+                    <div class="col form-check">
+                        <input class="form-check-input" type="checkbox" value="1" id="readPromptAloud" <?php echo $readPromptChecked; ?>>
+                        <label class="form-check-label" for="readPromptAloud">
+                            Read the prompt aloud before recording starts
                         </label>
                     </div>
                     <div class="">
