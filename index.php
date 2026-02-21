@@ -44,6 +44,7 @@ $result3 = $query3->get_result();
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
     <title>ELC Audio Recorder</title>
+    <script src="js/accessibility-auto-alt.js" defer></script>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
     <link href="css/style.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
@@ -122,9 +123,10 @@ $result3 = $query3->get_result();
                 <div id="transcriptionRow" class="row">
                     <h4>Transcription</h4> 
                     <div class="">
-                        <textarea class="form-control" id='transcriptionBox' placeholder="Please wait for your transcription . . . ." id="floatingTextarea"><?php
-                            if(isset($result2['transcription_text'])) {echo $result2['transcription_text'];} 
-                            ?></textarea>
+                        <label for="transcriptionBox" class="form-label">Transcription</label>
+                        <textarea class="form-control" id="transcriptionBox" placeholder="Please wait for your transcription . . . ."><?php
+                            if (isset($result2['transcription_text'])) { echo $result2['transcription_text']; }
+                        ?></textarea>
                         <div id="transcriptionNotice" class="form-text">Transcribed by browser</div>
                     </div>
                 </div>
@@ -132,7 +134,8 @@ $result3 = $query3->get_result();
 
                 <div id="repeatRecording" class="row bg-danger d-none" style="color: white; padding:2em;">
                     <p class="text-center">Please enter the password to allow the student to re-record. Please be aware that any previous recordings will be deleted.</p>
-                    <input id='repeatPassword' type='password'></input>
+                    <label for="repeatPassword" class="form-label">Password to re-record</label>
+                    <input id="repeatPassword" type="password" class="form-control" />
                 </div>
             </div>
 
@@ -153,7 +156,7 @@ $result3 = $query3->get_result();
             <!-- prepare and record display     -->
             <div id="prepareAndRecord" class="row justify-content-center">
                 <div id='timer_container' class="d-flex row flex-wrap align-items-center justify-content-between d-none">
-                    <img id='timeOrRecord' class="col-2 oscillate" src='images/lightbulb.jpg' />
+                    <img id='timeOrRecord' class="col-2 oscillate" src='images/lightbulb.jpg' alt='Lightbulb icon' />
                     <div id='timer' class='col-10 text-end'></div>
 
                 </div>
@@ -193,11 +196,12 @@ $result3 = $query3->get_result();
       <a id="createPrompt" class='btn btn-primary me-3' href='teacher/index.php'>Teacher Area</a></nav>
             <?php
             echo "<p> Recordings for $name. </p>";
-            while ($row = $result3->fetch_assoc()) { ?>
-
+            while ($row = $result3->fetch_assoc()) { 
+                if (!!$row['title']) { $temp_title=$row['title']; } else { $temp_title="no title"; }
+?>
                 <div class="row">
                     <div class="card  m-0 p-0" id='<?php echo $row['prompt_id']; ?>'>
-                        <div class='card-header'> <h5 style="margin:0;padding:0;"><?php echo $row['title']."</h5>".$row['date_created']; ?> </div>
+                        <div class='card-header'> <h5 style="margin:0;padding:0;"><?php echo $temp_title."</h5>".$row['date_created']; ?> </div>
                         <div class='card-body'> 
                             <?php
                             echo "<p class='card-text'><strong>Prompt: </strong>". $row['text']." </p><p>You have ".$row['prepare_time']." seconds to prepare and ".$row['response_time']." seconds to record.</p>";?>

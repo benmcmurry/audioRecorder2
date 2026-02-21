@@ -25,6 +25,7 @@ include_once('../addUser.php');
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
     <title>ELC Audio Recorder</title>
+    <script src="../js/accessibility-auto-alt.js" defer></script>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
     <link href="../css/style.css" rel="stylesheet">
 
@@ -59,7 +60,6 @@ include_once('../addUser.php');
                 
                 <button id="multipleViewer" class='btn btn-primary' onclick="multipleViewer();">View Multiple Responses</button>
 
-          
         <div class="row" id='response'></div>
     </nav>
     <main role="main" class="m-0 p-0">
@@ -92,9 +92,9 @@ include_once('../addUser.php');
                             <button id="link-<?php echo $prompt_id; ?>" class='btn btn-outline-primary action-item toolbar-button ' title='Copy Student Link to Clipboard' onClick="copyLink('<?php echo $prompt_id; ?>', '<?php echo $server; ?>');"><i class='bi bi-clipboard'></i></button>
                                 <a class='btn btn-outline-primary action-item toolbar-button' role='button' title='View Prompt' href='../index.php?prompt_id=<?php echo $row['prompt_id']; ?>'><i class='bi bi-box-arrow-up-right'></i></a>
                                 <a class='btn btn-outline-primary action-item toolbar-button' role='button' title='Edit Prompt' href='../responses/index.php?prompt_id=<?php echo $row['prompt_id']; ?>'><i class='bi bi-pencil-square'></i></a>
-                                <a class='btn btn-outline-primary action-item toolbar-button' role='button' title='View Responses' href='../responses/index.php?prompt_id=<?php echo $row['prompt_id']; ?>'><i class='bi bi-eye'></i></a>
                                 <button class='btn btn-outline-primary action-item toolbar-button' title='<?php echo $archiveTitle; ?>' onclick="archive('<?php echo $prompt_id; ?>', '<?php echo $archiveStatus; ?>')"><i id='icon-<?php echo $prompt_id; ?>' class='bi <?php echo $archiveIcon; ?>'></i></button>
                                 <div class='btn btn-outline-primary action-item toolbar-button'><input class="form-check-input" type="checkbox" value="<?php echo $prompt_id; ?>" id="flexCheckDefault-<?php echo $prompt_id; ?>" onclick='selectMultiple(this.value)'></div>
+                                <label class="visually-hidden" for="flexCheckDefault-<?php echo $prompt_id; ?>">Select Prompt</label>
 
                             </div>
                         </div>

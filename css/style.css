@@ -73,6 +73,46 @@ div#title a {
     color: inherit;
     text-decoration: none;
 }
+
+#header a {
+    color: #ffffff;
+    text-decoration-color: rgba(255, 255, 255, 0.7);
+}
+
+#header a:visited {
+    color: #ffffff;
+}
+
+#header a:hover,
+#header a:focus {
+    color: #ffffff;
+    text-decoration-color: #ffffff;
+}
+
+#header a:focus-visible {
+    outline: 2px solid #ffffff;
+    outline-offset: 2px;
+}
+
+footer a {
+    color: #ffffff;
+    text-decoration-color: rgba(255, 255, 255, 0.7);
+}
+
+footer a:visited {
+    color: #ffffff;
+}
+
+footer a:hover,
+footer a:focus {
+    color: #ffffff;
+    text-decoration-color: #ffffff;
+}
+
+footer a:focus-visible {
+    outline: 2px solid #ffffff;
+    outline-offset: 2px;
+}
 /* this shrinks the size of the font in the header for smaller screens */
 @media all and (max-width: 400px) {
 
