@@ -6,6 +6,10 @@ if ($mode !== 'link') {
     $mode = 'login';
 }
 
+if (!ar_google_shared_enabled()) {
+    ar_redirect(ar_web_root() . '/auth/login.php?error=' . urlencode('Google sign-in is not configured.'));
+}
+
 $defaultRedirect = ar_web_root() . '/index.php';
 $requestedRedirect = isset($_GET['redirect']) ? $_GET['redirect'] : $defaultRedirect;
 $redirect = ar_safe_redirect_target($requestedRedirect, $defaultRedirect);
@@ -19,23 +23,18 @@ if ($mode === 'link') {
 }
 
 $state = ar_random_string(40);
-$nonce = ar_random_string(40);
-$_SESSION['oauth_state'] = array(
-    'value' => $state,
-    'nonce' => $nonce,
+$_SESSION['ar_google_login'] = array(
+    'state' => $state,
     'mode' => $mode,
     'redirect' => $redirect,
     'created' => time()
 );
 
-$params = array(
-    'client_id' => ar_google_client_id(),
-    'redirect_uri' => ar_google_redirect_uri(),
-    'response_type' => 'code',
-    'scope' => 'openid email profile',
-    'state' => $state,
-    'nonce' => $nonce,
-    'prompt' => 'select_account'
-);
+$sharedStartUrl = rtrim(ar_google_shared_root(), '/') . '/google_start.php';
+$url = ar_build_url_with_query($sharedStartUrl, array(
+    'app' => ar_google_app_id(),
+    'return_to' => ar_google_consume_url(),
+    'state' => $state
+));
 
-ar_redirect('https://accounts.google.com/o/oauth2/v2/auth?' . http_build_query($params, '', '&'));
+ar_redirect($url);

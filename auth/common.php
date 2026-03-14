@@ -3,6 +3,25 @@ if (session_status() !== PHP_SESSION_ACTIVE) {
     session_start();
 }
 
+function ar_server_config() {
+    static $config = null;
+
+    if ($config !== null) {
+        return $config;
+    }
+
+    $config = array();
+    $configPath = dirname($_SERVER['DOCUMENT_ROOT']) . '/google_auth_config.php';
+    if (is_readable($configPath)) {
+        $loaded = include $configPath;
+        if (is_array($loaded)) {
+            $config = $loaded;
+        }
+    }
+
+    return $config;
+}
+
 function ar_web_root() {
     $envRoot = getenv('AR_WEB_ROOT');
     if ($envRoot) {
@@ -33,6 +52,33 @@ function ar_current_url() {
 function ar_redirect($path) {
     header('Location: ' . $path);
     exit;
+}
+
+function ar_build_url_with_query($url, $params) {
+    $parts = parse_url($url);
+    $query = array();
+    if (isset($parts['query'])) {
+        parse_str($parts['query'], $query);
+    }
+    foreach ($params as $key => $value) {
+        if ($value === null) {
+            unset($query[$key]);
+        } else {
+            $query[$key] = $value;
+        }
+    }
+
+    $scheme = isset($parts['scheme']) ? $parts['scheme'] . '://' : '';
+    $host = isset($parts['host']) ? $parts['host'] : '';
+    $port = isset($parts['port']) ? ':' . $parts['port'] : '';
+    $user = isset($parts['user']) ? $parts['user'] : '';
+    $pass = isset($parts['pass']) ? ':' . $parts['pass'] : '';
+    $pass = ($user !== '' || $pass !== '') ? $pass . '@' : '';
+    $path = isset($parts['path']) ? $parts['path'] : '';
+    $fragment = isset($parts['fragment']) ? '#' . $parts['fragment'] : '';
+    $queryString = $query ? '?' . http_build_query($query, '', '&') : '';
+
+    return $scheme . $user . $pass . $host . $port . $path . $queryString . $fragment;
 }
 
 function ar_safe_redirect_target($target, $fallback) {
@@ -94,23 +140,25 @@ function ar_ensure_auth_tables() {
 }
 
 function ar_google_client_id() {
-    $env = getenv('GOOGLE_CLIENT_ID');
+    $env = getenv('GOOGLE_SHARED_CLIENT_ID');
     return $env ? $env : '';
 }
 
 function ar_google_client_secret() {
-    $env = getenv('GOOGLE_CLIENT_SECRET');
+    $env = getenv('GOOGLE_SHARED_CLIENT_SECRET');
     return $env ? $env : '';
 }
 
 function ar_google_redirect_uri() {
-    $override = getenv('GOOGLE_REDIRECT_URI');
-    if ($override) {
-        return $override;
+    $config = ar_server_config();
+    if (isset($config['google_shared_redirect_uri']) && $config['google_shared_redirect_uri'] !== '') {
+        return trim($config['google_shared_redirect_uri']);
     }
-    $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
-    $host = $_SERVER['HTTP_HOST'];
-    return $scheme . '://' . $host . ar_web_root() . '/auth/google_callback.php';
+    $env = getenv('GOOGLE_SHARED_REDIRECT_URI');
+    if ($env) {
+        return trim($env);
+    }
+    return rtrim(ar_google_shared_root(), '/') . '/google_callback.php';
 }
 
 function ar_http_post_form($url, $fields) {
@@ -261,9 +309,139 @@ function ar_clear_session_user() {
     unset($_SESSION['auth_user']);
     unset($_SESSION['oauth_state']);
     unset($_SESSION['google_link_target_netid']);
+    unset($_SESSION['ar_google_login']);
 }
 
 function ar_auth_required_redirect() {
     $target = urlencode(ar_current_url());
     ar_redirect(ar_web_root() . '/auth/login.php?redirect=' . $target);
+}
+
+function ar_google_app_id() {
+    $env = getenv('AR_GOOGLE_APP_ID');
+    if ($env) {
+        return trim($env);
+    }
+
+    $config = ar_server_config();
+    if (isset($config['shared_auth_apps']) && is_array($config['shared_auth_apps'])) {
+        $appFolder = basename(realpath(__DIR__ . '/..'));
+        if (isset($config['shared_auth_apps'][$appFolder])) {
+            return $config['shared_auth_apps'][$appFolder];
+        }
+    }
+
+    return basename(realpath(__DIR__ . '/..'));
+}
+
+function ar_google_shared_root() {
+    $env = getenv('SHARED_AUTH_WEB_ROOT');
+    if ($env) {
+        return rtrim(trim($env), '/');
+    }
+
+    $config = ar_server_config();
+    if (isset($config['shared_auth_web_root']) && $config['shared_auth_web_root'] !== '') {
+        return rtrim(trim($config['shared_auth_web_root']), '/');
+    }
+
+    $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+    $host = isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : 'localhost';
+    return $scheme . '://' . $host . '/sharedAuth';
+}
+
+function ar_google_expected_issuer() {
+    $env = getenv('SHARED_AUTH_ISSUER');
+    if ($env) {
+        return rtrim(trim($env), '/');
+    }
+
+    $config = ar_server_config();
+    if (isset($config['shared_auth_issuer']) && $config['shared_auth_issuer'] !== '') {
+        return rtrim(trim($config['shared_auth_issuer']), '/');
+    }
+
+    return rtrim(ar_google_shared_root(), '/');
+}
+
+function ar_google_consume_url() {
+    $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+    $host = isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : 'localhost';
+    return $scheme . '://' . $host . ar_web_root() . '/auth/google_callback.php';
+}
+
+function ar_google_public_key_path() {
+    $env = getenv('GOOGLE_SHARED_PUBLIC_KEY_PATH');
+    if ($env) {
+        return trim($env);
+    }
+
+    $config = ar_server_config();
+    if (isset($config['google_shared_public_key_path']) && $config['google_shared_public_key_path'] !== '') {
+        return trim($config['google_shared_public_key_path']);
+    }
+
+    return dirname($_SERVER['DOCUMENT_ROOT']) . '/keys/google_jwt_public.pem';
+}
+
+function ar_google_shared_enabled() {
+    return is_readable(ar_google_public_key_path());
+}
+
+function ar_base64url_decode($input) {
+    $remainder = strlen($input) % 4;
+    if ($remainder) {
+        $input .= str_repeat('=', 4 - $remainder);
+    }
+    return base64_decode(strtr($input, '-_', '+/'));
+}
+
+function ar_verify_google_token($token) {
+    $parts = explode('.', $token);
+    if (count($parts) !== 3) {
+        return null;
+    }
+
+    $headerJson = ar_base64url_decode($parts[0]);
+    $payloadJson = ar_base64url_decode($parts[1]);
+    $signature = ar_base64url_decode($parts[2]);
+    if ($headerJson === false || $payloadJson === false || $signature === false) {
+        return null;
+    }
+
+    $header = json_decode($headerJson, true);
+    $payload = json_decode($payloadJson, true);
+    if (!is_array($header) || !is_array($payload) || !isset($header['alg']) || $header['alg'] !== 'RS256') {
+        return null;
+    }
+
+    $publicKeyPath = ar_google_public_key_path();
+    if (!is_readable($publicKeyPath)) {
+        return null;
+    }
+
+    $publicKey = openssl_pkey_get_public(file_get_contents($publicKeyPath));
+    if (!$publicKey) {
+        return null;
+    }
+
+    $verified = openssl_verify($parts[0] . '.' . $parts[1], $signature, $publicKey, OPENSSL_ALGO_SHA256);
+    if ($verified !== 1) {
+        return null;
+    }
+
+    $now = time();
+    if (!isset($payload['exp']) || (int) $payload['exp'] < $now) {
+        return null;
+    }
+
+    if (!isset($payload['aud']) || (string) $payload['aud'] !== ar_google_app_id()) {
+        return null;
+    }
+
+    if (!isset($payload['iss']) || rtrim((string) $payload['iss'], '/') !== ar_google_expected_issuer()) {
+        return null;
+    }
+
+    return $payload;
 }

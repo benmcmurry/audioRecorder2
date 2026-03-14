@@ -10,6 +10,7 @@ $defaultRedirect = ar_web_root() . '/index.php';
 $requestedRedirect = isset($_GET['redirect']) ? $_GET['redirect'] : $defaultRedirect;
 $redirect = ar_safe_redirect_target($requestedRedirect, $defaultRedirect);
 $error = isset($_GET['error']) ? $_GET['error'] : '';
+$googleEnabled = ar_google_shared_enabled();
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -36,7 +37,11 @@ $error = isset($_GET['error']) ? $_GET['error'] : '';
             <div class="error"><?php echo htmlspecialchars($error); ?></div>
         <?php } ?>
         <a class="btn btn-cas" href="<?php echo ar_web_root(); ?>/auth/cas_start.php?redirect=<?php echo urlencode($redirect); ?>">Continue with CAS</a>
-        <a class="btn btn-google" href="<?php echo ar_web_root(); ?>/auth/google_start.php?mode=login&redirect=<?php echo urlencode($redirect); ?>">Continue with Google</a>
+        <?php if ($googleEnabled) { ?>
+            <a class="btn btn-google" href="<?php echo ar_web_root(); ?>/auth/google_start.php?mode=login&redirect=<?php echo urlencode($redirect); ?>">Continue with Google</a>
+        <?php } else { ?>
+            <span class="btn btn-google" style="opacity:.6; cursor:not-allowed;">Google unavailable</span>
+        <?php } ?>
     </div>
 </body>
 </html>

@@ -1,45 +1,29 @@
 <?php
 include_once __DIR__ . '/common.php';
 
-if (!isset($_GET['state']) || !isset($_GET['code'])) {
+if (!isset($_GET['state']) || !isset($_GET['token'])) {
     ar_redirect(ar_web_root() . '/auth/login.php?error=' . urlencode('Missing Google authorization data.'));
 }
 
-if (!isset($_SESSION['oauth_state']) || !is_array($_SESSION['oauth_state'])) {
-    ar_redirect(ar_web_root() . '/auth/login.php?error=' . urlencode('OAuth session is missing.'));
+if (!isset($_SESSION['ar_google_login']) || !is_array($_SESSION['ar_google_login'])) {
+    ar_redirect(ar_web_root() . '/auth/login.php?error=' . urlencode('Google login session is missing.'));
 }
 
-$oauthState = $_SESSION['oauth_state'];
-unset($_SESSION['oauth_state']);
+$oauthState = $_SESSION['ar_google_login'];
+unset($_SESSION['ar_google_login']);
 
-if (!isset($oauthState['value']) || $_GET['state'] !== $oauthState['value']) {
-    ar_redirect(ar_web_root() . '/auth/login.php?error=' . urlencode('Invalid OAuth state.'));
+if (!isset($oauthState['state']) || !hash_equals((string) $oauthState['state'], (string) $_GET['state'])) {
+    ar_redirect(ar_web_root() . '/auth/login.php?error=' . urlencode('Invalid Google state.'));
 }
 
-list($tokenCode, $tokenBody) = ar_http_post_form('https://oauth2.googleapis.com/token', array(
-    'code' => $_GET['code'],
-    'client_id' => ar_google_client_id(),
-    'client_secret' => ar_google_client_secret(),
-    'redirect_uri' => ar_google_redirect_uri(),
-    'grant_type' => 'authorization_code'
-));
-
-$tokenJson = json_decode($tokenBody, true);
-if ($tokenCode < 200 || $tokenCode >= 300 || !isset($tokenJson['access_token'])) {
-    ar_redirect(ar_web_root() . '/auth/login.php?error=' . urlencode('Google token exchange failed.'));
+$claims = ar_verify_google_token((string) $_GET['token']);
+if (!$claims) {
+    ar_redirect(ar_web_root() . '/auth/login.php?error=' . urlencode('Google sign-in could not be verified.'));
 }
 
-list($userCode, $userBody) = ar_http_get_json('https://openidconnect.googleapis.com/v1/userinfo', array(
-    'Authorization: Bearer ' . $tokenJson['access_token']
-));
-$userJson = json_decode($userBody, true);
-if ($userCode < 200 || $userCode >= 300 || !isset($userJson['sub'])) {
-    ar_redirect(ar_web_root() . '/auth/login.php?error=' . urlencode('Unable to read Google user profile.'));
-}
-
-$sub = $userJson['sub'];
-$email = isset($userJson['email']) ? $userJson['email'] : '';
-$name = isset($userJson['name']) ? $userJson['name'] : $email;
+$sub = isset($claims['sub']) ? (string) $claims['sub'] : '';
+$email = isset($claims['email']) ? (string) $claims['email'] : '';
+$name = isset($claims['name']) ? (string) $claims['name'] : $email;
 $mode = isset($oauthState['mode']) ? $oauthState['mode'] : 'login';
 $redirect = isset($oauthState['redirect']) ? $oauthState['redirect'] : (ar_web_root() . '/index.php');
 
