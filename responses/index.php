@@ -135,7 +135,10 @@ include_once('../addUser.php');
                 <button class='btn btn-primary' id='save' onclick="save('<?php echo $prompt_id; ?>');">Save</button>
             </div>
             <div class='row'>
-            <a href="transcripts.php?prompt_id=<?php echo $prompt_id; ?>" target="_blank" id="copyAllTranscripts" class="btn btn-primary">View all Transcripts</a>
+                <div class="d-flex gap-2">
+                    <a href="../phpScripts/downloadPromptFiles.php?prompt_id=<?php echo urlencode($prompt_id); ?>&type=audio" class="btn btn-outline-primary btn-sm">Download All Audio</a>
+                    <a href="../phpScripts/downloadPromptFiles.php?prompt_id=<?php echo urlencode($prompt_id); ?>&type=transcripts" class="btn btn-outline-primary btn-sm">Download All Transcriptions</a>
+                </div>
             </div>
             <div class='row' id="response">
 
@@ -165,6 +168,10 @@ include_once('../addUser.php');
                             <p class="card-text">
                                 <?php echo $row['transcription_text']; ?>
                             </p>
+                            <div>
+                                <a href="../phpScripts/downloadResponse.php?id=<?php echo urlencode($row['id']); ?>&type=audio" class="btn btn-outline-primary btn-sm me-2">Download Audio</a>
+                                <a href="../phpScripts/downloadResponse.php?id=<?php echo urlencode($row['id']); ?>&type=transcript" class="btn btn-outline-primary btn-sm">Download Transcription</a>
+                            </div>
                         </div>
                     </div>
                 </div>
