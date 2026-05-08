@@ -31,7 +31,7 @@ $result2 = $result2->fetch_assoc();
 	    $alreadyDone = TRUE;
 	}
 	}
-$query3 = $elc_db->prepare("SELECT * FROM Audio_files NATURAL JOIN Users JOIN Prompts ON Audio_files.prompt_id = Prompts.prompt_id WHERE Audio_files.netid = ? ORDER BY Audio_files.date_created DESC");
+	$query3 = $elc_db->prepare("SELECT Audio_files.*, Users.name AS user_name, Prompts.title, Prompts.prepare_time, Prompts.response_time, Prompts.text FROM Audio_files LEFT JOIN Users ON Audio_files.netid = Users.netid JOIN Prompts ON Audio_files.prompt_id = Prompts.prompt_id WHERE Audio_files.netid = ? ORDER BY Audio_files.date_created DESC");
 $query3->bind_param("s", $netid);
 $query3->execute();
 $result3 = $query3->get_result();

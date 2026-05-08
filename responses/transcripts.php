@@ -4,7 +4,7 @@ include_once("../cas-go.php");
 include_once('../../../connectFiles/connect_ar.php');
 include_once('../addUser.php');
 
-$query = $elc_db->prepare("Select * from Audio_files natural join Users where prompt_id=? order by date_created DESC");
+$query = $elc_db->prepare("SELECT Audio_files.*, Users.name AS user_name FROM Audio_files LEFT JOIN Users ON Audio_files.netid = Users.netid WHERE Audio_files.prompt_id=? ORDER BY Audio_files.date_created DESC");
 $query->bind_param("s", $prompt_id);
 $query->execute();
 $result = $query->get_result();
@@ -52,7 +52,7 @@ $result = $query->get_result();
                         <?php
                         while ($row = $result->fetch_assoc()) {
                         ?>
-                            <h4 class="card-text"><?php echo $row['name']; ?></h4>
+                            <h4 class="card-text"><?php echo $row['user_name'] ? $row['user_name'] : $row['netid']; ?></h4>
                             <p class="card-text"><?php echo $row['transcription_text']; ?></p>
                         <?php   } ?></p>
                 </div>

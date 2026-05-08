@@ -143,18 +143,19 @@ include_once('../addUser.php');
 
             <?php
             $transcription_text = "<h2>Transcripts</h2>";
-            $query = $elc_db->prepare("Select * from Audio_files natural join Users where prompt_id=? order by Users.name ASC");
+            $query = $elc_db->prepare("SELECT Audio_files.*, Users.name AS user_name FROM Audio_files LEFT JOIN Users ON Audio_files.netid = Users.netid WHERE Audio_files.prompt_id=? ORDER BY COALESCE(Users.name, Audio_files.netid) ASC, Audio_files.date_created DESC");
             $query->bind_param("s", $prompt_id);
             $query->execute();
             $result = $query->get_result();
 
             while ($row = $result->fetch_assoc()) { 
-                $transcription_text = "<h3>".$row['name']."</h3><p>".$row['transcription_text']."</p>";
+                $studentName = $row['user_name'] ? $row['user_name'] : $row['netid'];
+                $transcription_text = "<h3>".$studentName."</h3><p>".$row['transcription_text']."</p>";
                 ?>
                 <div class='row'>
                     <div class="card  m-0 p-0" id='<?php echo $row['prompt_id']; ?>'>
                         <div class='card-header'>
-                            <?php echo $row['name']; ?>
+                            <?php echo $studentName; ?>
                         </div>
                         <div class='card-body'>
                             <audio style='padding: 0em 0em 2em;' controls>

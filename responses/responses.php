@@ -53,27 +53,27 @@ $promptList = explode(",", $prompts);
       
         switch($promptCount) {
             case 1:
-                $query = $elc_db->prepare("SELECT * FROM Audio_files NATURAL JOIN Users JOIN Prompts ON Audio_files.prompt_id = Prompts.prompt_id WHERE Audio_files.prompt_id = ? ORDER BY name ASC;");
+                $query = $elc_db->prepare("SELECT Audio_files.*, Users.name AS user_name, Prompts.title, Prompts.prepare_time, Prompts.response_time, Prompts.text FROM Audio_files LEFT JOIN Users ON Audio_files.netid = Users.netid JOIN Prompts ON Audio_files.prompt_id = Prompts.prompt_id WHERE Audio_files.prompt_id = ? ORDER BY COALESCE(Users.name, Audio_files.netid) ASC;");
                 $query->bind_param("s", $promptList[0]);
                 break;
              case 2:
-                $query = $elc_db->prepare("SELECT * FROM Audio_files NATURAL JOIN Users JOIN Prompts ON Audio_files.prompt_id = Prompts.prompt_id WHERE Audio_files.prompt_id = ? OR Audio_files.prompt_id = ? ORDER BY name ASC;");
+                $query = $elc_db->prepare("SELECT Audio_files.*, Users.name AS user_name, Prompts.title, Prompts.prepare_time, Prompts.response_time, Prompts.text FROM Audio_files LEFT JOIN Users ON Audio_files.netid = Users.netid JOIN Prompts ON Audio_files.prompt_id = Prompts.prompt_id WHERE Audio_files.prompt_id = ? OR Audio_files.prompt_id = ? ORDER BY COALESCE(Users.name, Audio_files.netid) ASC;");
                 $query->bind_param("ss", $promptList[0], $promptList[1]);
                 break;
             case 3:
-                $query = $elc_db->prepare("SELECT * FROM Audio_files NATURAL JOIN Users JOIN Prompts ON Audio_files.prompt_id = Prompts.prompt_id WHERE Audio_files.prompt_id = ? OR Audio_files.prompt_id = ? OR Audio_files.prompt_id = ? ORDER BY name ASC;");
+                $query = $elc_db->prepare("SELECT Audio_files.*, Users.name AS user_name, Prompts.title, Prompts.prepare_time, Prompts.response_time, Prompts.text FROM Audio_files LEFT JOIN Users ON Audio_files.netid = Users.netid JOIN Prompts ON Audio_files.prompt_id = Prompts.prompt_id WHERE Audio_files.prompt_id = ? OR Audio_files.prompt_id = ? OR Audio_files.prompt_id = ? ORDER BY COALESCE(Users.name, Audio_files.netid) ASC;");
                 $query->bind_param("sss", $promptList[0], $promptList[1], $promptList[2]);
                 break;
             case 4:
-                $query = $elc_db->prepare("SELECT * FROM Audio_files NATURAL JOIN Users JOIN Prompts ON Audio_files.prompt_id = Prompts.prompt_id WHERE Audio_files.prompt_id = ? OR Audio_files.prompt_id = ? OR Audio_files.prompt_id = ? OR Audio_files.prompt_id = ? ORDER BY name ASC;");
+                $query = $elc_db->prepare("SELECT Audio_files.*, Users.name AS user_name, Prompts.title, Prompts.prepare_time, Prompts.response_time, Prompts.text FROM Audio_files LEFT JOIN Users ON Audio_files.netid = Users.netid JOIN Prompts ON Audio_files.prompt_id = Prompts.prompt_id WHERE Audio_files.prompt_id = ? OR Audio_files.prompt_id = ? OR Audio_files.prompt_id = ? OR Audio_files.prompt_id = ? ORDER BY COALESCE(Users.name, Audio_files.netid) ASC;");
                 $query->bind_param("ssss", $promptList[0], $promptList[1], $promptList[2], $promptList[3]);
                 break;
             case 5:
-                $query = $elc_db->prepare("SELECT * FROM Audio_files NATURAL JOIN Users JOIN Prompts ON Audio_files.prompt_id = Prompts.prompt_id WHERE Audio_files.prompt_id = ? OR Audio_files.prompt_id = ? OR Audio_files.prompt_id = ? OR Audio_files.prompt_id = ? OR Audio_files.prompt_id = ? ORDER BY name ASC;");
+                $query = $elc_db->prepare("SELECT Audio_files.*, Users.name AS user_name, Prompts.title, Prompts.prepare_time, Prompts.response_time, Prompts.text FROM Audio_files LEFT JOIN Users ON Audio_files.netid = Users.netid JOIN Prompts ON Audio_files.prompt_id = Prompts.prompt_id WHERE Audio_files.prompt_id = ? OR Audio_files.prompt_id = ? OR Audio_files.prompt_id = ? OR Audio_files.prompt_id = ? OR Audio_files.prompt_id = ? ORDER BY COALESCE(Users.name, Audio_files.netid) ASC;");
                 $query->bind_param("sssss", $promptList[0], $promptList[1], $promptList[2], $promptList[3], $promptList[4]);
                 break;
             case 6:
-                $query = $elc_db->prepare("SELECT * FROM Audio_files NATURAL JOIN Users JOIN Prompts ON Audio_files.prompt_id = Prompts.prompt_id WHERE Audio_files.prompt_id = ? OR Audio_files.prompt_id = ? OR Audio_files.prompt_id = ? OR Audio_files.prompt_id = ? OR Audio_files.prompt_id = ? OR Audio_files.prompt_id = ? ORDER BY name ASC;");
+                $query = $elc_db->prepare("SELECT Audio_files.*, Users.name AS user_name, Prompts.title, Prompts.prepare_time, Prompts.response_time, Prompts.text FROM Audio_files LEFT JOIN Users ON Audio_files.netid = Users.netid JOIN Prompts ON Audio_files.prompt_id = Prompts.prompt_id WHERE Audio_files.prompt_id = ? OR Audio_files.prompt_id = ? OR Audio_files.prompt_id = ? OR Audio_files.prompt_id = ? OR Audio_files.prompt_id = ? OR Audio_files.prompt_id = ? ORDER BY COALESCE(Users.name, Audio_files.netid) ASC;");
                 $query->bind_param("ssssss", $promptList[0], $promptList[1], $promptList[2], $promptList[3], $promptList[4], $promptList[5]);
                 break;
 
@@ -85,25 +85,26 @@ $promptList = explode(",", $prompts);
 
             <?php
             $transcription_text = "<h2>Transcripts</h2>";
-            // $query = $elc_db->prepare("Select * from Audio_files natural join Users where prompt_id = ? order by name ASC");
+            // $query = $elc_db->prepare("SELECT * FROM Audio_files LEFT JOIN Users ON Audio_files.netid = Users.netid WHERE prompt_id = ? ORDER BY name ASC");
             // $query->bind_param("s", $prompts);
             $query->execute();
             $result = $query->get_result();
             $previousName = "none";
             while ($row = $result->fetch_assoc()) { 
-                $transcription_text = "<h3>".$row['name']."</h3><p>".$row['transcription_text']."</p>";
+                $studentName = $row['user_name'] ? $row['user_name'] : $row['netid'];
+                $transcription_text = "<h3>".$studentName."</h3><p>".$row['transcription_text']."</p>";
                 ?>
-                <?php if($row['name'] != $previousName && $previousName !="none") { 
+                <?php if($studentName != $previousName && $previousName !="none") {
 
                     ?>
                             </div> <!-- end card body -->
                         </div> <!-- end card -->
                     </div> <!-- end row -->
                 <?php } // check to see if same as previous
-                if($row['name'] != $previousName || $previousName == "none") { ?>   
+                if($studentName != $previousName || $previousName == "none") { ?>
                     <div class='row'>
                          <div class="card  m-0 p-0" id='<?php echo $row['prompt_id']; ?>'>
-                            <div class='card-header'> <?php echo $row['name']; ?> </div>
+                            <div class='card-header'> <?php echo $studentName; ?> </div>
                             <div class='card-body'>
                 <?php } ?>
                     
@@ -113,7 +114,7 @@ $promptList = explode(",", $prompts);
                                 </audio>
                                 <p class="card-text"> <?php echo $row['transcription_text']; ?> </p>
             <?php
-                $previousName = $row['name'];
+                $previousName = $studentName;
             } ?>
                             </div> <!-- end card body -->
                         </div> <!-- end card -->
