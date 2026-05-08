@@ -2,8 +2,6 @@ var response = document.querySelector("#response");
 var updateForm = document.getElementById("updateForm");
 let currentAudio = null;
 function save(prompt_id) {
-   
-    console.log(prompt_title);
     var prompt_title = document.querySelector('#prompt_title').value;
     var text = document.querySelector('#text').value;
     var prepare_time = document.querySelector('#prepare_time').value;
@@ -27,7 +25,13 @@ function save(prompt_id) {
     var xmlHttp = new XMLHttpRequest();
     xmlHttp.onreadystatechange = function () {
         if (xmlHttp.readyState == 4 && xmlHttp.status == 200) {
+            response.classList.remove("alert", "alert-danger");
+            response.classList.add("alert", "alert-success");
             response.innerHTML = xmlHttp.responseText;
+        } else if (xmlHttp.readyState == 4) {
+            response.classList.remove("alert", "alert-success");
+            response.classList.add("alert", "alert-danger");
+            response.innerHTML = "Prompt could not be saved. Please try again.";
         }
     }
     xmlHttp.open("post", "../phpScripts/updatePrompt.php");
@@ -47,6 +51,32 @@ function playAudio(event) {
     currentAudio = event.target;
     console.log("Playing new audio:", currentAudio.src);
 
+}
+
+function copyPromptLink() {
+    var copyButton = document.querySelector("#copyPromptLink");
+    if (!copyButton || !copyButton.dataset.promptUrl) {
+        return;
+    }
+
+    if (!navigator.clipboard) {
+        copyButton.innerHTML = "Copy Unavailable";
+        return;
+    }
+
+    navigator.clipboard.writeText(copyButton.dataset.promptUrl).then(function () {
+        var originalText = copyButton.innerHTML;
+        copyButton.innerHTML = "Copied";
+        copyButton.classList.remove("btn-outline-primary");
+        copyButton.classList.add("btn-primary");
+        setTimeout(function () {
+            copyButton.innerHTML = originalText;
+            copyButton.classList.remove("btn-primary");
+            copyButton.classList.add("btn-outline-primary");
+        }, 2000);
+    }, function () {
+        copyButton.innerHTML = "Copy Failed";
+    });
 }
 
 document.querySelectorAll('.audio-controls').forEach(audio => {

@@ -16,6 +16,7 @@ $server = str_replace("/teacher/index.php","/",$serverName);
 include_once("../cas-go.php");
 include_once('../../../connectFiles/connect_ar.php');
 include_once('../addUser.php');
+include_once('../phpScripts/responseHelpers.php');
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -52,25 +53,31 @@ include_once('../addUser.php');
 
         </div>
     </header>
-    <nav class="container mt-5">
-      
-                <button id="createPrompt" class='btn btn-primary me-3' onclick='createPrompt()'>New Prompt</button>
-   
-                <button id="archiveToggleButton" class='btn btn-primary' onclick="archiveToggle();">Show Archived Prompts</button>
-                
-                <button id="multipleViewer" class='btn btn-primary' onclick="multipleViewer();">View Multiple Responses</button>
-
+    <nav class="container dashboard-shell mt-5">
+        <div class="d-flex flex-wrap align-items-center justify-content-between gap-2">
+            <div>
+                <p class="section-kicker">Teacher Dashboard</p>
+                <h1 class="dashboard-title">Prompts</h1>
+            </div>
+            <div class="d-flex flex-wrap gap-2">
+                <button id="createPrompt" class='btn btn-primary btn-sm' onclick='createPrompt()'>New Prompt</button>
+                <button id="archiveToggleButton" class='btn btn-outline-primary btn-sm' onclick="archiveToggle();">Show Archived Prompts</button>
+                <button id="multipleViewer" class='btn btn-outline-primary btn-sm' onclick="multipleViewer();">View Multiple Responses</button>
+            </div>
+        </div>
         <div class="row" id='response'></div>
     </nav>
     <main role="main" class="m-0 p-0">
-        <div class="container-sm mt-5 mb-5 pb-3">
+        <div class="container-sm dashboard-shell mt-4 mb-5 pb-3">
             <?php
 
-            $query = $elc_db->prepare("Select * from Prompts where netid=? order by date_created DESC");
+            $query = $elc_db->prepare("SELECT Prompts.prompt_id, Prompts.title, Prompts.text, Prompts.prepare_time, Prompts.response_time, Prompts.archive, Prompts.date_created, COUNT(Audio_files.id) AS response_count FROM Prompts LEFT JOIN Audio_files ON Prompts.prompt_id = Audio_files.prompt_id WHERE Prompts.netid=? GROUP BY Prompts.prompt_id, Prompts.title, Prompts.text, Prompts.prepare_time, Prompts.response_time, Prompts.archive, Prompts.date_created ORDER BY Prompts.date_created DESC");
             $query->bind_param("s", $netid);
             $query->execute();
             $result = $query->get_result();
+            $promptCount = 0;
             while ($row = $result->fetch_assoc()) {
+                $promptCount++;
                 if ($row['archive'] == 0) {
                     $archiveIcon = "bi-archive";
                     $archiveTitle = "Archive Prompt";
@@ -84,33 +91,43 @@ include_once('../addUser.php');
                 }
                 $prompt_id = $row['prompt_id'];
             ?>
-                <div class='row promptList m-0 mb-4 p-0 <?php echo $archiveStatus . " " . $archiveHideClass; ?>' id='<?php echo $row['prompt_id']; ?>'>
-                    <div class="card m-0 p-0">
-                        <div class='card-header row prompt-toolbar justify-content-between p-0 m-0'>
-                            <div class='prompt-title action-item col-sm-auto text-nowrap'><?php echo $row['title']; ?></div>
-                            <div class="btn-group col-sm-auto toolbar-buttons">
-                            <button id="link-<?php echo $prompt_id; ?>" class='btn btn-outline-primary action-item toolbar-button ' title='Copy Student Link to Clipboard' onClick="copyLink('<?php echo $prompt_id; ?>', '<?php echo $server; ?>');"><i class='bi bi-clipboard'></i></button>
-                                <button class='btn btn-outline-primary action-item toolbar-button' title='<?php echo $archiveTitle; ?>' onclick="archive('<?php echo $prompt_id; ?>', '<?php echo $archiveStatus; ?>')"><i id='icon-<?php echo $prompt_id; ?>' class='bi <?php echo $archiveIcon; ?>'></i></button>
-                                <div class='btn btn-outline-primary action-item toolbar-button'><input class="form-check-input" type="checkbox" value="<?php echo $prompt_id; ?>" id="flexCheckDefault-<?php echo $prompt_id; ?>" onclick='selectMultiple(this.value)'></div>
-                                <label class="visually-hidden" for="flexCheckDefault-<?php echo $prompt_id; ?>">Select Prompt</label>
-
+                <div class='promptList m-0 mb-3 p-0 <?php echo $archiveStatus . " " . $archiveHideClass; ?>' id='<?php echo ar_h($row['prompt_id']); ?>'>
+                    <div class="card prompt-card m-0">
+                        <div class='card-header prompt-toolbar d-flex flex-wrap justify-content-between align-items-start gap-2'>
+                            <div>
+                                <div class='prompt-title action-item'><?php echo ar_h($row['title'] ? $row['title'] : 'Untitled Prompt'); ?></div>
+                                <div class="prompt-meta">
+                                    <span class="badge bg-light text-dark border"><?php echo (int) $row['response_count']; ?> <?php echo (int) $row['response_count'] === 1 ? 'response' : 'responses'; ?></span>
+                                    <span class="badge <?php echo $archiveStatus === 'archived' ? 'bg-secondary' : 'bg-success'; ?>"><?php echo $archiveStatus === 'archived' ? 'Archived' : 'Current'; ?></span>
+                                    <span><?php echo ar_h($row['date_created']); ?></span>
+                                </div>
+                            </div>
+                            <div class="btn-group toolbar-buttons">
+                                <button id="link-<?php echo ar_h($prompt_id); ?>" class='btn btn-outline-primary action-item toolbar-button' title='Copy Student Link to Clipboard' onClick="copyLink('<?php echo ar_h($prompt_id); ?>', '<?php echo ar_h($server); ?>');"><i class='bi bi-clipboard'></i></button>
+                                <button class='btn btn-outline-primary action-item toolbar-button' title='<?php echo ar_h($archiveTitle); ?>' onclick="archive('<?php echo ar_h($prompt_id); ?>', '<?php echo ar_h($archiveStatus); ?>')"><i id='icon-<?php echo ar_h($prompt_id); ?>' class='bi <?php echo ar_h($archiveIcon); ?>'></i></button>
+                                <div class='btn btn-outline-primary action-item toolbar-button'><input class="form-check-input" type="checkbox" value="<?php echo ar_h($prompt_id); ?>" id="flexCheckDefault-<?php echo ar_h($prompt_id); ?>" onclick='selectMultiple(this.value)'></div>
+                                <label class="visually-hidden" for="flexCheckDefault-<?php echo ar_h($prompt_id); ?>">Select Prompt</label>
                             </div>
                         </div>
 
                         <div class='card-body prompt-information'>
                             <p class='card-text'>
-                                You have <?php echo $row['prepare_time']; ?> seconds to prepare and <?php echo $row['response_time']; ?> seconds to respond.
+                                You have <?php echo ar_h($row['prepare_time']); ?> seconds to prepare and <?php echo ar_h($row['response_time']); ?> seconds to respond.
                             </p>
                             <p class='card-text'>
-                                <Strong>Prompt: </strong> <?php echo $row['text']; ?>
+                                <strong>Prompt:</strong> <?php echo ar_h($row['text']); ?>
                             </p>
-                            <a href="../responses/index.php?prompt_id=<?php echo $row['prompt_id']; ?>">Edit Prompt/View Responses</a>
+                            <a class="btn btn-outline-primary btn-sm" href="../responses/index.php?prompt_id=<?php echo urlencode($row['prompt_id']); ?>">Edit Prompt/View Responses</a>
 
                         </div>
                     </div>
                 </div>
 
             <?php
+            }
+
+            if ($promptCount === 0) {
+                echo "<div class='empty-state'>No prompts have been created yet.</div>";
             }
 
             ?>

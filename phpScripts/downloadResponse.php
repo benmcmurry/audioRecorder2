@@ -2,20 +2,7 @@
 include_once('../cas-go.php');
 include_once('../../../connectFiles/connect_ar.php');
 include_once('../addUser.php');
-
-function ar_download_error($statusCode, $message)
-{
-    http_response_code($statusCode);
-    echo $message;
-    exit;
-}
-
-function ar_safe_download_name($value, $fallback)
-{
-    $value = preg_replace('/[^A-Za-z0-9._-]+/', '_', (string) $value);
-    $value = trim($value, '_');
-    return $value === '' ? $fallback : $value;
-}
+include_once('responseHelpers.php');
 
 if (!isset($_GET['id']) || !isset($_GET['type'])) {
     ar_download_error(400, 'Missing download parameters.');
@@ -27,11 +14,7 @@ if ($responseId <= 0 || ($type !== 'audio' && $type !== 'transcript')) {
     ar_download_error(400, 'Invalid download parameters.');
 }
 
-$query = $elc_db->prepare("SELECT Audio_files.*, Users.name AS user_name, Prompts.netid AS prompt_owner FROM Audio_files LEFT JOIN Users ON Audio_files.netid = Users.netid JOIN Prompts ON Audio_files.prompt_id = Prompts.prompt_id WHERE Audio_files.id = ? LIMIT 1");
-$query->bind_param("i", $responseId);
-$query->execute();
-$result = $query->get_result();
-$row = $result ? $result->fetch_assoc() : null;
+$row = ar_response_for_download($elc_db, $responseId);
 
 if (!$row) {
     ar_download_error(404, 'Response not found.');
@@ -41,8 +24,8 @@ if ($row['prompt_owner'] !== $netid) {
     ar_download_error(403, 'You do not have access to this response.');
 }
 
-$studentName = $row['user_name'] ? $row['user_name'] : $row['netid'];
-$baseName = 'prompt_' . ar_safe_download_name($row['prompt_id'], 'prompt') . '_' . ar_safe_download_name($studentName, 'student');
+$studentName = ar_student_name($row);
+$baseName = 'prompt_' . ar_safe_file_name($row['prompt_id'], 'prompt') . '_' . ar_safe_file_name($studentName, 'student');
 
 if ($type === 'transcript') {
     $filename = $baseName . '_transcript.txt';
@@ -52,9 +35,8 @@ if ($type === 'transcript') {
     exit;
 }
 
-$appRoot = realpath(__DIR__ . '/..');
-$audioPath = realpath($appRoot . '/' . $row['filename']);
-if (!$audioPath || strpos($audioPath, $appRoot . DIRECTORY_SEPARATOR) !== 0 || !is_file($audioPath)) {
+$audioPath = ar_audio_file_path($row['filename']);
+if (!$audioPath) {
     ar_download_error(404, 'Audio file not found.');
 }
 

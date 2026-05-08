@@ -2,20 +2,7 @@
 include_once('../cas-go.php');
 include_once('../../../connectFiles/connect_ar.php');
 include_once('../addUser.php');
-
-function ar_zip_error($statusCode, $message)
-{
-    http_response_code($statusCode);
-    echo $message;
-    exit;
-}
-
-function ar_safe_zip_name($value, $fallback)
-{
-    $value = preg_replace('/[^A-Za-z0-9._-]+/', '_', (string) $value);
-    $value = trim($value, '_');
-    return $value === '' ? $fallback : $value;
-}
+include_once('responseHelpers.php');
 
 function ar_unique_zip_entry($zip, $name)
 {
@@ -36,49 +23,42 @@ function ar_unique_zip_entry($zip, $name)
 }
 
 if (!class_exists('ZipArchive')) {
-    ar_zip_error(500, 'Zip downloads are not available on this server.');
+    ar_download_error(500, 'Zip downloads are not available on this server.');
 }
 
 if (!isset($_GET['prompt_id']) || !isset($_GET['type'])) {
-    ar_zip_error(400, 'Missing download parameters.');
+    ar_download_error(400, 'Missing download parameters.');
 }
 
 $promptId = $_GET['prompt_id'];
 $type = $_GET['type'];
 if ($promptId === '' || ($type !== 'audio' && $type !== 'transcripts')) {
-    ar_zip_error(400, 'Invalid download parameters.');
+    ar_download_error(400, 'Invalid download parameters.');
 }
 
-$promptQuery = $elc_db->prepare("SELECT prompt_id FROM Prompts WHERE prompt_id = ? AND netid = ? LIMIT 1");
-$promptQuery->bind_param("ss", $promptId, $netid);
-$promptQuery->execute();
-$promptResult = $promptQuery->get_result();
-if (!$promptResult || !$promptResult->fetch_assoc()) {
-    ar_zip_error(403, 'You do not have access to this prompt.');
+$promptRow = ar_prompt_for_owner($elc_db, $promptId, $netid);
+if (!$promptRow) {
+    ar_download_error(403, 'You do not have access to this prompt.');
 }
 
-$query = $elc_db->prepare("SELECT Audio_files.*, Users.name AS user_name FROM Audio_files LEFT JOIN Users ON Audio_files.netid = Users.netid WHERE Audio_files.prompt_id = ? ORDER BY COALESCE(Users.name, Audio_files.netid) ASC, Audio_files.date_created DESC");
-$query->bind_param("s", $promptId);
-$query->execute();
-$result = $query->get_result();
+$responses = ar_prompt_responses($elc_db, $promptId);
 
 $tempFile = tempnam(sys_get_temp_dir(), 'ar_zip_');
 if (!$tempFile) {
-    ar_zip_error(500, 'Could not create the zip file.');
+    ar_download_error(500, 'Could not create the zip file.');
 }
 
 $zip = new ZipArchive();
 if ($zip->open($tempFile, ZipArchive::OVERWRITE) !== true) {
     @unlink($tempFile);
-    ar_zip_error(500, 'Could not open the zip file.');
+    ar_download_error(500, 'Could not open the zip file.');
 }
 
-$appRoot = realpath(__DIR__ . '/..');
 $added = 0;
 $allTranscriptions = '';
-while ($row = $result->fetch_assoc()) {
-    $studentName = $row['user_name'] ? $row['user_name'] : $row['netid'];
-    $baseName = 'prompt_' . ar_safe_zip_name($row['prompt_id'], 'prompt') . '_' . ar_safe_zip_name($studentName, 'student') . '_' . ar_safe_zip_name($row['id'], 'response');
+foreach ($responses as $row) {
+    $studentName = ar_student_name($row);
+    $baseName = 'prompt_' . ar_safe_file_name($row['prompt_id'], 'prompt') . '_' . ar_safe_file_name($studentName, 'student') . '_' . ar_safe_file_name($row['id'], 'response');
 
     if ($type === 'transcripts') {
         $allTranscriptions .= $studentName . "\n";
@@ -91,8 +71,8 @@ while ($row = $result->fetch_assoc()) {
         continue;
     }
 
-    $audioPath = realpath($appRoot . '/' . $row['filename']);
-    if (!$audioPath || strpos($audioPath, $appRoot . DIRECTORY_SEPARATOR) !== 0 || !is_file($audioPath)) {
+    $audioPath = ar_audio_file_path($row['filename']);
+    if (!$audioPath) {
         continue;
     }
 
@@ -114,7 +94,7 @@ if ($added === 0) {
 
 $zip->close();
 
-$zipName = 'prompt_' . ar_safe_zip_name($promptId, 'prompt') . '_' . ($type === 'audio' ? 'audio' : 'transcripts') . '.zip';
+$zipName = 'prompt_' . ar_safe_file_name($promptId, 'prompt') . '_' . ($type === 'audio' ? 'audio' : 'transcripts') . '.zip';
 header('Content-Type: application/zip');
 header('Content-Disposition: attachment; filename="' . $zipName . '"');
 header('Content-Length: ' . filesize($tempFile));

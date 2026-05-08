@@ -193,5 +193,142 @@ audio { width: 100%; }
 }
 
 #response {
-    float: right;
+    float: none;
+}
+
+/* Dashboard polish */
+
+.dashboard-shell {
+    max-width: 1040px;
+}
+
+.dashboard-title,
+.section-heading h1,
+.section-heading h2 {
+    margin: 0;
+    font-size: 1.35rem;
+    line-height: 1.25;
+}
+
+.section-kicker {
+    margin: 0 0 .2rem;
+    color: #5f6f85;
+    font-size: .78rem;
+    font-weight: 700;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+}
+
+.dashboard-card {
+    padding: 1rem;
+    border: 1px solid #d8dee8;
+    border-radius: 8px;
+    background: #ffffff;
+    box-shadow: 0 1px 3px rgba(0, 46, 93, .08);
+}
+
+.section-heading {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: .75rem;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+}
+
+.prompt-toggles {
+    display: grid;
+    gap: .75rem;
+    align-content: start;
+    padding-top: 2rem;
+}
+
+.save-status:empty {
+    display: none;
+}
+
+.empty-state,
+.transcript-empty {
+    padding: 1rem;
+    border: 1px dashed #c9d3df;
+    border-radius: 8px;
+    color: #5f6f85;
+    background: #f8fafc;
+}
+
+.response-card {
+    margin-top: 1rem;
+    border: 1px solid #d8dee8;
+    border-radius: 8px;
+    overflow: hidden;
+    background: #ffffff;
+}
+
+.response-card-header {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: .75rem;
+    align-items: flex-start;
+    padding: .75rem 1rem;
+    border-bottom: 1px solid #e6ebf2;
+    background: #f8fafc;
+}
+
+.response-card-header h3 {
+    margin: 0;
+    font-size: 1rem;
+}
+
+.response-card-header p,
+.prompt-meta {
+    margin: .2rem 0 0;
+    color: #5f6f85;
+    font-size: .85rem;
+}
+
+.response-card audio {
+    margin-bottom: 1rem;
+}
+
+.prompt-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .45rem;
+    align-items: center;
+}
+
+.transcript-block {
+    padding: 1rem;
+    border: 1px solid #e1e7ef;
+    border-radius: 8px;
+    background: #fbfcfe;
+    white-space: normal;
+}
+
+.prompt-card {
+    border: 1px solid #d8dee8;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0, 46, 93, .06);
+}
+
+.prompt-toolbar {
+    border-bottom: 1px solid #e6ebf2;
+    background: #f8fafc;
+}
+
+@media all and (max-width: 700px) {
+    .section-heading,
+    .response-card-header {
+        display: block;
+    }
+
+    .section-heading .btn,
+    .response-card-header .btn {
+        margin-top: .5rem;
+    }
+
+    .prompt-toggles {
+        padding-top: .5rem;
+    }
 }
