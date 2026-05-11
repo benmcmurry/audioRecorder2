@@ -35,7 +35,15 @@ $result2 = $result2->fetch_assoc();
 $query3->bind_param("s", $netid);
 $query3->execute();
 $result3 = $query3->get_result();
-?>
+
+function ar_js($value)
+{
+    return json_encode($value, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP);
+}
+
+$clientPrompt = ($prompt_id && isset($result) && is_array($result)) ? $result : null;
+$clientResponse = ($alreadyDone && isset($result2) && is_array($result2)) ? $result2 : null;
+	?>
 <!DOCTYPE html>
 <html lang="en">
 
@@ -49,34 +57,16 @@ $result3 = $query3->get_result();
     <link href="css/style.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
     <script type="text/javascript">
-        <?php if ($prompt_id) { ?>
-            var prepare_time = <?php echo $result['prepare_time']; ?>;
-            var response_time = <?php echo $result['response_time']; ?>;
-            var prompt_id = <?php echo $prompt_id; ?>;
-            var netid = "<?php echo $net_id; ?>";
-            var archiveStatus = <?php echo $result['archive']; ?>;
-            var promptText = "<?php echo $result['text']; ?>";
-            var shouldReadPrompt = <?php echo (isset($result['read_prompt']) ? (int)$result['read_prompt'] : 1); ?>;
-            <?php
-
-        } else {
-            ?>var prompt_id = 0;
-            var archiveStatus = 2
-            var shouldReadPrompt = 1
-        <?php }
-
-
-
-
-        if ($alreadyDone) {
-            echo "var alreadyDone =  $alreadyDone;";
-            echo "var reviewSource = '" . $result2['filename'] . "';";
-            echo "var reviewSourceType = '" . $result2['filetype'] . "';";
-        } else {
-            echo "var alreadyDone = false;";
-        }
-        echo "console.log(prompt_id);";
-        ?>
+        var prepare_time = <?php echo ar_js($clientPrompt ? (int) $clientPrompt['prepare_time'] : 0); ?>;
+        var response_time = <?php echo ar_js($clientPrompt ? (int) $clientPrompt['response_time'] : 0); ?>;
+        var prompt_id = <?php echo ar_js($clientPrompt ? (int) $prompt_id : 0); ?>;
+        var netid = <?php echo ar_js(isset($net_id) ? $net_id : $netid); ?>;
+        var archiveStatus = <?php echo ar_js($clientPrompt ? (int) $clientPrompt['archive'] : ($prompt_id ? 1 : 2)); ?>;
+        var promptText = <?php echo ar_js($clientPrompt ? $clientPrompt['text'] : ''); ?>;
+        var shouldReadPrompt = <?php echo ar_js($clientPrompt && isset($clientPrompt['read_prompt']) ? (int) $clientPrompt['read_prompt'] : 1); ?>;
+        var alreadyDone = <?php echo ar_js((bool) $alreadyDone); ?>;
+        var reviewSource = <?php echo ar_js($clientResponse ? $clientResponse['filename'] : ''); ?>;
+        var reviewSourceType = <?php echo ar_js($clientResponse ? $clientResponse['filetype'] : ''); ?>;
     </script>
 </head>
 
@@ -148,8 +138,10 @@ $result3 = $query3->get_result();
             <!-- prompt display -->
             <div id="prompt" class="row d-none">
                 <?php
-                echo "<p>" . $result['text'] . "<br /> <br />";
-                echo "You have {$result['prepare_time']} seconds to prepare and {$result['response_time']} seconds to respond.</p>";
+                if ($clientPrompt) {
+                    echo "<p>" . htmlspecialchars($clientPrompt['text'], ENT_QUOTES, 'UTF-8') . "<br /> <br />";
+                    echo "You have " . htmlspecialchars($clientPrompt['prepare_time'], ENT_QUOTES, 'UTF-8') . " seconds to prepare and " . htmlspecialchars($clientPrompt['response_time'], ENT_QUOTES, 'UTF-8') . " seconds to respond.</p>";
+                }
                 ?>
             </div>
 
