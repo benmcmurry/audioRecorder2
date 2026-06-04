@@ -1,5 +1,59 @@
 <?php
+function ar_request_scheme() {
+    if (!empty($_SERVER['HTTP_X_FORWARDED_PROTO'])) {
+        $values = explode(',', $_SERVER['HTTP_X_FORWARDED_PROTO']);
+        return strtolower(trim($values[0])) === 'https' ? 'https' : 'http';
+    }
+
+    if (!empty($_SERVER['HTTP_X_FORWARDED_PROTOCOL'])) {
+        $values = explode(',', $_SERVER['HTTP_X_FORWARDED_PROTOCOL']);
+        return strtolower(trim($values[0])) === 'https' ? 'https' : 'http';
+    }
+
+    if (!empty($_SERVER['HTTP_X_FORWARDED_SSL']) && strtolower((string) $_SERVER['HTTP_X_FORWARDED_SSL']) === 'on') {
+        return 'https';
+    }
+
+    if (!empty($_SERVER['HTTPS']) && strcasecmp((string) $_SERVER['HTTPS'], 'off') !== 0) {
+        return 'https';
+    }
+
+    return 'http';
+}
+
+function ar_request_host() {
+    if (!empty($_SERVER['HTTP_X_FORWARDED_HOST'])) {
+        $hosts = explode(',', $_SERVER['HTTP_X_FORWARDED_HOST']);
+        $host = trim($hosts[0]);
+        if ($host !== '') {
+            return $host;
+        }
+    }
+
+    if (!empty($_SERVER['HTTP_HOST'])) {
+        return $_SERVER['HTTP_HOST'];
+    }
+
+    if (!empty($_SERVER['SERVER_NAME'])) {
+        return $_SERVER['SERVER_NAME'];
+    }
+
+    return 'localhost';
+}
+
+function ar_request_origin() {
+    return ar_request_scheme() . '://' . ar_request_host();
+}
+
 if (session_status() !== PHP_SESSION_ACTIVE) {
+    session_set_cookie_params(array(
+        'lifetime' => 0,
+        'path' => '/',
+        'domain' => '',
+        'secure' => ar_request_scheme() === 'https',
+        'httponly' => true,
+        'samesite' => 'Lax',
+    ));
     session_start();
 }
 
@@ -43,8 +97,8 @@ function ar_web_root() {
 }
 
 function ar_current_url() {
-    $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
-    $host = $_SERVER['HTTP_HOST'];
+    $scheme = ar_request_scheme();
+    $host = ar_request_host();
     $uri = isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : '/';
     return $scheme . '://' . $host . $uri;
 }
@@ -88,7 +142,7 @@ function ar_safe_redirect_target($target, $fallback) {
 
     if (preg_match('/^https?:\/\//i', $target)) {
         $parts = parse_url($target);
-        $currentHost = isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : '';
+        $currentHost = ar_request_host();
         if ($parts && isset($parts['host']) && strcasecmp($parts['host'], $currentHost) === 0) {
             return $target;
         }
@@ -345,9 +399,7 @@ function ar_google_shared_root() {
         return rtrim(trim($config['shared_auth_web_root']), '/');
     }
 
-    $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
-    $host = isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : 'localhost';
-    return $scheme . '://' . $host . '/sharedAuth';
+    return ar_request_origin() . '/sharedAuth';
 }
 
 function ar_google_expected_issuer() {
@@ -361,13 +413,11 @@ function ar_google_expected_issuer() {
         return rtrim(trim($config['shared_auth_issuer']), '/');
     }
 
-    return rtrim(ar_google_shared_root(), '/');
+    return rtrim(ar_request_origin() . '/sharedAuth', '/');
 }
 
 function ar_google_consume_url() {
-    $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
-    $host = isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : 'localhost';
-    return $scheme . '://' . $host . ar_web_root() . '/auth/google_callback.php';
+    return ar_request_origin() . ar_web_root() . '/auth/google_callback.php';
 }
 
 function ar_google_public_key_path() {

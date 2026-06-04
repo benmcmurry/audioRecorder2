@@ -5,9 +5,6 @@ $isPromptOwner = false;
 $showRecordingHistory = true;
 error_reporting(E_ALL & ~E_NOTICE);
 ini_set("display_errors", 1);
-if (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] == 'https') {
-    $_SERVER['HTTPS'] = 'on';
-}
 include_once("cas-go.php");
 include_once('../../connectFiles/connect_ar.php');
 include_once('addUser.php');

@@ -11,7 +11,6 @@ ar_clear_session_user();
 if ($provider === 'cas') {
     require_once dirname($_SERVER['DOCUMENT_ROOT']) . '/config.php';
     require_once dirname($_SERVER['DOCUMENT_ROOT']) . '/CAS.php';
-    phpCAS::setVerbose(true);
     phpCAS::client(CAS_VERSION_2_0, $cas_host, $cas_port, $cas_context);
     phpCAS::setNoCasServerValidation();
     phpCAS::logout();

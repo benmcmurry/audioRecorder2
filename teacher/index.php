@@ -1,22 +1,12 @@
 <?php
 error_reporting(E_ALL & ~E_NOTICE);
 ini_set("display_errors", 1);
-if (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] == 'https') {
-    $_SERVER['HTTPS'] = 'on';
-}
-
-if ($_SERVER['SERVER_NAME'] == 'localhost.byu.edu') {
-    $serverName = $_SERVER['SERVER_NAME'] . $_SERVER['PHP_SELF'];
-} else {
-    $serverName = " https://" . $_SERVER['SERVER_NAME']. $_SERVER['PHP_SELF'];
-}
-
-$server = str_replace("/teacher/index.php","/",$serverName);
-
 include_once("../cas-go.php");
 include_once('../../../connectFiles/connect_ar.php');
 include_once('../addUser.php');
 include_once('../phpScripts/responseHelpers.php');
+
+$server = ar_request_origin() . ar_web_root() . '/index.php';
 ?>
 <!DOCTYPE html>
 <html lang="en">
