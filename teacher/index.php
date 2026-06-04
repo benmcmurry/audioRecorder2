@@ -93,8 +93,8 @@ $server = ar_request_origin() . ar_web_root() . '/index.php';
                                 </div>
                             </div>
                             <div class="btn-group toolbar-buttons">
-                                <button id="link-<?php echo ar_h($prompt_id); ?>" class='btn btn-outline-primary action-item toolbar-button' title='Copy Student Link to Clipboard' onClick="copyLink('<?php echo ar_h($prompt_id); ?>', '<?php echo ar_h($server); ?>');"><i class='bi bi-clipboard'></i></button>
-                                <button class='btn btn-outline-primary action-item toolbar-button' title='<?php echo ar_h($archiveTitle); ?>' onclick="archive('<?php echo ar_h($prompt_id); ?>', '<?php echo ar_h($archiveStatus); ?>')"><i id='icon-<?php echo ar_h($prompt_id); ?>' class='bi <?php echo ar_h($archiveIcon); ?>'></i></button>
+                                <button id="link-<?php echo ar_h($prompt_id); ?>" class='btn btn-outline-primary action-item toolbar-button' title='Copy Student Link to Clipboard' aria-label='Copy Student Link to Clipboard' onClick="copyLink('<?php echo ar_h($prompt_id); ?>', '<?php echo ar_h($server); ?>');"><i class='bi bi-clipboard' aria-hidden='true'></i></button>
+                                <button class='btn btn-outline-primary action-item toolbar-button' title='<?php echo ar_h($archiveTitle); ?>' aria-label='<?php echo ar_h($archiveTitle); ?>' onclick="archive('<?php echo ar_h($prompt_id); ?>', '<?php echo ar_h($archiveStatus); ?>')"><i id='icon-<?php echo ar_h($prompt_id); ?>' class='bi <?php echo ar_h($archiveIcon); ?>' aria-hidden='true'></i></button>
                                 <div class='btn btn-outline-primary action-item toolbar-button'><input class="form-check-input" type="checkbox" value="<?php echo ar_h($prompt_id); ?>" id="flexCheckDefault-<?php echo ar_h($prompt_id); ?>" onclick='selectMultiple(this.value)'></div>
                                 <label class="visually-hidden" for="flexCheckDefault-<?php echo ar_h($prompt_id); ?>">Select Prompt</label>
                             </div>
