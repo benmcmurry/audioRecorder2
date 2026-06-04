@@ -95,7 +95,7 @@ $clientResponse = ($alreadyDone && isset($result2) && is_array($result2)) ? $res
                     <div class="card-body text-center">
                         <div class="spinner-border text-primary mb-3" role="status" aria-hidden="true"></div>
                         <h5 class="card-title">Please wait</h5>
-                        <p class="card-text mb-0">We are saving your recording and transcription. Do not close this page.</p>
+                        <p class="card-text mb-0">We are saving your recording now. Transcription may appear shortly after the upload completes.</p>
                     </div>
                 </div>
             </div>

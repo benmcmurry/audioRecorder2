@@ -40,7 +40,7 @@ function ar_prompt_for_owner($db, $promptId, $netid)
 
 function ar_prompt_responses($db, $promptId)
 {
-    $query = $db->prepare("SELECT Audio_files.id, Audio_files.prompt_id, Audio_files.netid, Audio_files.filename, Audio_files.filesize, Audio_files.filetype, Audio_files.transcription_text, Audio_files.date_created, Users.name AS user_name FROM Audio_files LEFT JOIN Users ON Audio_files.netid = Users.netid WHERE Audio_files.prompt_id = ? ORDER BY COALESCE(Users.name, Audio_files.netid) ASC, Audio_files.date_created DESC");
+    $query = $db->prepare("SELECT Audio_files.id, Audio_files.prompt_id, Audio_files.netid, Audio_files.filename, Audio_files.filesize, Audio_files.filetype, Audio_files.transcription_text, Audio_files.status, Audio_files.transcription_status, Audio_files.transcription_source, Audio_files.date_created, Users.name AS user_name FROM Audio_files LEFT JOIN Users ON Audio_files.netid = Users.netid WHERE Audio_files.prompt_id = ? ORDER BY COALESCE(Users.name, Audio_files.netid) ASC, Audio_files.date_created DESC");
     $query->bind_param("s", $promptId);
     $query->execute();
     $result = $query->get_result();
@@ -55,7 +55,7 @@ function ar_prompt_responses($db, $promptId)
 
 function ar_response_for_download($db, $responseId)
 {
-    $query = $db->prepare("SELECT Audio_files.id, Audio_files.prompt_id, Audio_files.netid, Audio_files.filename, Audio_files.filesize, Audio_files.filetype, Audio_files.transcription_text, Audio_files.date_created, Users.name AS user_name, Prompts.netid AS prompt_owner FROM Audio_files LEFT JOIN Users ON Audio_files.netid = Users.netid JOIN Prompts ON Audio_files.prompt_id = Prompts.prompt_id WHERE Audio_files.id = ? LIMIT 1");
+    $query = $db->prepare("SELECT Audio_files.id, Audio_files.prompt_id, Audio_files.netid, Audio_files.filename, Audio_files.filesize, Audio_files.filetype, Audio_files.transcription_text, Audio_files.status, Audio_files.transcription_status, Audio_files.transcription_source, Audio_files.date_created, Users.name AS user_name, Prompts.netid AS prompt_owner FROM Audio_files LEFT JOIN Users ON Audio_files.netid = Users.netid JOIN Prompts ON Audio_files.prompt_id = Prompts.prompt_id WHERE Audio_files.id = ? LIMIT 1");
     $query->bind_param("i", $responseId);
     $query->execute();
     $result = $query->get_result();

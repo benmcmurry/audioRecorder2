@@ -3,8 +3,7 @@ include_once('../../../connectFiles/connect_ar.php');
 error_reporting(E_ALL & ~E_NOTICE);
 ini_set("display_errors", 1);
 
-
-$query = $elc_db->prepare("Update Audio_files set transcription_text = ? where prompt_id = ? and netid=?");
+$query = $elc_db->prepare("Update Audio_files set transcription_text = ?, transcription_status = 'complete', transcription_source = 'manual', status = 'complete', transcription_error = NULL, processing_finished_at = NOW() where prompt_id = ? and netid=?");
 $query->bind_param("sss", $_POST['transcription'], $_POST['prompt_id'], $_POST['netid']);
 $query->execute();
 $result = $query->get_result();

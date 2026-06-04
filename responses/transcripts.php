@@ -49,11 +49,13 @@ $result = $query->get_result();
             <div class="card m-0 p-0">
                 <div class='card-body'>
                     <p class="card-text">
-                        <?php
+                <?php
                         while ($row = $result->fetch_assoc()) {
+                            $transcription = trim((string) $row['transcription_text']);
+                            $isTranscriptionPending = empty($transcription) && in_array((string) ($row['transcription_status'] ?? ''), array('pending', 'processing'), true);
                         ?>
-                            <h4 class="card-text"><?php echo $row['user_name'] ? $row['user_name'] : $row['netid']; ?></h4>
-                            <p class="card-text"><?php echo $row['transcription_text']; ?></p>
+                            <h4 class="card-text"><?php echo ar_h($row['user_name'] ? $row['user_name'] : $row['netid']); ?></h4>
+                            <p class="card-text"><?php echo $isTranscriptionPending ? 'Transcription is still processing.' : ar_h($row['transcription_text']); ?></p>
                         <?php   } ?></p>
                 </div>
             </div>

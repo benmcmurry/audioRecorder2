@@ -133,6 +133,7 @@ $promptUrl = $scheme . '://' . $host . ar_web_root() . '/index.php?prompt_id=' .
                     $studentName = ar_student_name($row);
                     $audioPath = ar_audio_file_path($row['filename']);
                     $transcription = trim((string) $row['transcription_text']);
+                    $isTranscriptionPending = empty($transcription) && in_array((string) ($row['transcription_status'] ?? ''), array('pending', 'processing'), true);
                     ?>
                     <article class="response-card">
                         <div class='response-card-header'>
@@ -158,6 +159,8 @@ $promptUrl = $scheme . '://' . $host . ar_web_root() . '/index.php?prompt_id=' .
 
                             <?php if ($transcription !== '') { ?>
                                 <div class="transcript-block"><?php echo nl2br(ar_h($transcription)); ?></div>
+                            <?php } elseif ($isTranscriptionPending) { ?>
+                                <div class="transcript-empty">Transcription is still processing.</div>
                             <?php } else { ?>
                                 <div class="transcript-empty">No transcription available.</div>
                             <?php } ?>

@@ -1,88 +1,79 @@
 <?php
 include_once('../../connectFiles/connect_ar.php');
-if ($_SERVER['REMOTE_ADDR'] == '127.0.0.1') {
-    // $ffmpeg = "/usr/local/bin/ffmpeg";
-    $ffmpeg = "/opt/homebrew/bin/ffmpeg";
-} else {
-    $ffmpeg = "/usr/bin/ffmpeg";
-}
+include_once(__DIR__ . '/phpScripts/audioProcessingCommon.php');
+
+ob_start();
+error_reporting(E_ALL);
+ini_set('display_errors', '0');
+
 define('SITE_ROOT', realpath(dirname(__FILE__)));
 
-function getOpenAiApiKey()
-{
-    $apiKey = getenv("OPENAI_API_KEY");
-    if (!$apiKey && isset($_SERVER["OPENAI_API_KEY"])) {
-        $apiKey = $_SERVER["OPENAI_API_KEY"];
-    }
-    if (!$apiKey && isset($_ENV["OPENAI_API_KEY"])) {
-        $apiKey = $_ENV["OPENAI_API_KEY"];
-    }
-    return $apiKey;
-}
-
-function transcribeWithOpenAi($audioPath)
-{
-    if (!function_exists('curl_init')) {
-        return array(false, 'PHP cURL extension is required for transcription.');
+register_shutdown_function(function () {
+    $error = error_get_last();
+    if (!$error) {
+        return;
     }
 
-    $apiKey = getOpenAiApiKey();
-    if (!$apiKey) {
-        return array(false, 'OPENAI_API_KEY is not configured on the server.');
+    $fatalTypes = array(E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR, E_USER_ERROR);
+    if (!in_array($error['type'], $fatalTypes, true)) {
+        return;
     }
 
-    if (!is_file($audioPath)) {
-        return array(false, 'Audio file not found for transcription.');
+    if (ob_get_length()) {
+        @ob_clean();
     }
 
-    $postFields = array(
-        'model' => 'whisper-1',
-        'response_format' => 'json',
-        'file' => new CURLFile($audioPath, 'audio/mpeg', basename($audioPath))
-    );
-
-    $ch = curl_init('https://api.openai.com/v1/audio/transcriptions');
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_POST, true);
-    curl_setopt($ch, CURLOPT_HTTPHEADER, array(
-        'Authorization: Bearer ' . $apiKey
+    if (!headers_sent()) {
+        header('Content-Type: application/json');
+    }
+    http_response_code(500);
+    echo json_encode(array(
+        'ok' => false,
+        'message' => 'Upload failed unexpectedly.',
+        'details' => isset($error['message']) ? $error['message'] : 'Unknown fatal error.',
     ));
-    curl_setopt($ch, CURLOPT_POSTFIELDS, $postFields);
-    curl_setopt($ch, CURLOPT_TIMEOUT, 60);
+});
 
-    $apiResponse = curl_exec($ch);
-    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    $curlError = curl_error($ch);
-
-    if ($apiResponse === false || $curlError) {
-        return array(false, 'OpenAI transcription request failed: ' . $curlError);
-    }
-
-    if ($httpCode < 200 || $httpCode >= 300) {
-        return array(false, 'OpenAI transcription error: ' . $apiResponse);
-    }
-
-    $decoded = json_decode($apiResponse, true);
-    if (!is_array($decoded) || !isset($decoded['text'])) {
-        return array(false, 'OpenAI transcription response did not include text.');
-    }
-
-    return array(true, trim((string) $decoded['text']));
-}
-
-function json_response($statusCode, $payload)
+function ar_kick_audio_worker($submissionId)
 {
-    http_response_code($statusCode);
-    header('Content-Type: application/json');
-    echo json_encode($payload);
-    exit;
+    if (php_sapi_name() === 'cli' || !function_exists('shell_exec')) {
+        ar_audio_log('worker_kick_skipped', array(
+            'submission_id' => $submissionId,
+            'reason' => php_sapi_name() === 'cli' ? 'cli_context' : 'shell_exec_unavailable',
+        ));
+        return;
+    }
+
+    $worker = escapeshellarg(__DIR__ . '/phpScripts/processPendingAudio.php');
+    $phpBinary = escapeshellarg(ar_php_cli_binary());
+    $submissionArg = escapeshellarg($submissionId);
+    $command = ar_worker_environment_prefix() . $phpBinary . ' ' . $worker . ' ' . $submissionArg . ' > /dev/null 2>&1 &';
+    ar_audio_log('worker_kick_attempt', array(
+        'submission_id' => $submissionId,
+        'php_binary' => ar_php_cli_binary(),
+        'worker_script' => __DIR__ . '/phpScripts/processPendingAudio.php',
+    ));
+    $output = @shell_exec($command);
+    ar_audio_log('worker_kick_result', array(
+        'submission_id' => $submissionId,
+        'shell_output' => $output === null ? null : trim((string) $output),
+    ));
 }
 
 $targetdir = '/uploads/';
-// name of the directory where the files should be stored
-$time = date('Y-m-d-His');
-$fileName = $_POST['name'];
+$fileName = isset($_POST['name']) ? (string) $_POST['name'] : '';
+$submissionId = isset($_POST['submission_id']) ? (string) $_POST['submission_id'] : '';
+$promptId = isset($_POST['prompt_id']) ? (string) $_POST['prompt_id'] : '';
+$netid = isset($_POST['netid']) ? (string) $_POST['netid'] : '';
+$extension = isset($_POST['extension']) ? (string) $_POST['extension'] : '';
 $uploadsPath = SITE_ROOT . $targetdir;
+
+if ($fileName === '' || $submissionId === '' || $promptId === '' || $netid === '' || $extension === '') {
+    ar_json_response(400, array(
+        'ok' => false,
+        'message' => 'Missing required upload fields.'
+    ));
+}
 
 if (!is_dir($uploadsPath)) {
     mkdir($uploadsPath, 0755, true);
@@ -94,17 +85,42 @@ if (!is_dir($uploadsPath) || !is_writable($uploadsPath)) {
     exit;
 }
 
-$targetFile = $uploadsPath . $_POST['name'] . $_POST['extension'];
-// echo $_FILES['myBlob']['tmp_name'];
-$mp3File = $uploadsPath . $_POST['name'] . "mp3";
-$fileLocation = "uploads/" . $fileName . "mp3";
-$fallbackFileLocation = "uploads/" . $fileName . $_POST['extension'];
-$storedFileType = $_FILES['myBlob']['type'];
+$targetFile = $uploadsPath . $fileName . $extension;
+$fileLocation = "uploads/" . $fileName . $extension;
+$storedFileType = isset($_FILES['myBlob']['type']) ? (string) $_FILES['myBlob']['type'] : 'application/octet-stream';
+
+$existingQuery = $elc_db->prepare("SELECT id, prompt_id, netid, filename, filesize, filetype, transcription_text, status, transcription_status, transcription_error, transcription_source, submission_id FROM Audio_files WHERE submission_id = ? LIMIT 1");
+if ($existingQuery) {
+    $existingQuery->bind_param("s", $submissionId);
+    $existingQuery->execute();
+    $existingResult = $existingQuery->get_result();
+    $existingRow = $existingResult ? $existingResult->fetch_assoc() : null;
+    if ($existingRow) {
+        ar_audio_log('upload_duplicate_submission', array(
+            'submission_id' => $submissionId,
+            'prompt_id' => $promptId,
+            'netid' => $netid,
+            'existing_status' => isset($existingRow['status']) ? $existingRow['status'] : null,
+            'existing_transcription_status' => isset($existingRow['transcription_status']) ? $existingRow['transcription_status'] : null,
+        ));
+        ar_kick_audio_worker($submissionId);
+        ar_json_response(200, array(
+            'ok' => true,
+            'message' => 'Your response was already saved.',
+            'submission_id' => $submissionId,
+            'status' => isset($existingRow['status']) ? $existingRow['status'] : 'uploaded',
+            'transcription_status' => isset($existingRow['transcription_status']) ? $existingRow['transcription_status'] : 'pending',
+            'transcription_text' => isset($existingRow['transcription_text']) ? $existingRow['transcription_text'] : '',
+            'transcription_error' => isset($existingRow['transcription_error']) ? $existingRow['transcription_error'] : '',
+            'transcription_source' => isset($existingRow['transcription_source']) ? $existingRow['transcription_source'] : 'queue'
+        ));
+    }
+}
 
 $promptTranscriptionRequired = 0;
 $promptQuery = $elc_db->prepare("SELECT transcription FROM Prompts WHERE prompt_id = ? LIMIT 1");
 if ($promptQuery) {
-    $promptQuery->bind_param("s", $_POST['prompt_id']);
+    $promptQuery->bind_param("s", $promptId);
     $promptQuery->execute();
     $promptResult = $promptQuery->get_result();
     $promptRow = $promptResult ? $promptResult->fetch_assoc() : null;
@@ -113,58 +129,89 @@ if ($promptQuery) {
     }
 }
 
-$transcriptionText = "";
-$transcriptionError = "";
-$conversionWarning = "";
-$transcriptionSource = "browser";
 if (move_uploaded_file($_FILES['myBlob']['tmp_name'], $targetFile)) {
-    shell_exec($ffmpeg . " -y -i " . escapeshellarg($targetFile) . " " . escapeshellarg($mp3File) . " 2>&1");
-
-    $transcriptionSourcePath = $targetFile;
-    if (is_file($mp3File) && filesize($mp3File) > 0) {
-        $transcriptionSourcePath = $mp3File;
-        $fileLocation = "uploads/" . $fileName . "mp3";
-        $storedFileType = "audio/mpeg";
-        if (is_file($targetFile)) {
-            @unlink($targetFile);
-        }
-    } else {
-        $fileLocation = $fallbackFileLocation;
-        $conversionWarning = "MP3 conversion failed; using original uploaded audio for transcription.";
+    ar_audio_log('upload_file_moved', array(
+        'submission_id' => $submissionId,
+        'prompt_id' => $promptId,
+        'netid' => $netid,
+        'target_file' => $targetFile,
+        'file_location' => $fileLocation,
+        'filesize' => isset($_FILES['myBlob']['size']) ? (int) $_FILES['myBlob']['size'] : null,
+    ));
+    $transcriptionText = "";
+    $transcriptionError = "";
+    $transcriptionStatus = "pending";
+    $status = "uploaded";
+    $query = $elc_db->prepare("INSERT INTO Audio_files (prompt_id, netid, filename, filesize, filetype, transcription_text, submission_id, status, transcription_status, transcription_error, transcription_source, processing_started_at, processing_finished_at, date_created) VALUES (?,?,?,?,?,?,?,?,?,?,?,NULL,NULL,NOW())");
+    if (!$query) {
+        ar_audio_log('upload_prepare_failed', array(
+            'submission_id' => $submissionId,
+            'prompt_id' => $promptId,
+            'netid' => $netid,
+            'db_error' => $elc_db->error,
+        ));
+        @unlink($targetFile);
+        ar_json_response(500, array(
+            'ok' => false,
+            'message' => 'Could not prepare recording insert.',
+            'details' => $elc_db->error
+        ));
+    }
+    $filesize = isset($_FILES['myBlob']['size']) ? (string) $_FILES['myBlob']['size'] : '0';
+    $transcriptionSource = 'queue';
+    if (!$query->bind_param("sssssssssss", $promptId, $netid, $fileLocation, $filesize, $storedFileType, $transcriptionText, $submissionId, $status, $transcriptionStatus, $transcriptionError, $transcriptionSource)) {
+        ar_audio_log('upload_bind_failed', array(
+            'submission_id' => $submissionId,
+            'prompt_id' => $promptId,
+            'netid' => $netid,
+            'db_error' => $elc_db->error,
+        ));
+        @unlink($targetFile);
+        ar_json_response(500, array(
+            'ok' => false,
+            'message' => 'Could not bind recording data.',
+            'details' => $elc_db->error
+        ));
+    }
+    if (!$query || !$query->execute()) {
+        ar_audio_log('upload_db_insert_failed', array(
+            'submission_id' => $submissionId,
+            'prompt_id' => $promptId,
+            'netid' => $netid,
+            'db_error' => $elc_db->error,
+        ));
+        @unlink($targetFile);
+        ar_json_response(500, array(
+            'ok' => false,
+            'message' => 'Could not save recording metadata to the database.',
+            'details' => $elc_db->error
+        ));
     }
 
-    list($transcriptionOk, $transcriptionValue) = transcribeWithOpenAi($transcriptionSourcePath);
-    if ($transcriptionOk) {
-        $transcriptionText = $transcriptionValue;
-        $transcriptionSource = "openai";
-    } else {
-        $transcriptionError = $transcriptionValue;
-        $transcriptionSource = "browser";
-    }
+    ar_kick_audio_worker($submissionId);
+    ar_audio_log('upload_db_insert_success', array(
+        'submission_id' => $submissionId,
+        'prompt_id' => $promptId,
+        'netid' => $netid,
+        'status' => $status,
+        'transcription_status' => $transcriptionStatus,
+    ));
+
+    $response = array(
+        'ok' => true,
+        'message' => 'Your response has been saved. Transcription is processing in the background.',
+        'submission_id' => $submissionId,
+        'status' => $status,
+        'transcription_status' => $transcriptionStatus,
+        'transcription_text' => $transcriptionText,
+        'transcription_error' => $transcriptionError,
+        'transcription_source' => $transcriptionSource,
+        'transcription_required' => $promptTranscriptionRequired
+    );
+    ar_json_response(200, $response);
 } else {
-    json_response(500, array(
+    ar_json_response(500, array(
         'ok' => false,
         'message' => 'There was an error saving the uploaded file. Please refresh and try again.'
     ));
 }
-
-
-$query = $elc_db->prepare("Insert into Audio_files (prompt_id, netid, filename, filesize, filetype, transcription_text, date_created) Values (?,?,?,?,?,?,now())");
-$query->bind_param("ssssss", $_POST['prompt_id'], $_POST['netid'], $fileLocation, $_FILES['myBlob']['size'], $storedFileType, $transcriptionText);
-if (!$query || !$query->execute()) {
-    json_response(500, array(
-        'ok' => false,
-        'message' => 'Could not save recording metadata to the database.',
-        'details' => $elc_db->error
-    ));
-}
-
-json_response(200, array(
-    'ok' => true,
-    'message' => 'Your response has been saved.',
-    'transcription_text' => $transcriptionText,
-    'transcription_error' => $transcriptionError,
-    'conversion_warning' => $conversionWarning,
-    'transcription_source' => $transcriptionSource,
-    'transcription_required' => $promptTranscriptionRequired
-));

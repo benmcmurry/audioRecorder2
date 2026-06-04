@@ -47,6 +47,7 @@ var i = 0;
 var selectedTtsVoice = null;
 var pendingUploadPromise = null;
 var pendingTranscriptionSavePromise = null;
+var activeSubmissionId = null;
 
 //transcript variables
 var recognition = null;
@@ -247,6 +248,7 @@ function pickPreferredVoice() {
 async function startRecording() {
   pendingUploadPromise = null;
   pendingTranscriptionSavePromise = null;
+  activeSubmissionId = createSubmissionId();
   transcript = "";
   thisLine = "";
   buttons.classList.add("d-none");
@@ -499,13 +501,13 @@ function record(typeOfRecording) {
         }
       }
       var d = Date.now();
-      var name = "prompt_" + prompt_id + "_" + netid + "-" + d + ".";
+      var name = "prompt_" + prompt_id + "_" + netid + "-" + activeSubmissionId + ".";
 
       console.log(name);
 
       if (typeOfRecording === "recording") {
         setProcessingState(true);
-        pendingUploadPromise = uploadRecording(recording, name);
+        pendingUploadPromise = uploadRecording(recording, name, activeSubmissionId);
         Promise.all([
           pendingUploadPromise,
           pendingTranscriptionSavePromise || Promise.resolve(""),
@@ -565,7 +567,8 @@ function record(typeOfRecording) {
   }
 }
 
-function uploadRecording(blob, name) {
+function uploadRecording(blob, name, submissionId, attempt) {
+  attempt = attempt || 0;
   prompt.classList.add("d-none");
   console.log(blob);
   var fd = new FormData();
@@ -575,8 +578,10 @@ function uploadRecording(blob, name) {
   fd.append("prompt_id", prompt_id);
   fd.append("netid", netid);
   fd.append("transcription", transcription);
+  fd.append("submission_id", submissionId);
   return new Promise(function (resolve, reject) {
     var xmlHttp = new XMLHttpRequest();
+    xmlHttp.timeout = 120000;
     xmlHttp.onreadystatechange = function () {
       if (xmlHttp.readyState == 4) {
         if (xmlHttp.status == 200) {
@@ -592,7 +597,18 @@ function uploadRecording(blob, name) {
       }
     };
     xmlHttp.onerror = function () {
+      if (attempt < 1) {
+        uploadRecording(blob, name, submissionId, attempt + 1).then(resolve).catch(reject);
+        return;
+      }
       reject(new Error("Upload request failed."));
+    };
+    xmlHttp.ontimeout = function () {
+      if (attempt < 1) {
+        uploadRecording(blob, name, submissionId, attempt + 1).then(resolve).catch(reject);
+        return;
+      }
+      reject(new Error("Upload request timed out."));
     };
     xmlHttp.open("post", "upload.php");
     xmlHttp.send(fd);
@@ -827,6 +843,8 @@ function showCompletedRecording(uploadResponseData) {
     if (uploadResponseData.transcription_error) {
       answerHtml += "<p class='text-warning'>Automatic transcription was unavailable: " +
         escapeHtml(uploadResponseData.transcription_error) + "</p>";
+    } else if (uploadResponseData.transcription_status === "pending") {
+      answerHtml += "<p>Transcription is still processing. You can refresh this page shortly to see it.</p>";
     } else if (uploadResponseData.transcription_required == 1) {
       answerHtml += "<p>Now, please review your transcription below. You can edit it if needed.</p>";
     }
@@ -861,9 +879,21 @@ function setTranscriptionNotice(source) {
 
   if (source === "openai") {
     transcriptionNotice.innerHTML = "Transcribed by OpenAI";
+  } else if (source === "manual") {
+    transcriptionNotice.innerHTML = "Transcribed by you";
+  } else if (source === "queue") {
+    transcriptionNotice.innerHTML = "Transcription queued";
   } else {
     transcriptionNotice.innerHTML = "Transcribed by browser";
   }
+}
+
+function createSubmissionId() {
+  if (window.crypto && typeof window.crypto.randomUUID === "function") {
+    return window.crypto.randomUUID();
+  }
+
+  return "sub_" + Date.now().toString(36) + "_" + Math.random().toString(36).slice(2, 10);
 }
 
 var first_char = /\S/;
