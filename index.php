@@ -2,6 +2,7 @@
 $alreadyDone = false;
 $prompt_id = 0;
 $isPromptOwner = false;
+$showRecordingHistory = true;
 error_reporting(E_ALL & ~E_NOTICE);
 ini_set("display_errors", 1);
 if (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] == 'https') {
@@ -11,6 +12,7 @@ include_once("cas-go.php");
 include_once('../../connectFiles/connect_ar.php');
 include_once('addUser.php');
 if (isset($_GET['prompt_id'])) {$prompt_id = $_GET['prompt_id'];
+$showRecordingHistory = false;
 $alreadyDone = FALSE;
 
 	$query = $elc_db->prepare("Select * from Prompts where prompt_id=?");
@@ -24,17 +26,13 @@ $alreadyDone = FALSE;
 
 $query2 = $elc_db->prepare("Select * from Audio_files where prompt_id=? and netid=?");
 $query2->bind_param("ss", $prompt_id, $netid);
-$query2->execute();
-$result2 = $query2->get_result();
-$result2 = $result2->fetch_assoc();
+	$query2->execute();
+	$result2 = $query2->get_result();
+	$result2 = $result2->fetch_assoc();
 	if (isset($result2) && !$isPromptOwner) {
 	    $alreadyDone = TRUE;
 	}
 	}
-	$query3 = $elc_db->prepare("SELECT Audio_files.*, Users.name AS user_name, Prompts.title, Prompts.prepare_time, Prompts.response_time, Prompts.text FROM Audio_files LEFT JOIN Users ON Audio_files.netid = Users.netid JOIN Prompts ON Audio_files.prompt_id = Prompts.prompt_id WHERE Audio_files.netid = ? ORDER BY Audio_files.date_created DESC");
-$query3->bind_param("s", $netid);
-$query3->execute();
-$result3 = $query3->get_result();
 
 function ar_js($value)
 {
@@ -182,34 +180,16 @@ $clientResponse = ($alreadyDone && isset($result2) && is_array($result2)) ? $res
             
 
         </div> <!-- end container -->
-        <div id="allRecordings"  style="display:none;" class="container mt-5 mb-5 pb-3">
-        <nav class="container mt-5">
-      
-      <a id="createPrompt" class='btn btn-primary me-3' href='teacher/index.php'>Teacher Area</a></nav>
-            <?php
-            echo "<p> Recordings for $name. </p>";
-            while ($row = $result3->fetch_assoc()) { 
-                if (!!$row['title']) { $temp_title=$row['title']; } else { $temp_title="no title"; }
-?>
-                <div class="row">
-                    <div class="card  m-0 p-0" id='<?php echo $row['prompt_id']; ?>'>
-                        <div class='card-header'> <h5 style="margin:0;padding:0;"><?php echo $temp_title."</h5>".$row['date_created']; ?> </div>
-                        <div class='card-body'> 
-                            <?php
-                            echo "<p class='card-text'><strong>Prompt: </strong>". $row['text']." </p><p>You have ".$row['prepare_time']." seconds to prepare and ".$row['response_time']." seconds to record.</p>";?>
-                            <audio class="audio-control" style='padding: 0em 0em 2em;' controls>
-                                <source src='<?php echo $row['filename']; ?>' type='<?php echo $row['filetype']; ?>'>
-                            </audio> 
-                            <?php 
-                            if ($row['transcription_text']) {
-                                echo "<p class='card-text'>Transcript: ".$row['transcription_text']." </p>";
-                            }
-                            ?>
-                        </div>
-                    </div>
-                </div>
-                <?php } ?>
-       </div>
+        <?php if ($showRecordingHistory) { ?>
+        <div id="allRecordings" class="container mt-5 mb-5 pb-3">
+            <nav class="container mt-5">
+                <a id="createPrompt" class='btn btn-primary me-3' href='teacher/index.php'>Teacher Area</a>
+                <button id="loadRecordingsButton" class="btn btn-outline-primary">Load My Recordings</button>
+                <span id="recordingsStatus" class="ms-2 small text-muted" aria-live="polite"></span>
+            </nav>
+            <div id="allRecordingsResults" class="mt-4"></div>
+        </div>
+       <?php } ?>
      
     </main>
     <footer class='p-2 bg-byu-navy text-white fixed-bottom'>

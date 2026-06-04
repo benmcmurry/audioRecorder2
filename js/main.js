@@ -42,6 +42,9 @@ var response = document.querySelector("#response");
 var transcriptionRow = document.querySelector("#transcriptionRow");
 var processingScreen = document.querySelector("#processingScreen");
 var transcriptionNotice = document.querySelector("#transcriptionNotice");
+var loadRecordingsButton = document.querySelector("#loadRecordingsButton");
+var recordingsStatus = document.querySelector("#recordingsStatus");
+var allRecordingsResults = document.querySelector("#allRecordingsResults");
 var transcription;
 var i = 0;
 var selectedTtsVoice = null;
@@ -103,6 +106,43 @@ if (alreadyDone) {
   alreadyDoneBox.classList.remove("d-none");
   reviewRecording.src = reviewSource;
   reviewRecording.type = reviewSourceType;
+}
+
+if (loadRecordingsButton && allRecordingsResults) {
+  loadRecordingsButton.addEventListener("click", function () {
+    loadRecordingsButton.disabled = true;
+    loadRecordingsButton.textContent = "Loading...";
+    if (recordingsStatus) {
+      recordingsStatus.textContent = "Fetching your recordings...";
+    }
+
+    fetch("phpScripts/getMyRecordings.php", {
+      credentials: "same-origin",
+      headers: {
+        "X-Requested-With": "XMLHttpRequest",
+      },
+    })
+      .then(function (response) {
+        if (!response.ok) {
+          throw new Error("Request failed with status " + response.status);
+        }
+        return response.text();
+      })
+      .then(function (html) {
+        allRecordingsResults.innerHTML = html;
+        if (recordingsStatus) {
+          recordingsStatus.textContent = "Loaded.";
+        }
+      })
+      .catch(function (error) {
+        console.error("Could not load recordings.", error);
+        if (recordingsStatus) {
+          recordingsStatus.textContent = "Could not load recordings.";
+        }
+        loadRecordingsButton.disabled = false;
+        loadRecordingsButton.textContent = "Load My Recordings";
+      });
+  });
 }
 
 //this initializes (is that the right word?) the mediaRecorder
