@@ -6,7 +6,7 @@ include_once('../../../connectFiles/connect_ar.php');
 include_once('../addUser.php');
 include_once('../phpScripts/responseHelpers.php');
 
-$server = ar_request_origin() . ar_web_root() . '/index.php';
+$server = ar_public_origin() . ar_web_root() . '/index.php';
 ?>
 <!DOCTYPE html>
 <html lang="en">

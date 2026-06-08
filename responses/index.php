@@ -16,9 +16,7 @@ $responses = ar_prompt_responses($elc_db, $prompt_id);
 $responseCount = count($responses);
 $checked = ((int) $promptRow['transcription'] === 1) ? "checked" : "";
 $readPromptChecked = (!isset($promptRow['read_prompt']) || (int) $promptRow['read_prompt'] === 1) ? "checked" : "";
-$scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
-$host = $_SERVER['HTTP_HOST'];
-$promptUrl = $scheme . '://' . $host . ar_web_root() . '/index.php?prompt_id=' . urlencode($prompt_id);
+$promptUrl = ar_public_origin() . ar_web_root() . '/index.php?prompt_id=' . urlencode($prompt_id);
 ?>
 
 <!DOCTYPE html>
