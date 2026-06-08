@@ -1,5 +1,6 @@
 <?php
 include_once __DIR__ . '/common.php';
+ar_auth_debug_log('login.php');
 
 $currentUser = ar_get_session_user();
 if ($currentUser) {

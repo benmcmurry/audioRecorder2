@@ -1,5 +1,6 @@
 <?php
 include_once __DIR__ . '/common.php';
+ar_auth_debug_log('cas_start.php');
 
 require_once dirname($_SERVER['DOCUMENT_ROOT']) . '/config.php';
 require_once dirname($_SERVER['DOCUMENT_ROOT']) . '/CAS.php';

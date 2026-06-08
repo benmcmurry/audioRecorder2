@@ -103,6 +103,35 @@ function ar_current_url() {
     return $scheme . '://' . $host . $uri;
 }
 
+function ar_auth_debug_enabled() {
+    $env = getenv('AR_AUTH_DEBUG');
+    return $env !== false && $env !== '' && $env !== '0' && strtolower((string) $env) !== 'false';
+}
+
+function ar_auth_debug_log($stage, $extra = array()) {
+    if (!ar_auth_debug_enabled()) {
+        return;
+    }
+
+    $payload = array(
+        'stage' => $stage,
+        'time' => gmdate('c'),
+        'host' => isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : '',
+        'xfh' => isset($_SERVER['HTTP_X_FORWARDED_HOST']) ? $_SERVER['HTTP_X_FORWARDED_HOST'] : '',
+        'xfp' => isset($_SERVER['HTTP_X_FORWARDED_PROTO']) ? $_SERVER['HTTP_X_FORWARDED_PROTO'] : '',
+        'scheme' => ar_request_scheme(),
+        'uri' => isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : '',
+        'script' => isset($_SERVER['SCRIPT_NAME']) ? $_SERVER['SCRIPT_NAME'] : '',
+        'session_id' => function_exists('session_id') ? session_id() : '',
+    );
+
+    foreach ($extra as $key => $value) {
+        $payload[$key] = $value;
+    }
+
+    error_log('[audioRecorder-auth] ' . json_encode($payload));
+}
+
 function ar_redirect($path) {
     header('Location: ' . $path);
     exit;
@@ -368,6 +397,7 @@ function ar_clear_session_user() {
 
 function ar_auth_required_redirect() {
     $target = urlencode(ar_current_url());
+    ar_auth_debug_log('auth_required_redirect', array('target' => $target));
     ar_redirect(ar_web_root() . '/auth/login.php?redirect=' . $target);
 }
 

@@ -1,5 +1,6 @@
 <?php
 include_once __DIR__ . '/common.php';
+ar_auth_debug_log('logout.php');
 
 $provider = '';
 if (isset($_SESSION['auth_user']) && isset($_SESSION['auth_user']['provider'])) {
