@@ -45,6 +45,15 @@ function ar_request_origin() {
     return ar_request_scheme() . '://' . ar_request_host();
 }
 
+function ar_public_origin() {
+    $envOrigin = getenv('AR_PUBLIC_ORIGIN');
+    if ($envOrigin) {
+        return rtrim(trim($envOrigin), '/');
+    }
+
+    return ar_request_origin();
+}
+
 if (session_status() !== PHP_SESSION_ACTIVE) {
     session_set_cookie_params(array(
         'lifetime' => 0,
@@ -97,10 +106,8 @@ function ar_web_root() {
 }
 
 function ar_current_url() {
-    $scheme = ar_request_scheme();
-    $host = ar_request_host();
     $uri = isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : '/';
-    return $scheme . '://' . $host . $uri;
+    return ar_public_origin() . $uri;
 }
 
 function ar_auth_debug_enabled() {
@@ -171,8 +178,8 @@ function ar_safe_redirect_target($target, $fallback) {
 
     if (preg_match('/^https?:\/\//i', $target)) {
         $parts = parse_url($target);
-        $currentHost = ar_request_host();
-        if ($parts && isset($parts['host']) && strcasecmp($parts['host'], $currentHost) === 0) {
+        $currentHost = parse_url(ar_public_origin(), PHP_URL_HOST);
+        if ($parts && isset($parts['host']) && $currentHost && strcasecmp($parts['host'], $currentHost) === 0) {
             return $target;
         }
         return $fallback;
@@ -429,7 +436,7 @@ function ar_google_shared_root() {
         return rtrim(trim($config['shared_auth_web_root']), '/');
     }
 
-    return ar_request_origin() . '/sharedAuth';
+    return ar_public_origin() . '/sharedAuth';
 }
 
 function ar_google_expected_issuer() {
@@ -443,11 +450,11 @@ function ar_google_expected_issuer() {
         return rtrim(trim($config['shared_auth_issuer']), '/');
     }
 
-    return rtrim(ar_request_origin() . '/sharedAuth', '/');
+    return rtrim(ar_public_origin() . '/sharedAuth', '/');
 }
 
 function ar_google_consume_url() {
-    return ar_request_origin() . ar_web_root() . '/auth/google_callback.php';
+    return ar_public_origin() . ar_web_root() . '/auth/google_callback.php';
 }
 
 function ar_google_public_key_path() {
