@@ -31,7 +31,7 @@ if ($mode === 'link') {
     $targetNetid = isset($_SESSION['google_link_target_netid']) ? $_SESSION['google_link_target_netid'] : '';
     unset($_SESSION['google_link_target_netid']);
     if ($targetNetid === '') {
-        ar_redirect(ar_web_root() . '/profile.php?error=' . urlencode('CAS session required to link Google.'));
+        ar_redirect(ar_web_root() . '/profile.php?error=' . urlencode('A signed-in account is required to link Google.'));
     }
 
     $existingNetid = ar_find_google_link($sub);

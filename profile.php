@@ -61,8 +61,8 @@ $error = isset($_GET['error']) ? $_GET['error'] : '';
                     <span class="btn">Google already connected</span>
                 <?php } ?>
             <?php } else { ?>
-                <div class="note">To connect Google to a CAS account, sign in with CAS first, then return to this page.</div>
-                <a class="btn" href="<?php echo $app_root; ?>/auth/cas_start.php?redirect=<?php echo urlencode($app_root . '/profile.php'); ?>">Sign in with CAS</a>
+                <div class="note">To connect Google to your account, sign in first, then return to this page.</div>
+                <a class="btn" href="<?php echo $app_root; ?>/auth/cas_start.php?redirect=<?php echo urlencode($app_root . '/profile.php'); ?>">Sign in</a>
             <?php } ?>
         </div>
 

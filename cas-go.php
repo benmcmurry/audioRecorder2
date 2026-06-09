@@ -1,5 +1,6 @@
 <?php
 include_once __DIR__ . '/auth/common.php';
+require_once dirname($_SERVER['DOCUMENT_ROOT']) . '/Web/sharedAuth/broker.php';
 
 $app_root = ar_web_root();
 

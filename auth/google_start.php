@@ -16,8 +16,8 @@ $redirect = ar_safe_redirect_target($requestedRedirect, $defaultRedirect);
 
 if ($mode === 'link') {
     $user = ar_get_session_user();
-    if (!$user || !isset($user['provider']) || $user['provider'] !== 'cas') {
-        ar_redirect(ar_web_root() . '/auth/login.php?error=' . urlencode('Linking requires a CAS login first.'));
+    if (!$user || !isset($user['netid']) || trim((string) $user['netid']) === '') {
+        ar_redirect(ar_web_root() . '/auth/login.php?error=' . urlencode('Linking requires a signed-in account first.'));
     }
     $_SESSION['google_link_target_netid'] = $user['netid'];
 }

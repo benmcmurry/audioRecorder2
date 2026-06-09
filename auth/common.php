@@ -66,6 +66,8 @@ if (session_status() !== PHP_SESSION_ACTIVE) {
     session_start();
 }
 
+require_once dirname(__DIR__, 2) . '/sharedAuth/broker.php';
+
 function ar_server_config() {
     static $config = null;
 
@@ -74,8 +76,11 @@ function ar_server_config() {
     }
 
     $config = array();
-    $configPath = dirname($_SERVER['DOCUMENT_ROOT']) . '/google_auth_config.php';
-    if (is_readable($configPath)) {
+    $configPath = shared_auth_first_readable_path(array(
+        getenv('SHARED_AUTH_CONFIG_PATH') ?: '',
+        dirname(__DIR__, 3) . '/google_auth_config.php',
+    ));
+    if ($configPath !== '') {
         $loaded = include $configPath;
         if (is_array($loaded)) {
             $config = $loaded;
@@ -468,7 +473,9 @@ function ar_google_public_key_path() {
         return trim($config['google_shared_public_key_path']);
     }
 
-    return dirname($_SERVER['DOCUMENT_ROOT']) . '/keys/google_jwt_public.pem';
+    return shared_auth_first_readable_path(array(
+        dirname(__DIR__, 3) . '/keys/google_jwt_public.pem',
+    ));
 }
 
 function ar_google_shared_enabled() {
