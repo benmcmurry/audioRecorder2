@@ -14,6 +14,10 @@ $error = isset($_GET['error']) ? $_GET['error'] : '';
 $googleEnabled = ar_google_shared_enabled();
 $oktaEnabled = shared_auth_okta_enabled();
 
+if (shared_auth_dev_enabled()) {
+    shared_auth_redirect(shared_auth_login_url($redirect));
+}
+
 shared_auth_render_login_choice(
     'ELC Audio Recorder',
     'Sign in',
