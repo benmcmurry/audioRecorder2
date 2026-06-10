@@ -10,7 +10,7 @@ if (isset($_SESSION['auth_user']) && isset($_SESSION['auth_user']['provider'])) 
 ar_clear_session_user();
 
 if ($provider === 'cas') {
-    require_once dirname($_SERVER['DOCUMENT_ROOT']) . '/Web/sharedAuth/broker.php';
+    require_once dirname(__DIR__, 2) . '/sharedAuth/broker.php';
     shared_auth_cas_bootstrap();
     phpCAS::logout();
 }

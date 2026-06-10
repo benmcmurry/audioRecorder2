@@ -2,7 +2,7 @@
 include_once __DIR__ . '/common.php';
 ar_auth_debug_log('cas_start.php');
 
-require_once dirname($_SERVER['DOCUMENT_ROOT']) . '/Web/sharedAuth/broker.php';
+require_once dirname(__DIR__, 2) . '/sharedAuth/broker.php';
 
 $defaultRedirect = ar_web_root() . '/index.php';
 $requestedRedirect = isset($_GET['redirect']) ? $_GET['redirect'] : $defaultRedirect;
