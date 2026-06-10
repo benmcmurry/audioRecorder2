@@ -48,7 +48,9 @@ function ar_request_origin() {
 function ar_public_origin() {
     $envOrigin = getenv('AR_PUBLIC_ORIGIN');
     if ($envOrigin) {
-        return rtrim(trim($envOrigin), '/');
+        return function_exists('shared_auth_normalize_origin')
+            ? shared_auth_normalize_origin($envOrigin)
+            : rtrim(trim($envOrigin), '/');
     }
 
     return ar_request_origin();
@@ -94,21 +96,15 @@ function ar_server_config() {
 function ar_web_root() {
     $envRoot = getenv('AR_WEB_ROOT');
     if ($envRoot) {
+        $envRoot = trim($envRoot);
+        if (preg_match('#^https?://#i', $envRoot)) {
+            $parts = parse_url($envRoot);
+            return isset($parts['path']) && $parts['path'] !== '' ? rtrim($parts['path'], '/') : '/';
+        }
         return '/' . trim($envRoot, '/');
     }
 
-    $appFolder = basename(realpath(__DIR__ . '/..'));
-    $requestPath = isset($_SERVER['REQUEST_URI']) ? parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH) : '';
-    if ($requestPath && preg_match('#^(.*?/' . preg_quote($appFolder, '#') . ')(?:/|$)#', $requestPath, $m)) {
-        return rtrim($m[1], '/');
-    }
-
-    $scriptName = isset($_SERVER['SCRIPT_NAME']) ? $_SERVER['SCRIPT_NAME'] : '';
-    if ($scriptName && preg_match('#^(.*?/' . preg_quote($appFolder, '#') . ')(?:/|$)#', $scriptName, $m)) {
-        return rtrim($m[1], '/');
-    }
-
-    return '/' . $appFolder;
+    return '/' . basename(realpath(__DIR__ . '/..'));
 }
 
 function ar_current_url() {
