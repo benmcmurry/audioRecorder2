@@ -78,6 +78,7 @@ function ar_server_config() {
     $config = array();
     $configPath = shared_auth_first_readable_path(array(
         getenv('SHARED_AUTH_CONFIG_PATH') ?: '',
+        dirname(__DIR__, 3) . '/shared_auth_config.php',
         dirname(__DIR__, 3) . '/google_auth_config.php',
     ));
     if ($configPath !== '') {
