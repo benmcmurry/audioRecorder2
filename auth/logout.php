@@ -2,17 +2,9 @@
 include_once __DIR__ . '/common.php';
 ar_auth_debug_log('logout.php');
 
-$provider = '';
-if (isset($_SESSION['auth_user']) && isset($_SESSION['auth_user']['provider'])) {
-    $provider = $_SESSION['auth_user']['provider'];
-}
+$returnTo = shared_auth_build_url_with_query(ar_web_root() . '/login.php', array(
+    'redirect' => ar_web_root() . '/index.php',
+));
 
-ar_clear_session_user();
-
-if ($provider === 'cas') {
-    require_once dirname(__DIR__, 2) . '/sharedAuth/broker.php';
-    shared_auth_cas_bootstrap();
-    phpCAS::logout();
-}
-
-ar_redirect(ar_web_root() . '/auth/login.php');
+ar_clear_local_session();
+shared_auth_redirect(shared_auth_logout_url($returnTo, 'audioRecorder'));

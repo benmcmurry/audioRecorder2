@@ -382,6 +382,11 @@ function ar_migrate_netid_data($oldNetid, $newNetid) {
 }
 
 function ar_set_session_user($provider, $netid, $name, $email) {
+    $provider = strtolower(trim((string) $provider));
+    if ($provider !== 'google') {
+        $provider = 'byu';
+    }
+
     $_SESSION['auth_user'] = array(
         'provider' => $provider,
         'netid' => $netid,
@@ -402,26 +407,56 @@ function ar_clear_session_user() {
     unset($_SESSION['oauth_state']);
     unset($_SESSION['google_link_target_netid']);
     unset($_SESSION['ar_google_login']);
+    unset($_SESSION['preferredFirstName']);
+    unset($_SESSION['surname']);
+    unset($_SESSION['auth_provider']);
+    unset($_SESSION['google_authenticated']);
+}
+
+function ar_clear_local_session(): void
+{
+    ar_clear_session_user();
+
+    if (session_status() === PHP_SESSION_ACTIVE) {
+        $params = session_get_cookie_params();
+        $cookiePaths = array_unique(array(
+            $params['path'] ?? '/',
+            '/',
+            '/audioRecorder',
+            '/sharedAuth',
+        ));
+        $_SESSION = array();
+
+        if (!headers_sent()) {
+            foreach ($cookiePaths as $path) {
+                setcookie(
+                    session_name(),
+                    '',
+                    time() - 3600,
+                    $path,
+                    $params['domain'] ?? '',
+                    !empty($params['secure']),
+                    !empty($params['httponly'])
+                );
+            }
+        }
+
+        session_destroy();
+    }
 }
 
 function ar_auth_required_redirect() {
-    $target = urlencode(ar_current_url());
+    $target = ar_current_url();
     ar_auth_debug_log('auth_required_redirect', array('target' => $target));
-    ar_redirect(ar_web_root() . '/auth/login.php?redirect=' . $target);
+    ar_redirect(shared_auth_build_url_with_query(ar_public_origin() . ar_web_root() . '/login.php', array(
+        'redirect' => $target,
+    )));
 }
 
 function ar_google_app_id() {
     $env = getenv('AR_GOOGLE_APP_ID');
     if ($env) {
         return trim($env);
-    }
-
-    $config = ar_server_config();
-    if (isset($config['shared_auth_apps']) && is_array($config['shared_auth_apps'])) {
-        $appFolder = basename(realpath(__DIR__ . '/..'));
-        if (isset($config['shared_auth_apps'][$appFolder])) {
-            return $config['shared_auth_apps'][$appFolder];
-        }
     }
 
     return basename(realpath(__DIR__ . '/..'));
@@ -476,7 +511,7 @@ function ar_google_public_key_path() {
 }
 
 function ar_google_shared_enabled() {
-    return is_readable(ar_google_public_key_path());
+    return shared_auth_app_google_enabled('audioRecorder') && is_readable(ar_google_public_key_path());
 }
 
 function ar_base64url_decode($input) {

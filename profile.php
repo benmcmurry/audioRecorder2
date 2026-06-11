@@ -1,5 +1,5 @@
 <?php
-include_once __DIR__ . '/cas-go.php';
+include_once __DIR__ . '/bootstrap.php';
 include_once __DIR__ . '/../../connectFiles/connect_ar.php';
 include_once __DIR__ . '/auth/common.php';
 
@@ -54,15 +54,15 @@ $error = isset($_GET['error']) ? $_GET['error'] : '';
         </div>
 
         <div class="row">
-            <?php if ($auth_provider === 'cas') { ?>
+            <?php if ($auth_provider === 'google') { ?>
                 <?php if (!$linked) { ?>
                     <a class="btn btn-primary" href="<?php echo $app_root; ?>/auth/google_start.php?mode=link&redirect=<?php echo urlencode($app_root . '/profile.php'); ?>">Connect Google Account</a>
                 <?php } else { ?>
                     <span class="btn">Google already connected</span>
                 <?php } ?>
             <?php } else { ?>
-                <div class="note">To connect Google to your account, sign in first, then return to this page.</div>
-                <a class="btn" href="<?php echo $app_root; ?>/auth/cas_start.php?redirect=<?php echo urlencode($app_root . '/profile.php'); ?>">Sign in</a>
+                <div class="note">To connect Google to your account, sign in with BYU first, then return to this page.</div>
+                <a class="btn btn-primary" href="<?php echo $app_root; ?>/login.php?redirect=<?php echo urlencode($app_root . '/profile.php'); ?>">Sign in with BYU</a>
             <?php } ?>
         </div>
 
