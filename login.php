@@ -16,7 +16,6 @@ if (!$logoutBlocked && ($currentUser || $sharedUser)) {
 }
 
 $loginUrl = shared_auth_login_url($requestedRedirect, 'audioRecorder');
-$otherMethods = shared_auth_app_login_methods('audioRecorder');
 ?>
 <!doctype html>
 <html lang="en">
@@ -52,20 +51,6 @@ $otherMethods = shared_auth_app_login_methods('audioRecorder');
                         <div class="d-grid gap-2">
                             <a class="btn btn-primary btn-lg" href="<?php echo htmlspecialchars($loginUrl, ENT_QUOTES, 'UTF-8'); ?>">Login with BYU</a>
                         </div>
-                        <?php if (!empty($otherMethods)) { ?>
-                            <p class="text-uppercase text-muted fw-bold small mt-4 mb-2">Other login options</p>
-                            <div class="d-grid gap-2">
-                                <?php foreach ($otherMethods as $method) {
-                                    $provider = isset($method['provider']) ? (string) $method['provider'] : '';
-                                    $label = isset($method['label']) && trim((string) $method['label']) !== ''
-                                        ? (string) $method['label']
-                                        : shared_auth_provider_label($provider);
-                                    $providerUrl = shared_auth_build_url_with_query($loginUrl, array('auth' => $provider));
-                                ?>
-                                    <a class="btn btn-outline-secondary btn-lg" href="<?php echo htmlspecialchars($providerUrl, ENT_QUOTES, 'UTF-8'); ?>"><?php echo htmlspecialchars($label, ENT_QUOTES, 'UTF-8'); ?></a>
-                                <?php } ?>
-                            </div>
-                        <?php } ?>
                         <p class="text-muted small mt-4 mb-0">
                             You will be returned to the page you requested after sign-in.
                         </p>
