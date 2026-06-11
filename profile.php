@@ -1,19 +1,6 @@
 <?php
 include_once __DIR__ . '/bootstrap.php';
-include_once __DIR__ . '/../../connectFiles/connect_ar.php';
 include_once __DIR__ . '/auth/common.php';
-
-ar_ensure_auth_tables();
-$linked = false;
-$query = $elc_db->prepare("SELECT provider_user_id, email FROM User_auth_providers WHERE provider = ? AND netid = ? LIMIT 1");
-$provider = 'google';
-$query->bind_param('ss', $provider, $netid);
-$query->execute();
-$result = $query->get_result();
-$row = $result ? $result->fetch_assoc() : null;
-if ($row) {
-    $linked = true;
-}
 
 $success = isset($_GET['success']) ? $_GET['success'] : '';
 $error = isset($_GET['error']) ? $_GET['error'] : '';
@@ -45,25 +32,8 @@ $error = isset($_GET['error']) ? $_GET['error'] : '';
         <?php if ($error !== '') { ?><div class="err"><?php echo htmlspecialchars($error); ?></div><?php } ?>
 
         <div class="row">
-            <strong>Google Login</strong><br>
-            <?php if ($linked) { ?>
-                Connected<?php if (!empty($row['email'])) { echo ' as ' . htmlspecialchars($row['email']); } ?>.
-            <?php } else { ?>
-                Not connected.
-            <?php } ?>
-        </div>
-
-        <div class="row">
-            <?php if ($auth_provider === 'google') { ?>
-                <?php if (!$linked) { ?>
-                    <a class="btn btn-primary" href="<?php echo $app_root; ?>/auth/google_start.php?mode=link&redirect=<?php echo urlencode($app_root . '/profile.php'); ?>">Connect Google Account</a>
-                <?php } else { ?>
-                    <span class="btn">Google already connected</span>
-                <?php } ?>
-            <?php } else { ?>
-                <div class="note">To connect Google to your account, sign in with BYU first, then return to this page.</div>
-                <a class="btn btn-primary" href="<?php echo $app_root; ?>/login.php?redirect=<?php echo urlencode($app_root . '/profile.php'); ?>">Sign in with BYU</a>
-            <?php } ?>
+            <strong>Additional login options</strong><br>
+            <div class="note">Google account linking is temporarily disabled while the BYU login flow is being finalized.</div>
         </div>
 
         <div class="row">
