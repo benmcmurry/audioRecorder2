@@ -18,7 +18,7 @@ function ar_request_scheme() {
         return 'https';
     }
 
-    return 'http';
+    return 'https';
 }
 
 function ar_request_host() {
