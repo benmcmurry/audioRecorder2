@@ -22,19 +22,36 @@ $result = $query->get_result();
 echo "<p>Recordings for " . ar_h($name) . ".</p>";
 
 $hasRecordings = false;
+$recordIndex = 0;
 while ($result && ($row = $result->fetch_assoc())) {
     $hasRecordings = true;
+    $recordIndex++;
     $tempTitle = !empty($row['title']) ? $row['title'] : 'no title';
+    $cardHeadingId = 'recording-heading-' . (int) $row['prompt_id'] . '-' . $recordIndex;
+    $audioLabel = $tempTitle . ', ' . $row['date_created'];
+    $dateTimeValue = '';
+    if (!empty($row['date_created'])) {
+        $timestamp = strtotime((string) $row['date_created']);
+        if ($timestamp !== false) {
+            $dateTimeValue = date('c', $timestamp);
+        }
+    }
     echo "<div class='row'>";
-    echo "<div class='card m-0 p-0' id='" . ar_h($row['prompt_id']) . "'>";
-    echo "<div class='card-header'><h5 style='margin:0;padding:0;'>" . ar_h($tempTitle) . "</h5>" . ar_h($row['date_created']) . "</div>";
+    echo "<article class='card m-0 p-0' id='" . ar_h($row['prompt_id']) . "' aria-labelledby='" . ar_h($cardHeadingId) . "'>";
+    echo "<div class='card-header'><h5 id='" . ar_h($cardHeadingId) . "' style='margin:0;padding:0;'>" . ar_h($tempTitle) . ", " . ar_h($row['date_created']) . "</h5>";
+    if ($dateTimeValue !== '') {
+        echo "<time class='d-block text-muted small' datetime='" . ar_h($dateTimeValue) . "'>" . ar_h($row['date_created']) . "</time>";
+    }
+    echo "</div>";
     echo "<div class='card-body'>";
     echo "<p class='card-text'><strong>Prompt: </strong>" . ar_h($row['text']) . "</p><p>You have " . ar_h($row['prepare_time']) . " seconds to prepare and " . ar_h($row['response_time']) . " seconds to record.</p>";
-    echo "<audio class='audio-control' style='padding: 0em 0em 2em;' controls preload='none'>";
+    echo "<audio class='audio-control' style='padding: 0em 0em 2em;' controls preload='none' aria-label='" . ar_h('Play recording for ' . $audioLabel) . "'>";
     echo "<source src='" . ar_h($row['filename']) . "' type='" . ar_h($row['filetype']) . "'>";
     echo "</audio>";
     if (!empty($row['transcription_text'])) {
         echo "<p class='card-text'>Transcript: " . ar_h($row['transcription_text']) . "</p>";
+    } else {
+        echo "<p class='card-text text-muted'>Transcript unavailable.</p>";
     }
     echo "</div>";
     echo "</div>";

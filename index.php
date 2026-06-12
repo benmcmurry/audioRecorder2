@@ -85,7 +85,7 @@ $clientResponse = ($alreadyDone && isset($result2) && is_array($result2)) ? $res
 
 
             <!-- AlreadyDone? -->
-            <div id="processingScreen" class="d-none mt-5">
+            <div id="processingScreen" class="d-none mt-5" role="status" aria-live="polite" aria-atomic="true">
                 <div class="card">
                     <div class="card-body text-center">
                         <div class="spinner-border text-primary mb-3" role="status" aria-hidden="true"></div>
@@ -101,7 +101,8 @@ $clientResponse = ($alreadyDone && isset($result2) && is_array($result2)) ? $res
                     <p class="text-center">You can play your answer below.</p>
                 </div>
                 <div class="row">
-                    <audio class="" id="reviewRecording" controls>
+                    <p id="reviewRecordingLabel" class="visually-hidden">Saved response playback</p>
+                    <audio class="" id="reviewRecording" controls aria-labelledby="reviewRecordingLabel">
                     </audio>
                 </div>
 
@@ -115,7 +116,7 @@ $clientResponse = ($alreadyDone && isset($result2) && is_array($result2)) ? $res
                         <div id="transcriptionNotice" class="form-text">Transcribed by browser</div>
                     </div>
                 </div>
-                <div class="row justify-content-end" id="response"></div>
+                <div class="row justify-content-end" id="response" role="status" aria-live="polite" aria-atomic="true"></div>
 
                 <div id="repeatRecording" class="row bg-danger d-none" style="color: white; padding:2em;">
                     <p class="text-center">Please enter the password to allow the student to re-record. Please be aware that any previous recordings will be deleted.</p>
@@ -144,7 +145,7 @@ $clientResponse = ($alreadyDone && isset($result2) && is_array($result2)) ? $res
             <div id="prepareAndRecord" class="row justify-content-center">
                 <div id='timer_container' class="d-flex row flex-wrap align-items-center justify-content-between d-none">
                     <img id='timeOrRecord' class="col-2 oscillate" src='images/lightbulb.jpg' alt='Lightbulb icon' />
-                    <div id='timer' class='col-10 text-end'></div>
+                    <div id='timer' class='col-10 text-end' aria-live="off"></div>
 
                 </div>
             </div>

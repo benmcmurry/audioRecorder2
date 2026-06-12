@@ -865,6 +865,7 @@ function setProcessingState(isProcessing) {
     return;
   }
 
+  processingScreen.setAttribute("aria-busy", isProcessing ? "true" : "false");
   if (isProcessing) {
     alreadyDoneBox.classList.add("d-none");
     response.classList.add("d-none");
