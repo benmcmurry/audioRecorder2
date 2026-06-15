@@ -1,141 +1,117 @@
 <?php
-$prompts = $_GET['prompts'];
+error_reporting(E_ALL & ~E_NOTICE);
+ini_set("display_errors", 1);
 include_once("../cas-go.php");
 include_once('../../../connectFiles/connect_ar.php');
 include_once('../addUser.php');
-$promptCount = substr_count($prompts, ",") + 1;
-$promptList = explode(",", $prompts);
+include_once('../phpScripts/responseHelpers.php');
 
+$appRoot = ar_web_root();
+$prompts = isset($_GET['prompts']) ? trim((string) $_GET['prompts']) : '';
+$promptList = array_values(array_filter(array_map('trim', explode(',', $prompts)), 'strlen'));
+$promptList = array_slice($promptList, 0, 6);
+$promptCount = count($promptList);
 ?>
-
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
     <title>ELC Audio Recorder</title>
     <script src="../js/accessibility-auto-alt.js" defer></script>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
-    <link href="../css/style.css" rel="stylesheet">
-
+    <?php include_once __DIR__ . '/../includes/styles_and_scripts.php'; ?>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
-    <script type="text/javascript"></script>
-    <style>
-
-    </style>
-
 </head>
-
 <body>
-    <header id="header" class="p-2 bg-byu-navy text-white fixed-top">
-        <div class="container">
-            <div class="d-flex flex-wrap align-items-center justify-content-between">
-                <div id="title">
-                    ELC Audio Recorder
+    <?php include_once __DIR__ . '/../includes/site-header.php'; ?>
+
+    <main role="main" class="container dashboard-shell mt-4 mb-5 pb-3">
+        <section class="dashboard-card mb-4">
+            <div class="section-heading">
+                <div>
+                    <p class="section-kicker">Responses</p>
+                    <h1 class="dashboard-title">Prompt response groups</h1>
                 </div>
-                <div id="user" class="text-end">
-                    <?php echo $login; ?>
-                </div>
+                <a class="btn btn-outline-primary btn-sm" href="<?php echo $appRoot; ?>/teacher/">Return to Prompt List</a>
             </div>
+            <p class="mb-0">Showing responses for <?php echo (int) $promptCount; ?> prompt<?php echo $promptCount === 1 ? '' : 's'; ?>.</p>
+        </section>
 
-        </div>
-    </header>
-    <nav class="container mt-5">
-        <div class="row">
-        <a id="createPrompt" class='button btn btn-primary me-3' href="../teacher/">Return to Prompt list</a>
-</div>
-</nav>
-    <main role="main">
-        <div class="container mt-5 mb-5 pb-3">
-        <?php 
-      
-        switch($promptCount) {
-            case 1:
-                $query = $elc_db->prepare("SELECT Audio_files.*, Users.name AS user_name, Prompts.title, Prompts.prepare_time, Prompts.response_time, Prompts.text FROM Audio_files LEFT JOIN Users ON Audio_files.netid = Users.netid JOIN Prompts ON Audio_files.prompt_id = Prompts.prompt_id WHERE Audio_files.prompt_id = ? ORDER BY COALESCE(Users.name, Audio_files.netid) ASC;");
-                $query->bind_param("s", $promptList[0]);
-                break;
-             case 2:
-                $query = $elc_db->prepare("SELECT Audio_files.*, Users.name AS user_name, Prompts.title, Prompts.prepare_time, Prompts.response_time, Prompts.text FROM Audio_files LEFT JOIN Users ON Audio_files.netid = Users.netid JOIN Prompts ON Audio_files.prompt_id = Prompts.prompt_id WHERE Audio_files.prompt_id = ? OR Audio_files.prompt_id = ? ORDER BY COALESCE(Users.name, Audio_files.netid) ASC;");
-                $query->bind_param("ss", $promptList[0], $promptList[1]);
-                break;
-            case 3:
-                $query = $elc_db->prepare("SELECT Audio_files.*, Users.name AS user_name, Prompts.title, Prompts.prepare_time, Prompts.response_time, Prompts.text FROM Audio_files LEFT JOIN Users ON Audio_files.netid = Users.netid JOIN Prompts ON Audio_files.prompt_id = Prompts.prompt_id WHERE Audio_files.prompt_id = ? OR Audio_files.prompt_id = ? OR Audio_files.prompt_id = ? ORDER BY COALESCE(Users.name, Audio_files.netid) ASC;");
-                $query->bind_param("sss", $promptList[0], $promptList[1], $promptList[2]);
-                break;
-            case 4:
-                $query = $elc_db->prepare("SELECT Audio_files.*, Users.name AS user_name, Prompts.title, Prompts.prepare_time, Prompts.response_time, Prompts.text FROM Audio_files LEFT JOIN Users ON Audio_files.netid = Users.netid JOIN Prompts ON Audio_files.prompt_id = Prompts.prompt_id WHERE Audio_files.prompt_id = ? OR Audio_files.prompt_id = ? OR Audio_files.prompt_id = ? OR Audio_files.prompt_id = ? ORDER BY COALESCE(Users.name, Audio_files.netid) ASC;");
-                $query->bind_param("ssss", $promptList[0], $promptList[1], $promptList[2], $promptList[3]);
-                break;
-            case 5:
-                $query = $elc_db->prepare("SELECT Audio_files.*, Users.name AS user_name, Prompts.title, Prompts.prepare_time, Prompts.response_time, Prompts.text FROM Audio_files LEFT JOIN Users ON Audio_files.netid = Users.netid JOIN Prompts ON Audio_files.prompt_id = Prompts.prompt_id WHERE Audio_files.prompt_id = ? OR Audio_files.prompt_id = ? OR Audio_files.prompt_id = ? OR Audio_files.prompt_id = ? OR Audio_files.prompt_id = ? ORDER BY COALESCE(Users.name, Audio_files.netid) ASC;");
-                $query->bind_param("sssss", $promptList[0], $promptList[1], $promptList[2], $promptList[3], $promptList[4]);
-                break;
-            case 6:
-                $query = $elc_db->prepare("SELECT Audio_files.*, Users.name AS user_name, Prompts.title, Prompts.prepare_time, Prompts.response_time, Prompts.text FROM Audio_files LEFT JOIN Users ON Audio_files.netid = Users.netid JOIN Prompts ON Audio_files.prompt_id = Prompts.prompt_id WHERE Audio_files.prompt_id = ? OR Audio_files.prompt_id = ? OR Audio_files.prompt_id = ? OR Audio_files.prompt_id = ? OR Audio_files.prompt_id = ? OR Audio_files.prompt_id = ? ORDER BY COALESCE(Users.name, Audio_files.netid) ASC;");
-                $query->bind_param("ssssss", $promptList[0], $promptList[1], $promptList[2], $promptList[3], $promptList[4], $promptList[5]);
-                break;
+        <section class="dashboard-card">
+            <?php if ($promptCount === 0) { ?>
+                <div class="empty-state">No prompt IDs were provided.</div>
+            <?php } else { ?>
+                <?php
+                switch ($promptCount) {
+                    case 1:
+                        $query = $elc_db->prepare("SELECT Audio_files.*, Users.name AS user_name, Prompts.title, Prompts.prepare_time, Prompts.response_time, Prompts.text FROM Audio_files LEFT JOIN Users ON Audio_files.netid = Users.netid JOIN Prompts ON Audio_files.prompt_id = Prompts.prompt_id WHERE Audio_files.prompt_id = ? ORDER BY COALESCE(Users.name, Audio_files.netid) ASC;");
+                        $query->bind_param("s", $promptList[0]);
+                        break;
+                    case 2:
+                        $query = $elc_db->prepare("SELECT Audio_files.*, Users.name AS user_name, Prompts.title, Prompts.prepare_time, Prompts.response_time, Prompts.text FROM Audio_files LEFT JOIN Users ON Audio_files.netid = Users.netid JOIN Prompts ON Audio_files.prompt_id = Prompts.prompt_id WHERE Audio_files.prompt_id = ? OR Audio_files.prompt_id = ? ORDER BY COALESCE(Users.name, Audio_files.netid) ASC;");
+                        $query->bind_param("ss", $promptList[0], $promptList[1]);
+                        break;
+                    case 3:
+                        $query = $elc_db->prepare("SELECT Audio_files.*, Users.name AS user_name, Prompts.title, Prompts.prepare_time, Prompts.response_time, Prompts.text FROM Audio_files LEFT JOIN Users ON Audio_files.netid = Users.netid JOIN Prompts ON Audio_files.prompt_id = Prompts.prompt_id WHERE Audio_files.prompt_id = ? OR Audio_files.prompt_id = ? OR Audio_files.prompt_id = ? ORDER BY COALESCE(Users.name, Audio_files.netid) ASC;");
+                        $query->bind_param("sss", $promptList[0], $promptList[1], $promptList[2]);
+                        break;
+                    case 4:
+                        $query = $elc_db->prepare("SELECT Audio_files.*, Users.name AS user_name, Prompts.title, Prompts.prepare_time, Prompts.response_time, Prompts.text FROM Audio_files LEFT JOIN Users ON Audio_files.netid = Users.netid JOIN Prompts ON Audio_files.prompt_id = Prompts.prompt_id WHERE Audio_files.prompt_id = ? OR Audio_files.prompt_id = ? OR Audio_files.prompt_id = ? OR Audio_files.prompt_id = ? ORDER BY COALESCE(Users.name, Audio_files.netid) ASC;");
+                        $query->bind_param("ssss", $promptList[0], $promptList[1], $promptList[2], $promptList[3]);
+                        break;
+                    case 5:
+                        $query = $elc_db->prepare("SELECT Audio_files.*, Users.name AS user_name, Prompts.title, Prompts.prepare_time, Prompts.response_time, Prompts.text FROM Audio_files LEFT JOIN Users ON Audio_files.netid = Users.netid JOIN Prompts ON Audio_files.prompt_id = Prompts.prompt_id WHERE Audio_files.prompt_id = ? OR Audio_files.prompt_id = ? OR Audio_files.prompt_id = ? OR Audio_files.prompt_id = ? OR Audio_files.prompt_id = ? ORDER BY COALESCE(Users.name, Audio_files.netid) ASC;");
+                        $query->bind_param("sssss", $promptList[0], $promptList[1], $promptList[2], $promptList[3], $promptList[4]);
+                        break;
+                    default:
+                        $query = $elc_db->prepare("SELECT Audio_files.*, Users.name AS user_name, Prompts.title, Prompts.prepare_time, Prompts.response_time, Prompts.text FROM Audio_files LEFT JOIN Users ON Audio_files.netid = Users.netid JOIN Prompts ON Audio_files.prompt_id = Prompts.prompt_id WHERE Audio_files.prompt_id = ? OR Audio_files.prompt_id = ? OR Audio_files.prompt_id = ? OR Audio_files.prompt_id = ? OR Audio_files.prompt_id = ? OR Audio_files.prompt_id = ? ORDER BY COALESCE(Users.name, Audio_files.netid) ASC;");
+                        $query->bind_param("ssssss", $promptList[0], $promptList[1], $promptList[2], $promptList[3], $promptList[4], $promptList[5]);
+                        break;
+                }
 
-
-
-
-        }
-        ?>
-
-            <?php
-            $transcription_text = "<h2>Transcripts</h2>";
-            // $query = $elc_db->prepare("SELECT * FROM Audio_files LEFT JOIN Users ON Audio_files.netid = Users.netid WHERE prompt_id = ? ORDER BY name ASC");
-            // $query->bind_param("s", $prompts);
-            $query->execute();
-            $result = $query->get_result();
-            $previousName = "none";
-            while ($row = $result->fetch_assoc()) { 
-                $studentName = $row['user_name'] ? $row['user_name'] : $row['netid'];
-                $transcription_text = "<h3>".$studentName."</h3><p>".$row['transcription_text']."</p>";
-                ?>
-                <?php if($studentName != $previousName && $previousName !="none") {
-
-                    ?>
-                            </div> <!-- end card body -->
-                        </div> <!-- end card -->
-                    </div> <!-- end row -->
-                <?php } // check to see if same as previous
-                if($studentName != $previousName || $previousName == "none") { ?>
-                    <div class='row'>
-                         <div class="card  m-0 p-0" id='<?php echo $row['prompt_id']; ?>'>
-                            <div class='card-header'> <?php echo $studentName; ?> </div>
-                            <div class='card-body'>
-                <?php } ?>
-                    
-                                <?php echo "<p>".$row['title']." (".$row['prepare_time']."/".$row['response_time'].") - ". $row['text']."</p>"; ?>
-                                <audio class="audio-controls" style='padding: 0em 0em 2em;' controls>
-                                    <source src='<?php echo "../".$row['filename']; ?>' type='<?php echo $row['filetype']; ?>'>
-                                </audio>
-                                <p class="card-text"> <?php echo $row['transcription_text']; ?> </p>
-            <?php
-                $previousName = $studentName;
-            } ?>
-                            </div> <!-- end card body -->
-                        </div> <!-- end card -->
-                    </div> <!-- end row -->
-        </div> <!-- end div inside of main -->
-       
-    </main>
-    <footer class='p-2 bg-byu-navy text-white fixed-bottom'>
-        <div class="container-fluid">
-            <div class="d-flex flex-wrap align-items-center justify-content-around">
-                <div class="text-center small">
-                    <div>Developed by Ben McMurry</div>
-                    <div> <a href="https://elc.byu.edu">English Language Center</a>, <a href="https://www.byu.edu">BYU</a>
+                $query->execute();
+                $result = $query->get_result();
+                $previousName = 'none';
+                while ($row = $result->fetch_assoc()) {
+                    $studentName = $row['user_name'] ? $row['user_name'] : $row['netid'];
+                    if ($studentName != $previousName && $previousName !== 'none') {
+                        ?>
+                            </div>
+                        </div>
                     </div>
+                        <?php
+                    }
+                    if ($studentName != $previousName || $previousName === 'none') {
+                        ?>
+                        <div class="row mb-3">
+                            <div class="card m-0 p-0">
+                                <div class="card-header"><?php echo ar_h($studentName); ?></div>
+                                <div class="card-body">
+                        <?php
+                    }
+                    ?>
+                                    <p><?php echo ar_h($row['title']); ?> (<?php echo ar_h($row['prepare_time']); ?>/<?php echo ar_h($row['response_time']); ?>) - <?php echo ar_h($row['text']); ?></p>
+                                    <audio class="audio-controls" style="padding: 0 0 2em;" controls>
+                                        <source src="<?php echo '../' . ar_h($row['filename']); ?>" type="<?php echo ar_h($row['filetype']); ?>">
+                                    </audio>
+                                    <p class="card-text"><?php echo ar_h($row['transcription_text']); ?></p>
+                    <?php
+                    $previousName = $studentName;
+                }
+                if ($previousName !== 'none') {
+                    ?>
+                                </div>
+                            </div>
+                        </div>
+                    <?php
+                }
+                ?>
+            <?php } ?>
+        </section>
+    </main>
 
-                </div>
-
-            </div>
-    </footer>
-    <script src='../js/responses.js'></script>
-  
+    <?php include_once __DIR__ . '/../includes/site-footer.php'; ?>
+    <script src="../js/responses.js"></script>
 </body>
-
 </html>

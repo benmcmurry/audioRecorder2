@@ -1,24 +1,13 @@
 <?php
-$prompt_id = isset($_GET['prompt_id']) ? $_GET['prompt_id'] : '';
+error_reporting(E_ALL & ~E_NOTICE);
+ini_set("display_errors", 1);
 include_once("../cas-go.php");
 include_once('../../../connectFiles/connect_ar.php');
 include_once('../addUser.php');
 include_once('../phpScripts/responseHelpers.php');
 
-$promptRow = ar_prompt_for_owner($elc_db, $prompt_id, $netid);
-if (!$promptRow) {
-    http_response_code(403);
-    echo "You do not have access to this prompt.";
-    exit;
-}
-
-$responses = ar_prompt_responses($elc_db, $prompt_id);
-$responseCount = count($responses);
-$checked = ((int) $promptRow['transcription'] === 1) ? "checked" : "";
-$readPromptChecked = (!isset($promptRow['read_prompt']) || (int) $promptRow['read_prompt'] === 1) ? "checked" : "";
-$promptUrl = ar_public_origin() . ar_web_root() . '/index.php?prompt_id=' . urlencode($prompt_id);
+$server = ar_public_origin() . ar_web_root() . '/index.php';
 ?>
-
 <!DOCTYPE html>
 <html lang="en">
 
@@ -28,32 +17,19 @@ $promptUrl = ar_public_origin() . ar_web_root() . '/index.php?prompt_id=' . urle
     <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
     <title>ELC Audio Recorder</title>
     <script src="../js/accessibility-auto-alt.js" defer></script>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
-    <link href="../css/style.css" rel="stylesheet">
-
+    <?php include_once __DIR__ . '/../includes/styles_and_scripts.php'; ?>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
-    <script type="text/javascript"></script>
-    <style>
+    <script type="text/javascript">
 
-    </style>
+
+    </script>
+
 
 </head>
 
 <body>
-    <header id="header" class="p-2 bg-byu-navy text-white fixed-top">
-        <div class="container">
-            <div class="d-flex flex-wrap align-items-center justify-content-between">
-                <div id="title">
-                    <?php echo "<a href='" . $app_root . "/index.php'>ELC Audio Recorder</a>" ?>
-                </div>
-                <div id="user" class="text-end">
-                    <?php echo $login; ?>
-                </div>
-            </div>
-
-        </div>
-    </header>
-    <nav class="container mt-5 dashboard-shell">
+    <?php include_once __DIR__ . '/../includes/site-header.php'; ?>
+    <nav class="container dashboard-shell mt-5">
         <div class="d-flex flex-wrap align-items-center justify-content-between gap-2">
             <a id="createPrompt" class='button btn btn-outline-primary btn-sm' href="../teacher/">Return to Prompt List</a>
             <div class="d-flex flex-wrap gap-2">
@@ -169,20 +145,9 @@ $promptUrl = ar_public_origin() . ar_web_root() . '/index.php?prompt_id=' . urle
         </div>
 
     </main>
-    <footer class='p-2 bg-byu-navy text-white fixed-bottom'>
-        <div class="container-fluid">
-            <div class="d-flex flex-wrap align-items-center justify-content-around">
-                <div class="text-center small">
-                    <div>Developed by Ben McMurry</div>
-                    <div> <a href="https://elc.byu.edu">English Language Center</a>, <a href="https://www.byu.edu">BYU</a>
-                    </div>
-
-                </div>
-
-            </div>
-    </footer>
+    <?php include_once __DIR__ . '/../includes/site-footer.php'; ?>
     <script src='../js/responses.js'></script>
-  
+
 </body>
 
 </html>

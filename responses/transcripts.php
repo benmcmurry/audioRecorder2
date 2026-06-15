@@ -1,78 +1,64 @@
 <?php
-$prompt_id = $_GET['prompt_id'];
+error_reporting(E_ALL & ~E_NOTICE);
+ini_set("display_errors", 1);
 include_once("../cas-go.php");
 include_once('../../../connectFiles/connect_ar.php');
 include_once('../addUser.php');
+include_once('../phpScripts/responseHelpers.php');
+
+$appRoot = ar_web_root();
+$prompt_id = isset($_GET['prompt_id']) ? trim((string) $_GET['prompt_id']) : '';
 
 $query = $elc_db->prepare("SELECT Audio_files.*, Users.name AS user_name FROM Audio_files LEFT JOIN Users ON Audio_files.netid = Users.netid WHERE Audio_files.prompt_id=? ORDER BY Audio_files.date_created DESC");
 $query->bind_param("s", $prompt_id);
 $query->execute();
 $result = $query->get_result();
 ?>
-
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
     <title>ELC Audio Recorder</title>
     <script src="../js/accessibility-auto-alt.js" defer></script>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
-    <link href="../css/style.css" rel="stylesheet">
-
+    <?php include_once __DIR__ . '/../includes/styles_and_scripts.php'; ?>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
-    <script type="text/javascript"></script>
-    <style>
-
-    </style>
-
 </head>
-
 <body>
-    <header id="header" class="p-2 bg-byu-navy text-white fixed-top">
-        <div class="container">
-            <div class="d-flex flex-wrap align-items-center justify-content-between">
-                <div id="title">
-                    ELC Audio Recorder
-                </div>
-                <div id="user" class="text-end">
-                    <?php echo $login; ?>
-                </div>
-            </div>
+    <?php include_once __DIR__ . '/../includes/site-header.php'; ?>
 
-        </div>
-    </header>
-    <main>
-        <div class="container mt-5 mb-5 pb-3">
-            <div class="card m-0 p-0">
-                <div class='card-body'>
-                    <p class="card-text">
-                <?php
+    <main class="container dashboard-shell mt-4 mb-5 pb-3">
+        <section class="dashboard-card mb-4">
+            <div class="section-heading">
+                <div>
+                    <p class="section-kicker">Transcripts</p>
+                    <h1 class="dashboard-title">Prompt transcript list</h1>
+                </div>
+                <a class="btn btn-outline-primary btn-sm" href="<?php echo $appRoot; ?>/teacher/">Return to Prompt List</a>
+            </div>
+        </section>
+
+        <section class="dashboard-card">
+            <?php if (!$prompt_id) { ?>
+                <div class="empty-state">No prompt ID was provided.</div>
+            <?php } else { ?>
+                <div class="card m-0 p-0 border-0">
+                    <div class="card-body">
+                        <?php
                         while ($row = $result->fetch_assoc()) {
                             $transcription = trim((string) $row['transcription_text']);
                             $isTranscriptionPending = empty($transcription) && in_array((string) ($row['transcription_status'] ?? ''), array('pending', 'processing'), true);
-                        ?>
+                            ?>
                             <h4 class="card-text"><?php echo ar_h($row['user_name'] ? $row['user_name'] : $row['netid']); ?></h4>
                             <p class="card-text"><?php echo $isTranscriptionPending ? 'Transcription is still processing.' : ar_h($row['transcription_text']); ?></p>
-                        <?php   } ?></p>
-                </div>
-            </div>
-        </div>
-
-
-        </div>
-    </main>
-    <footer class='p-2 bg-byu-navy text-white fixed-bottom'>
-        <div class="container-fluid">
-            <div class="d-flex flex-wrap align-items-center justify-content-around">
-                <div class="text-center small">
-                    <div>Developed by Ben McMurry</div>
-                    <div> <a href="https://elc.byu.edu">English Language Center</a>, <a href="https://www.byu.edu">BYU</a>
+                        <?php } ?>
                     </div>
-
                 </div>
+            <?php } ?>
+        </section>
+    </main>
 
-            </div>
-    </footer>
+    <?php include_once __DIR__ . '/../includes/site-footer.php'; ?>
+</body>
+</html>
