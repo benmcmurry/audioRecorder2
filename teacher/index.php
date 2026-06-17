@@ -28,7 +28,7 @@ $server = ar_public_origin() . ar_web_root() . '/index.php';
 </head>
 
 <body>
-    <?php include_once __DIR__ . '/../includes/site-header.php'; ?>
+    <?php require_once __DIR__ . '/../includes/shared-shell.php'; audio_recorder_render_header(); ?>
     <nav class="container mt-5 dashboard-shell">
         <div class="d-flex flex-wrap align-items-center justify-content-between gap-2">
             <div>
@@ -109,7 +109,7 @@ $server = ar_public_origin() . ar_web_root() . '/index.php';
             ?>
         </div>
     </main>
-    <?php include_once __DIR__ . '/../includes/site-footer.php'; ?>
+    <?php audio_recorder_render_footer(); ?>
     <script src="../js/teacher.js"></script>
 
 </body>

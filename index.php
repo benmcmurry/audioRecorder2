@@ -65,7 +65,7 @@ $clientResponse = ($alreadyDone && isset($result2) && is_array($result2)) ? $res
 </head>
 
 <body>
-    <?php include_once __DIR__ . '/includes/site-header.php'; ?>
+    <?php require_once __DIR__ . '/includes/shared-shell.php'; audio_recorder_render_header(); ?>
     <main role="main">
         <div id="mainContainer" class="container mt-5 mb-5 pb-3">
 
@@ -177,7 +177,7 @@ $clientResponse = ($alreadyDone && isset($result2) && is_array($result2)) ? $res
        <?php } ?>
      
     </main>
-    <?php include_once __DIR__ . '/includes/site-footer.php'; ?>
+    <?php audio_recorder_render_footer(); ?>
     <script>
         if (archiveStatus === 1) {
             var message = document.querySelector('#mainContainer');

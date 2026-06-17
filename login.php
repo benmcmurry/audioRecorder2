@@ -26,7 +26,7 @@ $loginUrl = shared_auth_login_url($requestedRedirect, 'audioRecorder');
     <?php include_once __DIR__ . '/includes/styles_and_scripts.php'; ?>
 </head>
 <body>
-    <?php include_once __DIR__ . '/includes/site-header.php'; ?>
+    <?php require_once __DIR__ . '/includes/shared-shell.php'; audio_recorder_render_header(); ?>
 
     <main class="container py-5">
         <div class="row justify-content-center">
@@ -50,6 +50,6 @@ $loginUrl = shared_auth_login_url($requestedRedirect, 'audioRecorder');
         </div>
     </main>
 
-    <?php include_once __DIR__ . '/includes/site-footer.php'; ?>
+    <?php audio_recorder_render_footer(); ?>
 </body>
 </html>
