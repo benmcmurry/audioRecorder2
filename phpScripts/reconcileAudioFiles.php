@@ -6,7 +6,7 @@ if (php_sapi_name() !== 'cli') {
     exit;
 }
 
-include_once(dirname(__FILE__) . '/../../../connectFiles/connect_ar.php');
+include_once((getenv('APP_PRIVATE_ROOT') ? rtrim(trim((string) getenv('APP_PRIVATE_ROOT')), '/') : dirname(__DIR__, 3) . '/private-config') . '/connectFiles/connect_ar.php');
 
 $missingFiles = array();
 $query = $elc_db->query("SELECT id, filename, status FROM Audio_files WHERE filename IS NOT NULL AND filename <> ''");

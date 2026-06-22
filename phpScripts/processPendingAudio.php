@@ -6,7 +6,7 @@ if (php_sapi_name() !== 'cli') {
     exit;
 }
 
-include_once(dirname(__FILE__) . '/../../../connectFiles/connect_ar.php');
+include_once((getenv('APP_PRIVATE_ROOT') ? rtrim(trim((string) getenv('APP_PRIVATE_ROOT')), '/') : dirname(__DIR__, 3) . '/private-config') . '/connectFiles/connect_ar.php');
 include_once(__DIR__ . '/audioProcessingCommon.php');
 
 set_error_handler(function ($severity, $message, $file, $line) {

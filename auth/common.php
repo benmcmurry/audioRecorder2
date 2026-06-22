@@ -81,6 +81,12 @@ function ar_server_config() {
     $privateRoot = getenv('APP_PRIVATE_ROOT');
     if ($privateRoot !== false && trim((string) $privateRoot) !== '') {
         $privateRoot = rtrim(trim((string) $privateRoot), '/');
+        if (!is_dir($privateRoot)) {
+            $privateRoot = '';
+        }
+    }
+
+    if ($privateRoot !== '') {
         $configPath = shared_auth_first_readable_path(array(
             $privateRoot . '/shared_auth_config.php',
             $privateRoot . '/google_auth_config.php',
@@ -224,7 +230,7 @@ function ar_include_db() {
     global $elc_db;
 
     if (!isset($elc_db) || !($elc_db instanceof mysqli)) {
-        include_once __DIR__ . '/../../../connectFiles/connect_ar.php';
+        include_once (getenv('APP_PRIVATE_ROOT') ? rtrim(trim((string) getenv('APP_PRIVATE_ROOT')), '/') : dirname(__DIR__, 3) . '/private-config') . '/connectFiles/connect_ar.php';
     }
 
     return $elc_db;
@@ -511,6 +517,14 @@ function ar_google_consume_url() {
 }
 
 function ar_google_public_key_path() {
+    $privateRoot = shared_auth_private_root();
+    if ($privateRoot !== '') {
+        $candidate = $privateRoot . '/keys/google_jwt_public.pem';
+        if (is_readable($candidate)) {
+            return $candidate;
+        }
+    }
+
     $env = getenv('GOOGLE_SHARED_PUBLIC_KEY_PATH');
     if ($env) {
         return trim($env);
