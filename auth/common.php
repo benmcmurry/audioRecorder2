@@ -78,6 +78,22 @@ function ar_server_config() {
     }
 
     $config = array();
+    $privateRoot = getenv('APP_PRIVATE_ROOT');
+    if ($privateRoot !== false && trim((string) $privateRoot) !== '') {
+        $privateRoot = rtrim(trim((string) $privateRoot), '/');
+        $configPath = shared_auth_first_readable_path(array(
+            $privateRoot . '/shared_auth_config.php',
+            $privateRoot . '/google_auth_config.php',
+        ));
+        if ($configPath !== '') {
+            $loaded = include $configPath;
+            if (is_array($loaded)) {
+                $config = $loaded;
+                return $config;
+            }
+        }
+    }
+
     $configPath = shared_auth_first_readable_path(array(
         getenv('SHARED_AUTH_CONFIG_PATH') ?: '',
         dirname(__DIR__, 3) . '/shared_auth_config.php',
