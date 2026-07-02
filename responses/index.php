@@ -7,6 +7,17 @@ include_once('../addUser.php');
 include_once('../phpScripts/responseHelpers.php');
 
 $server = ar_public_origin() . ar_web_root() . '/index.php';
+$prompt_id = isset($_GET['prompt_id']) ? trim((string) $_GET['prompt_id']) : '';
+$promptRow = $prompt_id !== '' ? ar_prompt_for_owner($elc_db, $prompt_id, $netid) : null;
+$responses = $promptRow ? ar_prompt_responses($elc_db, $prompt_id) : array();
+$responseCount = count($responses);
+$promptUrl = $prompt_id !== '' ? $server . '?prompt_id=' . urlencode($prompt_id) : '';
+$promptTitle = $promptRow && isset($promptRow['title']) && trim((string) $promptRow['title']) !== '' ? $promptRow['title'] : 'Untitled Prompt';
+$promptText = $promptRow && isset($promptRow['text']) ? $promptRow['text'] : '';
+$prepareTime = $promptRow && isset($promptRow['prepare_time']) ? $promptRow['prepare_time'] : '';
+$responseTime = $promptRow && isset($promptRow['response_time']) ? $promptRow['response_time'] : '';
+$checked = $promptRow && !empty($promptRow['transcription']) ? 'checked' : '';
+$readPromptChecked = !$promptRow || !isset($promptRow['read_prompt']) || (int) $promptRow['read_prompt'] === 1 ? 'checked' : '';
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -33,10 +44,10 @@ $server = ar_public_origin() . ar_web_root() . '/index.php';
         <div class="d-flex flex-wrap align-items-center justify-content-between gap-2">
             <a id="createPrompt" class='button btn btn-outline-primary btn-sm' href="../teacher/">Return to Prompt List</a>
             <div class="d-flex flex-wrap gap-2">
-                <a href="<?php echo ar_h($promptUrl); ?>" class="btn btn-outline-primary btn-sm" target="_blank" rel="noopener">Open Prompt</a>
-                <button type="button" class="btn btn-outline-primary btn-sm" id="copyPromptLink" data-prompt-url="<?php echo ar_h($promptUrl); ?>" onclick="copyPromptLink()">Copy Student Link</button>
-                <a href="../phpScripts/downloadPromptFiles.php?prompt_id=<?php echo urlencode($prompt_id); ?>&type=audio" class="btn btn-outline-primary btn-sm">Download All Audio</a>
-                <a href="../phpScripts/downloadPromptFiles.php?prompt_id=<?php echo urlencode($prompt_id); ?>&type=transcripts" class="btn btn-outline-primary btn-sm">Download All Transcriptions</a>
+                <a href="<?php echo ar_h($promptUrl); ?>" class="btn btn-outline-primary btn-sm <?php echo $promptUrl === '' ? 'disabled' : ''; ?>" target="_blank" rel="noopener" <?php echo $promptUrl === '' ? 'aria-disabled="true" tabindex="-1"' : ''; ?>>Open Prompt</a>
+                <button type="button" class="btn btn-outline-primary btn-sm" id="copyPromptLink" data-prompt-url="<?php echo ar_h($promptUrl); ?>" onclick="copyPromptLink()" <?php echo $promptUrl === '' ? 'disabled' : ''; ?>>Copy Student Link</button>
+                <a href="../phpScripts/downloadPromptFiles.php?prompt_id=<?php echo urlencode($prompt_id); ?>&type=audio" class="btn btn-outline-primary btn-sm <?php echo $prompt_id === '' ? 'disabled' : ''; ?>" <?php echo $prompt_id === '' ? 'aria-disabled="true" tabindex="-1"' : ''; ?>>Download All Audio</a>
+                <a href="../phpScripts/downloadPromptFiles.php?prompt_id=<?php echo urlencode($prompt_id); ?>&type=transcripts" class="btn btn-outline-primary btn-sm <?php echo $prompt_id === '' ? 'disabled' : ''; ?>" <?php echo $prompt_id === '' ? 'aria-disabled="true" tabindex="-1"' : ''; ?>>Download All Transcriptions</a>
             </div>
         </div>
     </nav>
@@ -46,30 +57,30 @@ $server = ar_public_origin() . ar_web_root() . '/index.php';
                 <div class="section-heading">
                     <div>
                         <p class="section-kicker">Prompt Editor</p>
-                        <h1><?php echo ar_h($promptRow['title'] ? $promptRow['title'] : 'Untitled Prompt'); ?></h1>
+                        <h1><?php echo ar_h($promptTitle); ?></h1>
                     </div>
-                    <button class='btn btn-primary btn-sm' id='save' onclick="save('<?php echo ar_h($prompt_id); ?>');">Save Prompt</button>
+                    <button class='btn btn-primary btn-sm' id='save' onclick="save('<?php echo ar_h($prompt_id); ?>');" <?php echo $prompt_id === '' ? 'disabled' : ''; ?>>Save Prompt</button>
                 </div>
                 <form id="updateForm">
                     <div class="mb-3">
                         <label for="prompt_title" class="form-label">Title</label>
-                        <input type="text" class="form-control" id="prompt_title" aria-describedby="prompt_titleHelp" value="<?php echo ar_h($promptRow['title']); ?>">
+                        <input type="text" class="form-control" id="prompt_title" aria-describedby="prompt_titleHelp" value="<?php echo ar_h($promptTitle); ?>">
                         <div id="prompt_titleHelp" class="form-text">Name this prompt so it is easy to find later.</div>
                     </div>
                     <div class="mb-3">
                         <label for="text" class="form-label">Prompt Text</label>
-                        <textarea class="form-control" id="text" aria-describedby="textHelp" rows="4"><?php echo ar_h($promptRow['text']); ?></textarea>
+                        <textarea class="form-control" id="text" aria-describedby="textHelp" rows="4"><?php echo ar_h($promptText); ?></textarea>
                         <div id="textHelp" class="form-text">Students will see this before they record.</div>
                     </div>
                     <div class="row g-3 m-0">
                         <div class="col-md-3 p-0 pe-md-2">
                             <label for="prepare_time" class="form-label">Prepare Time</label>
-                            <input type="text" class="form-control" id="prepare_time" aria-describedby="prepare_timeHelp" value="<?php echo ar_h($promptRow['prepare_time']); ?>">
+                            <input type="text" class="form-control" id="prepare_time" aria-describedby="prepare_timeHelp" value="<?php echo ar_h($prepareTime); ?>">
                             <div id="prepare_timeHelp" class="form-text">Seconds before recording.</div>
                         </div>
                         <div class="col-md-3 p-0 px-md-2">
                             <label for="response_time" class="form-label">Response Time</label>
-                            <input type="text" class="form-control" id="response_time" aria-describedby="response_timeHelp" value="<?php echo ar_h($promptRow['response_time']); ?>">
+                            <input type="text" class="form-control" id="response_time" aria-describedby="response_timeHelp" value="<?php echo ar_h($responseTime); ?>">
                             <div id="response_timeHelp" class="form-text">Seconds to respond.</div>
                         </div>
                         <div class="col-md-6 p-0 ps-md-2 prompt-toggles">
@@ -94,12 +105,14 @@ $server = ar_public_origin() . ar_web_root() . '/index.php';
                         <h2><?php echo $responseCount; ?> <?php echo $responseCount === 1 ? 'Response' : 'Responses'; ?></h2>
                     </div>
                     <div class="d-flex flex-wrap gap-2">
-                        <a href="../phpScripts/downloadPromptFiles.php?prompt_id=<?php echo urlencode($prompt_id); ?>&type=audio" class="btn btn-outline-primary btn-sm">Download All Audio</a>
-                        <a href="../phpScripts/downloadPromptFiles.php?prompt_id=<?php echo urlencode($prompt_id); ?>&type=transcripts" class="btn btn-outline-primary btn-sm">Download All Transcriptions</a>
+                        <a href="../phpScripts/downloadPromptFiles.php?prompt_id=<?php echo urlencode($prompt_id); ?>&type=audio" class="btn btn-outline-primary btn-sm <?php echo $prompt_id === '' ? 'disabled' : ''; ?>" <?php echo $prompt_id === '' ? 'aria-disabled="true" tabindex="-1"' : ''; ?>>Download All Audio</a>
+                        <a href="../phpScripts/downloadPromptFiles.php?prompt_id=<?php echo urlencode($prompt_id); ?>&type=transcripts" class="btn btn-outline-primary btn-sm <?php echo $prompt_id === '' ? 'disabled' : ''; ?>" <?php echo $prompt_id === '' ? 'aria-disabled="true" tabindex="-1"' : ''; ?>>Download All Transcriptions</a>
                     </div>
                 </div>
 
-                <?php if ($responseCount === 0) { ?>
+                <?php if ($prompt_id === '' || !$promptRow) { ?>
+                    <div class="empty-state">Prompt not found or you do not have access to it.</div>
+                <?php } elseif ($responseCount === 0) { ?>
                     <div class="empty-state">No students have submitted responses for this prompt yet.</div>
                 <?php } ?>
 
