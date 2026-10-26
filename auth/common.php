@@ -172,9 +172,8 @@ function ar_auth_debug_log($stage, $extra = array()) {
         'xfh' => isset($_SERVER['HTTP_X_FORWARDED_HOST']) ? $_SERVER['HTTP_X_FORWARDED_HOST'] : '',
         'xfp' => isset($_SERVER['HTTP_X_FORWARDED_PROTO']) ? $_SERVER['HTTP_X_FORWARDED_PROTO'] : '',
         'scheme' => ar_request_scheme(),
-        'uri' => isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : '',
+        'path' => parse_url((string) ($_SERVER['REQUEST_URI'] ?? ''), PHP_URL_PATH),
         'script' => isset($_SERVER['SCRIPT_NAME']) ? $_SERVER['SCRIPT_NAME'] : '',
-        'session_id' => function_exists('session_id') ? session_id() : '',
     );
 
     foreach ($extra as $key => $value) {
@@ -488,7 +487,9 @@ function ar_clear_local_session(): void
 
 function ar_auth_required_redirect() {
     $target = ar_current_url();
-    ar_auth_debug_log('auth_required_redirect', array('target' => $target));
+    ar_auth_debug_log('auth_required_redirect', array(
+        'target_path' => parse_url($target, PHP_URL_PATH),
+    ));
     ar_redirect(shared_auth_build_url_with_query(ar_public_origin() . ar_web_root() . '/login.php', array(
         'redirect' => $target,
     )));
