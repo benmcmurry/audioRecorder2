@@ -56,12 +56,33 @@ function ar_public_origin() {
     return ar_request_origin();
 }
 
+function ar_session_cookie_secure(): bool {
+    // Forwarded headers are client-controlled unless a trusted proxy strips them.
+    $https = strtolower(trim((string) ($_SERVER['HTTPS'] ?? '')));
+    if (($https !== '' && $https !== 'off' && $https !== '0')
+        || (int) ($_SERVER['SERVER_PORT'] ?? 0) === 443) {
+        return true;
+    }
+
+    if (PHP_SAPI === 'cli' && !isset($_SERVER['REQUEST_METHOD'])) {
+        return false;
+    }
+
+    $peer = strtolower(trim((string) ($_SERVER['REMOTE_ADDR'] ?? '')));
+    $authority = trim((string) ($_SERVER['HTTP_HOST'] ?? $_SERVER['SERVER_NAME'] ?? ''));
+    $host = parse_url('http://' . $authority, PHP_URL_HOST);
+
+    return !in_array($peer, array('127.0.0.1', '::1'), true)
+        || !is_string($host)
+        || !in_array(strtolower($host), array('localhost', '127.0.0.1', '::1'), true);
+}
+
 if (session_status() !== PHP_SESSION_ACTIVE) {
     session_set_cookie_params(array(
         'lifetime' => 0,
         'path' => '/',
         'domain' => '',
-        'secure' => ar_request_scheme() === 'https',
+        'secure' => ar_session_cookie_secure(),
         'httponly' => true,
         'samesite' => 'Lax',
     ));
@@ -451,15 +472,13 @@ function ar_clear_local_session(): void
 
         if (!headers_sent()) {
             foreach ($cookiePaths as $path) {
-                setcookie(
-                    session_name(),
-                    '',
-                    time() - 3600,
-                    $path,
-                    $params['domain'] ?? '',
-                    !empty($params['secure']),
-                    !empty($params['httponly'])
-                );
+                setcookie(session_name(), '', array(
+                    'expires' => time() - 3600,
+                    'path' => $path,
+                    'secure' => ar_session_cookie_secure(),
+                    'httponly' => true,
+                    'samesite' => 'Lax',
+                ));
             }
         }
 
