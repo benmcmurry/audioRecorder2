@@ -63,6 +63,9 @@ $clientResponse = ($alreadyDone && isset($result2) && is_array($result2)) ? $res
         var reviewSource = <?php echo ar_js($clientResponse ? $clientResponse['filename'] : ''); ?>;
         var reviewSourceType = <?php echo ar_js($clientResponse ? $clientResponse['filetype'] : ''); ?>;
         var reviewResponseId = <?php echo ar_js($clientResponse ? (int) $clientResponse['id'] : 0); ?>;
+        var reviewTranscriptionStatus = <?php echo ar_js($clientResponse ? (string) $clientResponse['transcription_status'] : ''); ?>;
+        var reviewTranscriptionText = <?php echo ar_js($clientResponse ? (string) $clientResponse['transcription_text'] : ''); ?>;
+        var reviewTranscriptionSource = <?php echo ar_js($clientResponse ? (string) $clientResponse['transcription_source'] : ''); ?>;
     </script>
 </head>
 
@@ -95,7 +98,23 @@ $clientResponse = ($alreadyDone && isset($result2) && is_array($result2)) ? $res
                     </audio>
                 </div>
 
-                <div id="transcriptionRow" class="row">
+                <div id="transcriptionProgress" class="row d-none" role="status" aria-live="polite" aria-atomic="true" aria-busy="true">
+                    <div class="card mx-auto text-center transcription-progress-card">
+                        <div class="card-body">
+                            <div class="spinner-border text-primary mb-3" role="status" aria-hidden="true"></div>
+                            <h4 class="card-title">Preparing your transcript</h4>
+                            <p class="card-text mb-0">Your transcript is processing. You can leave this page and return later to see it.</p>
+                        </div>
+                    </div>
+                </div>
+                <div id="transcriptionFailure" class="row d-none" role="status" aria-live="polite" aria-atomic="true">
+                    <div class="alert alert-warning mx-auto transcription-progress-card mb-0">
+                        <p class="mb-2">We couldn’t create your transcript. You can try again.</p>
+                        <button id="retryTranscriptionButton" type="button" class="btn btn-outline-primary">Try transcription again</button>
+                        <span id="retryTranscriptionStatus" class="ms-2 small" aria-live="polite"></span>
+                    </div>
+                </div>
+                <div id="transcriptionRow" class="row d-none">
                     <h4>Transcription</h4> 
                     <div class="">
                         <label for="transcriptionBox" class="form-label">Transcription</label>

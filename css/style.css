@@ -138,6 +138,17 @@ audio { width: 100%; }
     float: none;
 }
 
+.transcription-progress-card {
+    width: 100%;
+    max-width: 680px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    #transcriptionProgress .spinner-border {
+        animation: none;
+    }
+}
+
 /* Dashboard polish */
 
 .dashboard-shell {

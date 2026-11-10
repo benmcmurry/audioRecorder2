@@ -41,7 +41,11 @@ var recordTime = 5000;
 var response = document.querySelector("#response");
 var transcriptionRow = document.querySelector("#transcriptionRow");
 var processingScreen = document.querySelector("#processingScreen");
+var transcriptionProgress = document.querySelector("#transcriptionProgress");
+var transcriptionFailure = document.querySelector("#transcriptionFailure");
 var transcriptionNotice = document.querySelector("#transcriptionNotice");
+var retryTranscriptionButton = document.querySelector("#retryTranscriptionButton");
+var retryTranscriptionStatus = document.querySelector("#retryTranscriptionStatus");
 var loadRecordingsButton = document.querySelector("#loadRecordingsButton");
 var recordingsStatus = document.querySelector("#recordingsStatus");
 var allRecordingsResults = document.querySelector("#allRecordingsResults");
@@ -51,6 +55,8 @@ var selectedTtsVoice = null;
 var pendingUploadPromise = null;
 var pendingTranscriptionSavePromise = null;
 var activeSubmissionId = null;
+var transcriptionPollTimer = null;
+var transcriptionPollInFlight = false;
 
 //transcript variables
 var recognition = null;
@@ -106,7 +112,32 @@ if (alreadyDone) {
   alreadyDoneBox.classList.remove("d-none");
   reviewRecording.src = "phpScripts/streamResponse.php?id=" + encodeURIComponent(reviewResponseId);
   reviewRecording.type = reviewSourceType;
+  if (reviewTranscriptionStatus === "complete" || reviewTranscriptionText) {
+    showTranscriptionComplete(reviewTranscriptionText, reviewTranscriptionSource);
+  } else if (reviewTranscriptionStatus === "failed") {
+    showTranscriptionFailure();
+  } else {
+    showTranscriptionProgress();
+    scheduleTranscriptionPoll();
+  }
 }
+
+if (retryTranscriptionButton) {
+  retryTranscriptionButton.addEventListener("click", retryTranscription);
+}
+
+document.addEventListener("visibilitychange", function () {
+  if (document.hidden) {
+    clearTimeout(transcriptionPollTimer);
+    transcriptionPollTimer = null;
+  } else if (alreadyDone && !transcriptionProgress.classList.contains("d-none")) {
+    scheduleTranscriptionPoll();
+  }
+});
+window.addEventListener("pagehide", function () {
+  clearTimeout(transcriptionPollTimer);
+  transcriptionPollTimer = null;
+});
 
 if (loadRecordingsButton && allRecordingsResults) {
   loadRecordingsButton.addEventListener("click", function () {
@@ -872,29 +903,137 @@ function showCompletedRecording(uploadResponseData) {
   visualizer.classList.add("d-none");
   prepareAndRecord.classList.add("d-none");
   alreadyDone = true;
+  if (uploadResponseData && uploadResponseData.response_id) {
+    reviewResponseId = parseInt(uploadResponseData.response_id, 10);
+  }
   if (uploadResponseData && uploadResponseData.message) {
     var answerHtml = "<p align='center'>" + escapeHtml(uploadResponseData.message) + "</p>";
-    if (uploadResponseData.transcription_error) {
-      answerHtml += "<p class='text-warning'>Automatic transcription was unavailable: " +
-        escapeHtml(uploadResponseData.transcription_error) + "</p>";
-    } else if (uploadResponseData.transcription_status === "pending") {
-      answerHtml += "<p>Transcription is still processing. You can refresh this page shortly to see it.</p>";
-    } else if (uploadResponseData.transcription_required == 1) {
+    if (uploadResponseData.transcription_required == 1 && uploadResponseData.transcription_status === "complete") {
       answerHtml += "<p>Now, please review your transcription below. You can edit it if needed.</p>";
     }
     alreadyAnswered.innerHTML = answerHtml;
   }
 
-  if (
-    uploadResponseData &&
-    typeof uploadResponseData.transcription_text === "string" &&
-    document.getElementById("transcriptionBox")
-  ) {
-    document.getElementById("transcriptionBox").value = uploadResponseData.transcription_text;
-  }
-
-  setTranscriptionNotice(uploadResponseData ? uploadResponseData.transcription_source : "browser");
   alreadyDoneBox.classList.remove("d-none");
+  var transcriptionStatus = uploadResponseData ? uploadResponseData.transcription_status : "complete";
+  if (transcriptionStatus === "complete" || (uploadResponseData && uploadResponseData.transcription_text)) {
+    showTranscriptionComplete(
+      uploadResponseData && typeof uploadResponseData.transcription_text === "string" ? uploadResponseData.transcription_text : "",
+      uploadResponseData ? uploadResponseData.transcription_source : "browser"
+    );
+  } else if (transcriptionStatus === "failed" || (uploadResponseData && uploadResponseData.transcription_error)) {
+    showTranscriptionFailure();
+  } else {
+    showTranscriptionProgress();
+    scheduleTranscriptionPoll();
+  }
+}
+
+function showTranscriptionProgress() {
+  transcriptionRow.classList.add("d-none");
+  transcriptionFailure.classList.add("d-none");
+  transcriptionProgress.classList.remove("d-none");
+  transcriptionProgress.setAttribute("aria-busy", "true");
+}
+
+function showTranscriptionComplete(text, source) {
+  clearTimeout(transcriptionPollTimer);
+  transcriptionPollTimer = null;
+  transcriptionProgress.classList.add("d-none");
+  transcriptionFailure.classList.add("d-none");
+  transcriptionProgress.setAttribute("aria-busy", "false");
+  transcriptionBox.value = typeof text === "string" ? text : "";
+  setTranscriptionNotice(source || "browser");
+  transcriptionRow.classList.remove("d-none");
+}
+
+function showTranscriptionFailure() {
+  clearTimeout(transcriptionPollTimer);
+  transcriptionPollTimer = null;
+  transcriptionProgress.classList.add("d-none");
+  transcriptionRow.classList.add("d-none");
+  transcriptionFailure.classList.remove("d-none");
+  transcriptionProgress.setAttribute("aria-busy", "false");
+  retryTranscriptionButton.disabled = false;
+  retryTranscriptionStatus.textContent = "";
+}
+
+function scheduleTranscriptionPoll() {
+  if (document.hidden || transcriptionPollTimer || !reviewResponseId) {
+    return;
+  }
+  transcriptionPollTimer = window.setTimeout(checkTranscriptionStatus, 5000);
+}
+
+function checkTranscriptionStatus() {
+  transcriptionPollTimer = null;
+  if (document.hidden || transcriptionPollInFlight || !reviewResponseId) {
+    return;
+  }
+  transcriptionPollInFlight = true;
+  fetch("phpScripts/transcriptionStatus.php?response_id=" + encodeURIComponent(reviewResponseId), {
+    credentials: "same-origin",
+    cache: "no-store",
+    headers: { "X-Requested-With": "XMLHttpRequest" }
+  })
+    .then(function (response) {
+      if (!response.ok) {
+        throw new Error("Could not check transcript status.");
+      }
+      return response.json();
+    })
+    .then(function (data) {
+      if (!data || !data.ok) {
+        throw new Error("Could not check transcript status.");
+      }
+      if (data.transcription_status === "complete") {
+        showTranscriptionComplete(data.transcription_text, data.transcription_source);
+      } else if (data.transcription_status === "failed") {
+        showTranscriptionFailure();
+      } else {
+        scheduleTranscriptionPoll();
+      }
+    })
+    .catch(function () {
+      scheduleTranscriptionPoll();
+    })
+    .finally(function () {
+      transcriptionPollInFlight = false;
+    });
+}
+
+function retryTranscription() {
+  if (!retryTranscriptionButton || !reviewResponseId) {
+    return;
+  }
+  retryTranscriptionButton.disabled = true;
+  retryTranscriptionStatus.textContent = "Starting retry…";
+  var formData = new FormData();
+  formData.append("response_id", reviewResponseId);
+  formData.append("csrf_token", arCsrfToken);
+  fetch("phpScripts/transcriptionStatus.php", {
+    method: "POST",
+    body: formData,
+    credentials: "same-origin",
+    headers: { "X-Requested-With": "XMLHttpRequest" }
+  })
+    .then(function (response) {
+      return response.json().then(function (data) {
+        if (!response.ok || !data || !data.ok) {
+          throw new Error(data && data.message ? data.message : "The retry could not be started.");
+        }
+        return data;
+      });
+    })
+    .then(function () {
+      retryTranscriptionStatus.textContent = "";
+      showTranscriptionProgress();
+      scheduleTranscriptionPoll();
+    })
+    .catch(function (error) {
+      retryTranscriptionStatus.textContent = error.message;
+      retryTranscriptionButton.disabled = false;
+    });
 }
 
 function escapeHtml(value) {

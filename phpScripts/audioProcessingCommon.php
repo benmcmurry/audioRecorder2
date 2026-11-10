@@ -70,6 +70,40 @@ function ar_worker_environment()
     return $env;
 }
 
+function ar_kick_audio_worker($submissionId)
+{
+    if (php_sapi_name() === 'cli' || !function_exists('proc_open')) {
+        ar_audio_log('worker_kick_skipped', array(
+            'submission_id' => $submissionId,
+            'reason' => php_sapi_name() === 'cli' ? 'cli_context' : 'proc_open_unavailable',
+        ));
+        return false;
+    }
+
+    $worker = escapeshellarg(__DIR__ . '/processPendingAudio.php');
+    $phpBinary = escapeshellarg(ar_php_cli_binary());
+    $submissionArg = escapeshellarg($submissionId);
+    $command = $phpBinary . ' ' . $worker . ' ' . $submissionArg . ' > /dev/null 2>&1 &';
+    ar_audio_log('worker_kick_attempt', array(
+        'submission_id' => $submissionId,
+        'php_binary' => ar_php_cli_binary(),
+        'worker_script' => __DIR__ . '/processPendingAudio.php',
+    ));
+    $descriptors = array(
+        0 => array('file', '/dev/null', 'r'),
+        1 => array('file', '/dev/null', 'a'),
+        2 => array('file', '/dev/null', 'a'),
+    );
+    $process = @proc_open($command, $descriptors, $pipes, dirname(__DIR__), ar_worker_environment());
+    $exitCode = is_resource($process) ? proc_close($process) : null;
+    ar_audio_log('worker_kick_result', array(
+        'submission_id' => $submissionId,
+        'started' => is_int($exitCode) && $exitCode === 0,
+        'exit_code' => $exitCode,
+    ));
+    return is_int($exitCode) && $exitCode === 0;
+}
+
 function ar_transcribe_with_openai($audioPath, $db, $netid, $recordingId)
 {
     $model = 'whisper-1';
