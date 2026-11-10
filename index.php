@@ -59,8 +59,10 @@ $clientResponse = ($alreadyDone && isset($result2) && is_array($result2)) ? $res
         var promptText = <?php echo ar_js($clientPrompt ? $clientPrompt['text'] : ''); ?>;
         var shouldReadPrompt = <?php echo ar_js($clientPrompt && isset($clientPrompt['read_prompt']) ? (int) $clientPrompt['read_prompt'] : 1); ?>;
         var alreadyDone = <?php echo ar_js((bool) $alreadyDone); ?>;
+        var arCsrfToken = <?php echo ar_js(ar_csrf_token()); ?>;
         var reviewSource = <?php echo ar_js($clientResponse ? $clientResponse['filename'] : ''); ?>;
         var reviewSourceType = <?php echo ar_js($clientResponse ? $clientResponse['filetype'] : ''); ?>;
+        var reviewResponseId = <?php echo ar_js($clientResponse ? (int) $clientResponse['id'] : 0); ?>;
     </script>
 </head>
 

@@ -1,3 +1,10 @@
 
-uploads/
+uploads/*
+!uploads/.htaccess
+generatedAudio/prompts/*
+!generatedAudio/prompts/.htaccess
+.env
+.env.*
+!.env.example
+audioRecorder.env
 .DS_Store

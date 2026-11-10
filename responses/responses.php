@@ -10,6 +10,9 @@ $appRoot = ar_web_root();
 $prompts = isset($_GET['prompts']) ? trim((string) $_GET['prompts']) : '';
 $promptList = array_values(array_filter(array_map('trim', explode(',', $prompts)), 'strlen'));
 $promptList = array_slice($promptList, 0, 6);
+$promptList = array_values(array_filter($promptList, function ($promptId) use ($elc_db, $netid) {
+    return preg_match('/\\A[0-9]+\\z/', $promptId) && ar_prompt_for_owner($elc_db, $promptId, $netid);
+}));
 $promptCount = count($promptList);
 ?>
 <!DOCTYPE html>
@@ -93,7 +96,7 @@ $promptCount = count($promptList);
                     ?>
                                     <p><?php echo ar_h($row['title']); ?> (<?php echo ar_h($row['prepare_time']); ?>/<?php echo ar_h($row['response_time']); ?>) - <?php echo ar_h($row['text']); ?></p>
                                     <audio class="audio-controls" style="padding: 0 0 2em;" controls>
-                                        <source src="<?php echo '../' . ar_h($row['filename']); ?>" type="<?php echo ar_h($row['filetype']); ?>">
+                                        <source src="../phpScripts/streamResponse.php?id=<?php echo (int) $row['id']; ?>" type="<?php echo ar_h($row['filetype']); ?>">
                                     </audio>
                                     <p class="card-text"><?php echo ar_h($row['transcription_text']); ?></p>
                     <?php

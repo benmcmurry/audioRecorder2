@@ -86,7 +86,7 @@ document
     ) {
       var fd = new FormData();
       fd.append("prompt_id", prompt_id);
-      fd.append("netid", netid);
+      fd.append("csrf_token", arCsrfToken);
       var xmlHttp = new XMLHttpRequest();
       xmlHttp.onreadystatechange = function () {
         if (xmlHttp.readyState == 4 && xmlHttp.status == 200) {
@@ -104,7 +104,7 @@ if (alreadyDone) {
   buttons.classList.add("d-none");
   visualizer.classList.add("d-none");
   alreadyDoneBox.classList.remove("d-none");
-  reviewRecording.src = reviewSource;
+  reviewRecording.src = "phpScripts/streamResponse.php?id=" + encodeURIComponent(reviewResponseId);
   reviewRecording.type = reviewSourceType;
 }
 
@@ -540,14 +540,9 @@ function record(typeOfRecording) {
           reviewRecording.play();
         }
       }
-      var d = Date.now();
-      var name = "prompt_" + prompt_id + "_" + netid + "-" + activeSubmissionId + ".";
-
-      console.log(name);
-
       if (typeOfRecording === "recording") {
         setProcessingState(true);
-        pendingUploadPromise = uploadRecording(recording, name, activeSubmissionId);
+        pendingUploadPromise = uploadRecording(recording, activeSubmissionId);
         Promise.all([
           pendingUploadPromise,
           pendingTranscriptionSavePromise || Promise.resolve(""),
@@ -607,18 +602,16 @@ function record(typeOfRecording) {
   }
 }
 
-function uploadRecording(blob, name, submissionId, attempt) {
+function uploadRecording(blob, submissionId, attempt) {
   attempt = attempt || 0;
   prompt.classList.add("d-none");
   console.log(blob);
   var fd = new FormData();
-  fd.append("name", name);
   fd.append("extension", extension);
   fd.append("myBlob", blob);
   fd.append("prompt_id", prompt_id);
-  fd.append("netid", netid);
-  fd.append("transcription", transcription);
   fd.append("submission_id", submissionId);
+  fd.append("csrf_token", arCsrfToken);
   return new Promise(function (resolve, reject) {
     var xmlHttp = new XMLHttpRequest();
     xmlHttp.timeout = 120000;
@@ -638,14 +631,14 @@ function uploadRecording(blob, name, submissionId, attempt) {
     };
     xmlHttp.onerror = function () {
       if (attempt < 1) {
-        uploadRecording(blob, name, submissionId, attempt + 1).then(resolve).catch(reject);
+        uploadRecording(blob, submissionId, attempt + 1).then(resolve).catch(reject);
         return;
       }
       reject(new Error("Upload request failed."));
     };
     xmlHttp.ontimeout = function () {
       if (attempt < 1) {
-        uploadRecording(blob, name, submissionId, attempt + 1).then(resolve).catch(reject);
+        uploadRecording(blob, submissionId, attempt + 1).then(resolve).catch(reject);
         return;
       }
       reject(new Error("Upload request timed out."));
@@ -664,9 +657,9 @@ function saveTranscription(netid, prompt_id, options) {
 
   transcription = transcriptionBox.value;
   var fd = new FormData();
-  fd.append("netid", netid);
   fd.append("prompt_id", prompt_id);
   fd.append("transcription", transcription);
+  fd.append("csrf_token", arCsrfToken);
   return new Promise(function (resolve, reject) {
     var xmlHttp = new XMLHttpRequest();
     xmlHttp.onreadystatechange = function () {

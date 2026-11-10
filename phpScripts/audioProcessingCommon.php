@@ -1,16 +1,5 @@
 <?php
-
-function ar_get_openai_api_key()
-{
-    $apiKey = getenv("OPENAI_API_KEY");
-    if (!$apiKey && isset($_SERVER["OPENAI_API_KEY"])) {
-        $apiKey = $_SERVER["OPENAI_API_KEY"];
-    }
-    if (!$apiKey && isset($_ENV["OPENAI_API_KEY"])) {
-        $apiKey = $_ENV["OPENAI_API_KEY"];
-    }
-    return $apiKey;
-}
+include_once(__DIR__ . '/openAiApiCommon.php');
 
 function ar_ffmpeg_binary()
 {
@@ -48,13 +37,23 @@ function ar_php_cli_binary()
     return 'php';
 }
 
-function ar_worker_environment_prefix()
+function ar_worker_environment()
 {
-    $env = array();
+    $env = PHP_VERSION_ID >= 70100 ? getenv() : array();
+    if (!is_array($env)) {
+        $env = array();
+        foreach (array($_ENV, $_SERVER) as $source) {
+            foreach ($source as $name => $value) {
+                if (is_string($name) && preg_match('/\\A[A-Za-z_][A-Za-z0-9_]*\\z/', $name) && is_scalar($value)) {
+                    $env[$name] = (string) $value;
+                }
+            }
+        }
+    }
 
     $apiKey = ar_get_openai_api_key();
     if ($apiKey) {
-        $env[] = 'OPENAI_API_KEY=' . escapeshellarg($apiKey);
+        $env['OPENAI_API_KEY'] = $apiKey;
     }
 
     $ffmpeg = getenv('FFMPEG_BINARY');
@@ -64,10 +63,10 @@ function ar_worker_environment_prefix()
         $ffmpeg = '/usr/bin/ffmpeg';
     }
     if ($ffmpeg) {
-        $env[] = 'FFMPEG_BINARY=' . escapeshellarg($ffmpeg);
+        $env['FFMPEG_BINARY'] = $ffmpeg;
     }
 
-    return $env ? implode(' ', $env) . ' ' : '';
+    return $env;
 }
 
 function ar_transcribe_with_openai($audioPath)
@@ -107,15 +106,14 @@ function ar_transcribe_with_openai($audioPath)
 
     $apiResponse = curl_exec($ch);
     $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    $curlError = curl_error($ch);
     curl_close($ch);
 
-    if ($apiResponse === false || $curlError) {
-        return array(false, 'OpenAI transcription request failed: ' . $curlError);
+    if ($apiResponse === false) {
+        return array(false, 'OpenAI transcription request failed.');
     }
 
     if ($httpCode < 200 || $httpCode >= 300) {
-        return array(false, 'OpenAI transcription error: ' . $apiResponse);
+        return array(false, 'OpenAI transcription request failed with HTTP status ' . (int) $httpCode . '.');
     }
 
     $decoded = json_decode($apiResponse, true);

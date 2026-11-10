@@ -89,6 +89,20 @@ if (session_status() !== PHP_SESSION_ACTIVE) {
     session_start();
 }
 
+function ar_csrf_token() {
+    if (empty($_SESSION['ar_csrf_token'])) {
+        $_SESSION['ar_csrf_token'] = bin2hex(random_bytes(32));
+    }
+
+    return (string) $_SESSION['ar_csrf_token'];
+}
+
+function ar_valid_csrf_token($candidate) {
+    return is_string($candidate)
+        && isset($_SESSION['ar_csrf_token'])
+        && hash_equals((string) $_SESSION['ar_csrf_token'], $candidate);
+}
+
 require_once dirname(__DIR__, 2) . '/sharedAuth/broker.php';
 
 function ar_server_config() {

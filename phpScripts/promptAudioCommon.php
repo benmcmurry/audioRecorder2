@@ -1,4 +1,5 @@
 <?php
+include_once(__DIR__ . '/openAiApiCommon.php');
 
 function composePromptSpeechText($promptText, $prepareTime, $responseTime)
 {
@@ -38,25 +39,13 @@ function ensurePromptAudioDirectory()
     return true;
 }
 
-function getOpenAiApiKey()
-{
-    $apiKey = getenv("OPENAI_API_KEY");
-    if (!$apiKey && isset($_SERVER["OPENAI_API_KEY"])) {
-        $apiKey = $_SERVER["OPENAI_API_KEY"];
-    }
-    if (!$apiKey && isset($_ENV["OPENAI_API_KEY"])) {
-        $apiKey = $_ENV["OPENAI_API_KEY"];
-    }
-    return $apiKey;
-}
-
 function requestOpenAiPromptAudio($speechText)
 {
     if (!function_exists("curl_init")) {
         return array(false, "PHP cURL extension is required.");
     }
 
-    $apiKey = getOpenAiApiKey();
+    $apiKey = ar_get_openai_api_key();
     if (!$apiKey) {
         return array(false, "OPENAI_API_KEY is not configured on the server.");
     }
@@ -84,15 +73,26 @@ function requestOpenAiPromptAudio($speechText)
     $curlError = curl_error($ch);
 
     if ($apiResponse === false || $curlError) {
-        return array(false, "OpenAI request failed: " . $curlError);
+        return array(false, "OpenAI speech request failed.");
     }
 
     if ($httpCode < 200 || $httpCode >= 300) {
-        $decoded = json_decode($apiResponse, true);
-        if (is_array($decoded)) {
-            return array(false, "OpenAI TTS error: " . json_encode($decoded));
+        $decoded = json_decode((string) $apiResponse, true);
+        $error = is_array($decoded) && isset($decoded['error']) && is_array($decoded['error'])
+            ? $decoded['error']
+            : array();
+        $safeDetails = array();
+        foreach (array('code', 'type') as $field) {
+            if (!isset($error[$field]) || !is_scalar($error[$field])) {
+                continue;
+            }
+            $value = preg_replace('/[^A-Za-z0-9_.-]/', '', (string) $error[$field]);
+            if ($value !== '' && !in_array($value, $safeDetails, true)) {
+                $safeDetails[] = substr($value, 0, 80);
+            }
         }
-        return array(false, "OpenAI TTS error: " . $apiResponse);
+        $detailText = $safeDetails ? ' (' . implode('/', $safeDetails) . ')' : '';
+        return array(false, "OpenAI speech request failed with HTTP status " . (int) $httpCode . $detailText . ".");
     }
 
     return array(true, $apiResponse);

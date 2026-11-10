@@ -8,11 +8,17 @@ include_once('../phpScripts/responseHelpers.php');
 
 $appRoot = ar_web_root();
 $prompt_id = isset($_GET['prompt_id']) ? trim((string) $_GET['prompt_id']) : '';
+$promptRow = $prompt_id !== '' ? ar_prompt_for_owner($elc_db, $prompt_id, $netid) : null;
 
-$query = $elc_db->prepare("SELECT Audio_files.*, Users.name AS user_name FROM Audio_files LEFT JOIN Users ON Audio_files.netid = Users.netid WHERE Audio_files.prompt_id=? ORDER BY Audio_files.date_created DESC");
-$query->bind_param("s", $prompt_id);
-$query->execute();
-$result = $query->get_result();
+$result = null;
+if ($promptRow) {
+    $query = $elc_db->prepare("SELECT Audio_files.*, Users.name AS user_name FROM Audio_files LEFT JOIN Users ON Audio_files.netid = Users.netid WHERE Audio_files.prompt_id=? ORDER BY Audio_files.date_created DESC");
+    if ($query) {
+        $query->bind_param("s", $prompt_id);
+        $query->execute();
+        $result = $query->get_result();
+    }
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -40,8 +46,8 @@ $result = $query->get_result();
         </section>
 
         <section class="dashboard-card">
-            <?php if (!$prompt_id) { ?>
-                <div class="empty-state">No prompt ID was provided.</div>
+            <?php if (!$prompt_id || !$promptRow) { ?>
+                <div class="empty-state">Prompt not found or you do not have access to it.</div>
             <?php } else { ?>
                 <div class="card m-0 p-0 border-0">
                     <div class="card-body">

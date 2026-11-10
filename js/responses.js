@@ -18,6 +18,7 @@ function save(prompt_id) {
     fd.append('transcription', transcription);
     fd.append('read_prompt', read_prompt);
     fd.append('prompt_id', prompt_id);
+    fd.append('csrf_token', arCsrfToken);
 
    
 
@@ -25,9 +26,12 @@ function save(prompt_id) {
     var xmlHttp = new XMLHttpRequest();
     xmlHttp.onreadystatechange = function () {
         if (xmlHttp.readyState == 4 && xmlHttp.status == 200) {
+            var saveMessage = xmlHttp.responseText;
+            var audioWarning = saveMessage.indexOf('Saved, but prompt audio was not generated:') === 0;
             response.classList.remove("alert", "alert-danger");
-            response.classList.add("alert", "alert-success");
-            response.innerHTML = xmlHttp.responseText;
+            response.classList.remove("alert-success", "alert-warning");
+            response.classList.add("alert", audioWarning ? "alert-warning" : "alert-success");
+            response.textContent = saveMessage;
         } else if (xmlHttp.readyState == 4) {
             response.classList.remove("alert", "alert-success");
             response.classList.add("alert", "alert-danger");

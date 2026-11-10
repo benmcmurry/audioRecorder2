@@ -1,5 +1,6 @@
 <?php
 require_once dirname(__DIR__, 2) . '/shared-ui/layout.php';
+require_once __DIR__ . '/feedback.php';
 
 if (!function_exists('audio_recorder_shell_context')) {
     function audio_recorder_shell_context() {
@@ -39,6 +40,9 @@ if (!function_exists('audio_recorder_render_header')) {
 
         if ($context['current_user']) {
             $menuItems[] = array('label' => 'Profile', 'href' => $context['app_root'] . '/profile.php');
+        }
+        if (function_exists('ar_feedback_admin_allowed') && ar_feedback_admin_allowed()) {
+            $menuItems[] = array('label' => 'Feedback reports', 'href' => $context['app_root'] . '/admin/feedback.php');
         }
 
         shared_ui_render_header(array(
@@ -89,6 +93,12 @@ if (!function_exists('audio_recorder_render_footer')) {
                 ),
             ),
             'note' => 'Developed by Ben McMurry',
+            'feedback' => array(
+                'endpoint' => $context['app_root'] . '/feedback-submit.php',
+                'csrf_token' => ar_feedback_csrf_token(),
+                'site_name' => 'Audio Recorder',
+                'categories' => ar_feedback_categories(),
+            ),
         ));
     }
 }

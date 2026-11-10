@@ -138,7 +138,7 @@ $readPromptChecked = !$promptRow || !isset($promptRow['read_prompt']) || (int) $
                         <div class='card-body'>
                             <?php if ($audioPath) { ?>
                                 <audio class="audio-controls" controls>
-                                    <source src='<?php echo ar_h("../" . ltrim($row['filename'], '/')); ?>' type='<?php echo ar_h($row['filetype']); ?>'>
+                                    <source src='../phpScripts/streamResponse.php?id=<?php echo (int) $row['id']; ?>' type='<?php echo ar_h($row['filetype']); ?>'>
                                 </audio>
                             <?php } else { ?>
                                 <div class="alert alert-warning mb-3">Audio file missing.</div>
@@ -159,6 +159,7 @@ $readPromptChecked = !$promptRow || !isset($promptRow['read_prompt']) || (int) $
 
     </main>
     <?php audio_recorder_render_footer(); ?>
+    <script>var arCsrfToken = <?php echo json_encode(ar_csrf_token(), JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP); ?>;</script>
     <script src='../js/responses.js'></script>
 
 </body>
