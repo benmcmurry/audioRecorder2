@@ -43,6 +43,7 @@ if (!function_exists('audio_recorder_render_header')) {
         }
         if (function_exists('ar_feedback_admin_allowed') && ar_feedback_admin_allowed()) {
             $menuItems[] = array('label' => 'Feedback reports', 'href' => $context['app_root'] . '/admin/feedback.php');
+            $menuItems[] = array('label' => 'API Activity', 'href' => $context['app_root'] . '/admin/api-activity.php');
         }
 
         shared_ui_render_header(array(

@@ -86,7 +86,7 @@ function ar_finish_audio_job($db, $rowId, $status, $transcriptionText, $transcri
 function ar_load_pending_audio_jobs($db, $limit)
 {
     $rows = array();
-    $query = $db->prepare("SELECT id, filename, filetype, transcription_text, transcription_error, submission_id FROM Audio_files WHERE status IN ('uploaded', 'failed_transcription', 'transcribing') ORDER BY date_created ASC LIMIT ?");
+    $query = $db->prepare("SELECT id, prompt_id, netid, filename, filetype, transcription_text, transcription_error, submission_id FROM Audio_files WHERE status IN ('uploaded', 'failed_transcription', 'transcribing') ORDER BY date_created ASC LIMIT ?");
     if (!$query) {
         ar_audio_log('worker_load_prepare_failed', array(
             'db_error' => $db->error,
@@ -134,7 +134,7 @@ $context = array(
 ar_audio_log('worker_start', $context);
 $jobs = array();
 if ($targetSubmissionId !== '') {
-    $query = $elc_db->prepare("SELECT id, filename, filetype, transcription_text, transcription_error, submission_id FROM Audio_files WHERE submission_id = ? LIMIT 1");
+    $query = $elc_db->prepare("SELECT id, prompt_id, netid, filename, filetype, transcription_text, transcription_error, submission_id FROM Audio_files WHERE submission_id = ? LIMIT 1");
     if (!$query) {
         ar_audio_log('worker_target_prepare_failed', array(
             'submission_id' => $targetSubmissionId,
@@ -201,7 +201,7 @@ foreach ($jobs as $job) {
         'row_id' => (int) $job['id'],
         'audio_path' => $audioPath,
     ));
-    list($ok, $text, $sourceOrError) = ar_try_transcribe_recording($audioPath);
+    list($ok, $text, $sourceOrError) = ar_try_transcribe_recording($audioPath, $elc_db, isset($job['netid']) ? $job['netid'] : '', (int) $job['id']);
     if ($ok) {
         ar_finish_audio_job($elc_db, (int) $job['id'], 'complete', $text, '', $sourceOrError);
         ar_audio_log('worker_transcribe_success', array(

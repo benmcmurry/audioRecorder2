@@ -74,7 +74,7 @@ if ($hasReadPromptColumn) {
 if ($query && $query->execute()) {
     if ($hasReadPromptColumn && (int) $read_prompt === 1) {
         $speechText = composePromptSpeechText($text, $prepare_time, $response_time);
-        list($audioOk, $audioStatus) = ensurePromptAudioCached($prompt_id, $speechText);
+        list($audioOk, $audioStatus) = ensurePromptAudioCached($prompt_id, $speechText, $elc_db, $netid);
         if (!$audioOk) {
             echo "Saved, but prompt audio was not generated: " . $audioStatus . " Students can still hear it using browser speech.";
             exit;

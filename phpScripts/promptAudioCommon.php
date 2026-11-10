@@ -1,5 +1,6 @@
 <?php
 include_once(__DIR__ . '/openAiApiCommon.php');
+include_once(__DIR__ . '/openAiActivityCommon.php');
 
 function composePromptSpeechText($promptText, $prepareTime, $responseTime)
 {
@@ -39,19 +40,28 @@ function ensurePromptAudioDirectory()
     return true;
 }
 
-function requestOpenAiPromptAudio($speechText)
+function requestOpenAiPromptAudio($speechText, $db, $netid, $promptId)
 {
+    $model = 'gpt-4o-mini-tts-2025-12-15';
+    $activityId = ar_openai_activity_begin($db, 'speech_generation', $netid, $model, 'prompt', $promptId);
+    if ($activityId === false) {
+        return array(false, 'OpenAI activity logging is unavailable; the request was not sent.');
+    }
+    $startedAt = microtime(true);
+
     if (!function_exists("curl_init")) {
+        ar_openai_activity_finish($db, $activityId, 'failed', null, 'curl_unavailable', 'client_error', ar_openai_activity_duration_ms($startedAt));
         return array(false, "PHP cURL extension is required.");
     }
 
     $apiKey = ar_get_openai_api_key();
     if (!$apiKey) {
+        ar_openai_activity_finish($db, $activityId, 'failed', null, 'missing_api_key', 'configuration_error', ar_openai_activity_duration_ms($startedAt));
         return array(false, "OPENAI_API_KEY is not configured on the server.");
     }
 
     $requestBody = array(
-        "model" => "gpt-4o-mini-tts-2025-12-15",
+        "model" => $model,
         "voice" => "cedar",
         "input" => $speechText,
         "response_format" => "mp3",
@@ -59,46 +69,54 @@ function requestOpenAiPromptAudio($speechText)
     );
 
     $ch = curl_init("https://api.openai.com/v1/audio/speech");
+    if ($ch === false) {
+        ar_openai_activity_finish($db, $activityId, 'failed', null, 'curl_init_failed', 'transport_error', ar_openai_activity_duration_ms($startedAt));
+        return array(false, "OpenAI speech request failed.");
+    }
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
     curl_setopt($ch, CURLOPT_POST, true);
     curl_setopt($ch, CURLOPT_HTTPHEADER, array(
         "Authorization: Bearer " . $apiKey,
         "Content-Type: application/json"
     ));
-    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($requestBody));
+    $encodedBody = json_encode($requestBody);
+    if ($encodedBody === false) {
+        curl_close($ch);
+        ar_openai_activity_finish($db, $activityId, 'failed', null, 'request_encoding_failed', 'client_error', ar_openai_activity_duration_ms($startedAt));
+        return array(false, 'OpenAI speech request could not be prepared.');
+    }
+    curl_setopt($ch, CURLOPT_POSTFIELDS, $encodedBody);
     curl_setopt($ch, CURLOPT_TIMEOUT, 30);
 
     $apiResponse = curl_exec($ch);
     $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    $curlError = curl_error($ch);
+    $curlNumber = curl_errno($ch);
+    curl_close($ch);
 
-    if ($apiResponse === false || $curlError) {
+    if ($apiResponse === false || $curlNumber !== 0) {
+        $errorCode = $curlNumber > 0 ? 'curl_' . $curlNumber : 'transport_error';
+        ar_openai_activity_finish($db, $activityId, 'failed', null, $errorCode, 'transport_error', ar_openai_activity_duration_ms($startedAt));
         return array(false, "OpenAI speech request failed.");
     }
 
     if ($httpCode < 200 || $httpCode >= 300) {
-        $decoded = json_decode((string) $apiResponse, true);
-        $error = is_array($decoded) && isset($decoded['error']) && is_array($decoded['error'])
-            ? $decoded['error']
-            : array();
+        $details = ar_openai_activity_error_details($apiResponse);
         $safeDetails = array();
         foreach (array('code', 'type') as $field) {
-            if (!isset($error[$field]) || !is_scalar($error[$field])) {
-                continue;
-            }
-            $value = preg_replace('/[^A-Za-z0-9_.-]/', '', (string) $error[$field]);
-            if ($value !== '' && !in_array($value, $safeDetails, true)) {
-                $safeDetails[] = substr($value, 0, 80);
+            if (!empty($details[$field])) {
+                $safeDetails[] = $details[$field];
             }
         }
+        ar_openai_activity_finish($db, $activityId, 'failed', (int) $httpCode, $details['code'], $details['type'], ar_openai_activity_duration_ms($startedAt));
         $detailText = $safeDetails ? ' (' . implode('/', $safeDetails) . ')' : '';
         return array(false, "OpenAI speech request failed with HTTP status " . (int) $httpCode . $detailText . ".");
     }
 
+    ar_openai_activity_finish($db, $activityId, 'succeeded', (int) $httpCode, null, null, ar_openai_activity_duration_ms($startedAt));
     return array(true, $apiResponse);
 }
 
-function ensurePromptAudioCached($promptId, $speechText)
+function ensurePromptAudioCached($promptId, $speechText, $db, $netid)
 {
     if (!ensurePromptAudioDirectory()) {
         return array(false, "Could not create prompt audio directory.");
@@ -114,7 +132,7 @@ function ensurePromptAudioCached($promptId, $speechText)
         }
     }
 
-    list($ok, $audioOrError) = requestOpenAiPromptAudio($speechText);
+    list($ok, $audioOrError) = requestOpenAiPromptAudio($speechText, $db, $netid, $promptId);
     if (!$ok) {
         return array(false, $audioOrError);
     }
