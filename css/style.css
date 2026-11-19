@@ -262,38 +262,28 @@ div#visualizer {
     background-color: #efefef;
 }
 div.volume {
-    display: flex;
-    flex-direction: row;
-    gap: .4rem;
-    align-items: center;
-    height: 28px;
+    height: 10px;
     width: 100%;
     box-sizing: border-box;
     margin: 1em 0em;
-}
-
-div.volume .volbox {
-    border: 1px solid #cbd5df;
-    flex: 1 1 0;
-    height: 100%;
-    min-width: 0;
+    overflow: hidden;
     border-radius: 999px;
-    background: #fff;
-    transition: background-color .12s ease, border-color .12s ease;
+    background: #e5eaf0;
 }
 
-div.volume .volbox.is-active {
-    border-color: #2a9d66;
+.volume-level {
+    width: 0%;
+    height: 100%;
+    border-radius: inherit;
     background: #2a9d66;
+    transition: width .1s linear, background-color .12s ease;
 }
 
-div.volume .volbox.is-active.is-strong {
-    border-color: #e0a52b;
+.volume-level.is-strong {
     background: #e0a52b;
 }
 
-div.volume .volbox.is-active.is-peak {
-    border-color: #d5534f;
+.volume-level.is-peak {
     background: #d5534f;
 }
 
@@ -331,9 +321,15 @@ audio { width: 100%; }
 }
 
 #activityContinueButton {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     width: 100%;
     min-height: 3rem;
+    padding: .75rem 1rem;
     font-weight: 600;
+    line-height: 1.2;
+    text-align: center;
 }
 
 #response {

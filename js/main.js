@@ -812,14 +812,11 @@ function processInput() {
   var smoothing = targetLevel > smoothedMicrophoneLevel ? 0.42 : 0.2;
   smoothedMicrophoneLevel += (targetLevel - smoothedMicrophoneLevel) * smoothing;
 
-  var bars = document.querySelectorAll(".volbox");
-  var activeBars = Math.round(smoothedMicrophoneLevel * bars.length);
-  for (var barIndex = 0; barIndex < bars.length; barIndex++) {
-    var bar = bars[barIndex];
-    var isActive = barIndex < activeBars;
-    bar.classList.toggle("is-active", isActive);
-    bar.classList.toggle("is-strong", isActive && barIndex >= 8);
-    bar.classList.toggle("is-peak", isActive && barIndex >= 10);
+  var microphoneLevel = document.querySelector("#microphoneLevel");
+  if (microphoneLevel) {
+    microphoneLevel.style.width = (smoothedMicrophoneLevel * 100) + "%";
+    microphoneLevel.classList.toggle("is-strong", smoothedMicrophoneLevel >= 0.62);
+    microphoneLevel.classList.toggle("is-peak", smoothedMicrophoneLevel >= 0.84);
   }
 
   visualizerAnimationFrame = requestAnimationFrame(processInput);

@@ -349,11 +349,7 @@ $isLtiSession = isset($auth_provider) && $auth_provider === 'lti';
 
             <!-- visualizer display -->
             <div id="visualizer" class="row justify-content-center" role="img" aria-label="Microphone input level">
-                <div class="volume" aria-hidden="true">
-                    <?php for ($level = 1; $level <= 12; $level++) { ?>
-                        <div class="volbox" id="volbox-<?php echo $level; ?>"></div>
-                    <?php } ?>
-                </div>
+                <div class="volume" aria-hidden="true"><div id="microphoneLevel" class="volume-level"></div></div>
             </div>
 
             <!-- audio elements -->
