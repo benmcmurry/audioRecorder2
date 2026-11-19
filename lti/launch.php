@@ -38,7 +38,6 @@ try {
     if ($messageType === 'LtiDeepLinkingRequest' && empty($claims['https://purl.imsglobal.org/spec/lti-dl/claim/deep_linking_settings']['deep_link_return_url'])) {
         throw new RuntimeException('Canvas content-selection launch did not include a return URL.');
     }
-    session_regenerate_id(true);
     ar_lti_set_user($platform, $claims);
     ar_lti_store_launch_context($platform, $claims, (string) $transaction['target_link_uri']);
     $_SESSION['ar_lti_platform'] = array(

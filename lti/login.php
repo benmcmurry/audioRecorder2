@@ -27,6 +27,11 @@ if (!$platform || $loginHint === '' || (!$validLaunchTarget && $targetUri !== $c
     ar_lti_error(400, 'This Canvas launch request is not configured.');
 }
 
+// Rotate before the cross-site OIDC form_post. Rotating after Canvas posts the
+// validated launch can lose the new cookie in Safari's embedded context before
+// the redirected content picker gets its next request.
+session_regenerate_id(true);
+
 $state = bin2hex(random_bytes(32));
 $nonce = bin2hex(random_bytes(32));
 if (!isset($_SESSION['ar_lti_oidc']) || !is_array($_SESSION['ar_lti_oidc'])) {
