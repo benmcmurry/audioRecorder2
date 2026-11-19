@@ -20,7 +20,10 @@ if (!preg_match('/\\A[0-9]+\\z/', $promptId)) {
 
 $query = $elc_db->prepare("DELETE FROM Audio_files WHERE prompt_id = ? AND netid = ?");
 $query->bind_param('ss', $promptId, $netid);
-$query->execute();
-echo "Please refresh this page to re-record your response.";
+if (!$query->execute()) {
+    http_response_code(500);
+    exit('Could not remove the previous response. Please try again.');
+}
+echo "Your previous response was removed. You can record again now.";
 
 ?>

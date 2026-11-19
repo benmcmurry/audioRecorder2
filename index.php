@@ -131,16 +131,25 @@ function ar_js($value)
 
 $clientPrompt = ($prompt_id && isset($result) && is_array($result)) ? $result : null;
 $clientResponse = ($alreadyDone && isset($result2) && is_array($result2)) ? $result2 : null;
-$isLtiEmbed = isset($auth_provider) && $auth_provider === 'lti';
+$isLtiSession = isset($auth_provider) && $auth_provider === 'lti';
 	?>
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="<?php echo $isLtiSession ? 'lti-session' : ''; ?>">
 
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
     <title>ELC Audio Recorder</title>
+    <script>
+        try {
+            if (document.documentElement.classList.contains('lti-session') && window.self !== window.top) {
+                document.documentElement.classList.add('lti-embed');
+            }
+        } catch (error) {
+            document.documentElement.classList.add('lti-embed');
+        }
+    </script>
     <script src="js/accessibility-auto-alt.js" defer></script>
     <?php include_once __DIR__ . '/includes/styles_and_scripts.php'; ?>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
@@ -173,10 +182,10 @@ $isLtiEmbed = isset($auth_provider) && $auth_provider === 'lti';
     </script>
 </head>
 
-<body class="<?php echo $isLtiEmbed ? 'lti-embed' : ''; ?>">
-    <?php if (!$isLtiEmbed) { require_once __DIR__ . '/includes/shared-shell.php'; audio_recorder_render_header(); } ?>
+<body>
+    <?php require_once __DIR__ . '/includes/shared-shell.php'; audio_recorder_render_header(); ?>
     <main role="main">
-        <div id="mainContainer" class="<?php echo $isLtiEmbed ? 'container-fluid lti-recorder-container' : 'container mt-5 mb-5 pb-3'; ?>">
+        <div id="mainContainer" class="container lti-recorder-container mt-5 mb-5 pb-3">
             <div class="recorder-workspace">
 
             <?php if ($activityItems && !$activityComplete) { ?>
@@ -196,9 +205,8 @@ $isLtiEmbed = isset($auth_provider) && $auth_provider === 'lti';
                 </section>
             <?php } elseif ($activityComplete) { ?>
                 <section class="dashboard-card mb-4 text-center">
-                    <?php if ($isLtiEmbed) { ?>
-                        <p class="mb-0 py-3" role="status">Your assignment has been completed.</p>
-                    <?php } else { ?>
+                    <p class="lti-completion-message mb-0 py-3" role="status">Your assignment has been completed.</p>
+                    <div class="standalone-completion">
                         <p class="section-kicker">Activity complete</p>
                         <h1 class="dashboard-title"><?php echo htmlspecialchars((string) $activityItems[0]['activity_title'], ENT_QUOTES, 'UTF-8'); ?></h1>
                         <p class="mb-0">You have saved a response to every prompt in this activity.</p>
@@ -207,7 +215,7 @@ $isLtiEmbed = isset($auth_provider) && $auth_provider === 'lti';
                             <a class="btn btn-primary btn-sm mt-2" href="index.php?activity_id=<?php echo rawurlencode($activityId); ?>&amp;repeat=1">Complete activity again</a>
                         <?php } ?>
                         <a class="btn btn-outline-primary btn-sm mt-3" href="index.php">Return to Audio Recorder</a>
-                    <?php } ?>
+                    </div>
                 </section>
             <?php } elseif ($activityNotFound) { ?>
                 <section class="dashboard-card mb-4 text-center">
@@ -281,10 +289,15 @@ $isLtiEmbed = isset($auth_provider) && $auth_provider === 'lti';
                     </div>
                 <?php } ?>
 
+                <div class="row justify-content-center">
+                    <button id="showRepeatRecordingButton" type="button" class="btn btn-outline-secondary btn-sm d-none">Enter re-record code</button>
+                </div>
+
                 <div id="repeatRecording" class="row bg-danger d-none" style="color: white; padding:2em;">
                     <p class="text-center">Please enter the password to allow the student to re-record. Please be aware that any previous recordings will be deleted.</p>
                     <label for="repeatPassword" class="form-label">Password to re-record</label>
                     <input id="repeatPassword" type="password" class="form-control" />
+                    <p id="repeatRecordingStatus" class="mt-2 mb-0" role="status" aria-live="polite"></p>
                 </div>
             </div>
 
@@ -379,7 +392,7 @@ $isLtiEmbed = isset($auth_provider) && $auth_provider === 'lti';
        <?php } ?>
      
     </main>
-    <?php if (!$isLtiEmbed) { audio_recorder_render_footer(); } ?>
+    <?php audio_recorder_render_footer(); ?>
     <script>
         if (archiveStatus === 1) {
             var message = document.querySelector('#mainContainer');

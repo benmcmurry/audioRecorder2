@@ -38,6 +38,10 @@ var transcriptionBox = document.querySelector("#transcriptionBox");
 var visualizer = document.querySelector("#visualizer");
 var reviewRecording = document.querySelector("#reviewRecording");
 var repeatRecording = document.querySelector("#repeatRecording");
+var repeatPasswordInput = document.querySelector("#repeatPassword");
+var repeatRecordingStatus = document.querySelector("#repeatRecordingStatus");
+var showRepeatRecordingButton = document.querySelector("#showRepeatRecordingButton");
+var repeatRequestPending = false;
 var recordTime = 5000;
 var response = document.querySelector("#response");
 var transcriptionRow = document.querySelector("#transcriptionRow");
@@ -51,7 +55,6 @@ var loadRecordingsButton = document.querySelector("#loadRecordingsButton");
 var recordingsStatus = document.querySelector("#recordingsStatus");
 var allRecordingsResults = document.querySelector("#allRecordingsResults");
 var transcription;
-var i = 0;
 var selectedTtsVoice = null;
 var pendingUploadPromise = null;
 var pendingTranscriptionSavePromise = null;
@@ -74,35 +77,47 @@ document
     }
   });
 
-document
-  .querySelector("#alreadyAnswered")
-  .addEventListener("click", function () {
-    i = i + 1;
-    if (i === 3) {
-      repeatRecording.classList.remove("d-none");
-      repeatPassword.focus();
-    }
-  });
+if (alreadyDone && !activityMode) {
+  showRepeatRecordingButton.classList.remove("d-none");
+}
+
+showRepeatRecordingButton.addEventListener("click", function () {
+  repeatRecording.classList.remove("d-none");
+  repeatPasswordInput.focus();
+});
 
 document
   .querySelector("#repeatPassword")
   .addEventListener("keydown", function (e) {
     if (
       e.keyCode == 13 &&
-      document.getElementById("repeatPassword").value == "repeat"
+      repeatPasswordInput.value == "repeat" && !repeatRequestPending
     ) {
+      repeatRequestPending = true;
+      repeatPasswordInput.disabled = true;
+      repeatRecordingStatus.textContent = "Removing your previous response…";
       var fd = new FormData();
       fd.append("prompt_id", prompt_id);
       fd.append("csrf_token", arCsrfToken);
       var xmlHttp = new XMLHttpRequest();
       xmlHttp.onreadystatechange = function () {
-        if (xmlHttp.readyState == 4 && xmlHttp.status == 200) {
-          repeatRecording.innerHTML = xmlHttp.responseText;
+        if (xmlHttp.readyState == 4) {
+          if (xmlHttp.status >= 200 && xmlHttp.status < 300) {
+            window.location.reload();
+            return;
+          }
+          repeatRequestPending = false;
+          repeatPasswordInput.disabled = false;
+          repeatRecordingStatus.textContent = xmlHttp.responseText || "Could not remove the previous response. Please try again.";
         }
+      };
+      xmlHttp.onerror = function () {
+        repeatRequestPending = false;
+        repeatPasswordInput.disabled = false;
+        repeatRecordingStatus.textContent = "Could not reach the server. Please try again.";
       };
       xmlHttp.open("post", "phpScripts/removeDBentry.php");
       xmlHttp.send(fd);
-      location.reload();
     }
     
   });

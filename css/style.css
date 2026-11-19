@@ -1,11 +1,23 @@
 @import url("https://cdn.jsdelivr.net/npm/bootstrap-icons@1.5.0/font/bootstrap-icons.css");
 
-body.lti-embed {
+html.lti-embed body {
     margin: 0;
     background: #fff;
+    padding-top: 0;
 }
 
-.lti-embed .lti-recorder-container {
+html.lti-embed #header,
+html.lti-embed .site-footer,
+html.lti-embed .feedback-widget,
+html.lti-embed .standalone-completion {
+    display: none !important;
+}
+
+html:not(.lti-embed) .lti-completion-message {
+    display: none;
+}
+
+html.lti-embed .lti-recorder-container {
     width: 100%;
     max-width: none;
     margin: 0 auto;
@@ -244,7 +256,7 @@ audio { width: 100%; }
 }
 
 @media (max-width: 576px) {
-    .lti-embed .lti-recorder-container {
+    html.lti-embed .lti-recorder-container {
         padding: .75rem;
     }
 
