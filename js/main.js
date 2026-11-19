@@ -947,7 +947,9 @@ function showCompletedRecording(uploadResponseData) {
 }
 
 function showTranscriptionProgress() {
-  transcriptionRow.classList.add("d-none");
+  transcriptionRow.classList.remove("d-none");
+  transcriptionBox.disabled = true;
+  transcriptionBox.placeholder = "Your transcript will appear here while it is being prepared.";
   transcriptionFailure.classList.add("d-none");
   transcriptionProgress.classList.remove("d-none");
   transcriptionProgress.setAttribute("aria-busy", "true");
@@ -960,6 +962,8 @@ function showTranscriptionComplete(text, source) {
   transcriptionFailure.classList.add("d-none");
   transcriptionProgress.setAttribute("aria-busy", "false");
   transcriptionBox.value = typeof text === "string" ? text : "";
+  transcriptionBox.disabled = false;
+  transcriptionBox.placeholder = "Edit your transcript here.";
   setTranscriptionNotice(source || "browser");
   transcriptionRow.classList.remove("d-none");
 }
@@ -968,7 +972,9 @@ function showTranscriptionFailure() {
   clearTimeout(transcriptionPollTimer);
   transcriptionPollTimer = null;
   transcriptionProgress.classList.add("d-none");
-  transcriptionRow.classList.add("d-none");
+  transcriptionRow.classList.remove("d-none");
+  transcriptionBox.disabled = false;
+  transcriptionBox.placeholder = "Transcription is unavailable. You can enter a transcript here.";
   transcriptionFailure.classList.remove("d-none");
   transcriptionProgress.setAttribute("aria-busy", "false");
   retryTranscriptionButton.disabled = false;

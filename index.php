@@ -177,15 +177,21 @@ $isLtiEmbed = isset($auth_provider) && $auth_provider === 'lti';
     <?php if (!$isLtiEmbed) { require_once __DIR__ . '/includes/shared-shell.php'; audio_recorder_render_header(); } ?>
     <main role="main">
         <div id="mainContainer" class="<?php echo $isLtiEmbed ? 'container-fluid lti-recorder-container' : 'container mt-5 mb-5 pb-3'; ?>">
+            <div class="recorder-workspace">
 
             <?php if ($activityItems && !$activityComplete) { ?>
-                <section class="dashboard-card mb-4" aria-live="polite">
+                <section class="dashboard-card activity-step-card mb-4" aria-live="polite">
                     <p class="section-kicker">Multi-prompt activity</p>
                     <h1 class="dashboard-title"><?php echo htmlspecialchars((string) $activityItems[0]['activity_title'], ENT_QUOTES, 'UTF-8'); ?></h1>
-                    <p class="mb-0">Prompt <?php echo (int) ($activityPosition + 1); ?> of <?php echo count($activityItems); ?></p>
+                    <div class="activity-step-meta">
+                        <p class="mb-0">Prompt <?php echo (int) ($activityPosition + 1); ?> of <?php echo count($activityItems); ?></p>
+                        <div class="activity-progress" role="progressbar" aria-label="Activity progress" aria-valuemin="1" aria-valuemax="<?php echo count($activityItems); ?>" aria-valuenow="<?php echo (int) ($activityPosition + 1); ?>">
+                            <span style="width: <?php echo (int) round((($activityPosition + 1) / count($activityItems)) * 100); ?>%"></span>
+                        </div>
+                    </div>
                     <?php if ($activityReplaceMode) { ?><p class="mt-2 mb-0">Your new responses will replace your previous responses for this activity.</p><?php } ?>
                     <?php if ($activityPosition > 0) { ?>
-                        <button id="activityReadyButton" type="button" class="btn btn-primary mt-3" onclick="startRecording();">I’m ready for this prompt</button>
+                        <button id="activityReadyButton" type="button" class="btn btn-primary recorder-ready-button mt-3" onclick="startRecording();">I’m ready for this prompt</button>
                     <?php } ?>
                 </section>
             <?php } elseif ($activityComplete) { ?>
@@ -222,13 +228,13 @@ $isLtiEmbed = isset($auth_provider) && $auth_provider === 'lti';
                     </div>
                 </div>
             </div>
-            <div id="alreadyDoneBox" class="d-none d-grid gap-2 col mx-auto mt-5">
+            <div id="alreadyDoneBox" class="recorder-results d-none d-grid gap-2 mx-auto mt-4">
                 <div class="row" id="alreadyAnswered">
                 <p class="text-center">You have already answered this prompt.</p>
 
                     <p class="text-center">You can play your answer below.</p>
                 </div>
-                <div class="row">
+                <div class="row saved-recording-row">
                     <p id="reviewRecordingLabel" class="visually-hidden">Saved response playback</p>
                     <audio class="" id="reviewRecording" controls aria-labelledby="reviewRecordingLabel">
                     </audio>
@@ -250,14 +256,14 @@ $isLtiEmbed = isset($auth_provider) && $auth_provider === 'lti';
                         <span id="retryTranscriptionStatus" class="ms-2 small" aria-live="polite"></span>
                     </div>
                 </div>
-                <div id="transcriptionRow" class="row d-none">
-                    <h4>Transcription</h4> 
-                    <div class="">
+                <div id="transcriptionRow" class="row transcription-panel">
+                    <div class="col-12">
+                        <h2 class="h5 mb-2">Your transcript</h2>
                         <label for="transcriptionBox" class="form-label">Transcription</label>
-                        <textarea class="form-control" id="transcriptionBox" placeholder="Please wait for your transcription . . . ."><?php
+                        <textarea class="form-control" id="transcriptionBox" placeholder="Your transcript will appear here while it is being prepared." disabled><?php
                             if (isset($result2['transcription_text'])) { echo $result2['transcription_text']; }
                         ?></textarea>
-                        <div id="transcriptionNotice" class="form-text">Transcribed by browser</div>
+                        <div id="transcriptionNotice" class="form-text">Preparing your transcript…</div>
                     </div>
                 </div>
                 <div class="row justify-content-end" id="response" role="status" aria-live="polite" aria-atomic="true"></div>
@@ -283,13 +289,13 @@ $isLtiEmbed = isset($auth_provider) && $auth_provider === 'lti';
             </div>
 
             <!-- Button display -->
-            <div id="buttons" class="row gap-2 <?php echo $activityItems && $activityPosition > 0 ? 'd-none' : ''; ?>">
-                <button id="testButton" type="button" class="btn btn-success" onclick="testStartRecording();">Test Microphone</button>
-                <button type="button" class="btn btn-primary" onclick="startRecording();">Begin Recording</button>
+            <div id="buttons" class="recorder-actions <?php echo $activityItems && $activityPosition > 0 ? 'd-none' : ''; ?>">
+                <button type="button" class="btn btn-primary recorder-start-button" onclick="startRecording();">Begin Recording</button>
+                <button id="testButton" type="button" class="btn btn-outline-success recorder-test-button" onclick="testStartRecording();">Test Microphone</button>
             </div>
 
             <!-- prompt display -->
-            <div id="prompt" class="row d-none">
+            <div id="prompt" class="recorder-prompt row d-none">
                 <?php
                 if ($clientPrompt) {
                     echo "<p>" . htmlspecialchars($clientPrompt['text'], ENT_QUOTES, 'UTF-8') . "<br /> <br />";
@@ -331,8 +337,7 @@ $isLtiEmbed = isset($auth_provider) && $auth_provider === 'lti';
                 <audio id="live" muted></audio>
                 <audio id="playback" autoplay playsinline></audio>
             </div>
-           
-            
+            </div>
 
         </div> <!-- end container -->
         <?php if ($showRecordingHistory) { ?>
