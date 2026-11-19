@@ -1,4 +1,6 @@
 <?php
+require_once __DIR__ . '/env.php';
+
 function ar_request_scheme() {
     if (!empty($_SERVER['HTTP_X_FORWARDED_PROTO'])) {
         $values = explode(',', $_SERVER['HTTP_X_FORWARDED_PROTO']);

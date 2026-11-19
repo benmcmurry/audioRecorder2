@@ -11,15 +11,17 @@ This integration uses LTI 1.3 launches, Deep Linking for assignment content sele
 
 ## Server configuration
 
-Set these values in the private service environment. `AR_LTI_PLATFORMS_JSON` may contain multiple Canvas registrations.
+Set these values in `audioRecorder.env` inside `APP_PRIVATE_ROOT` (outside the web root). The app loads this file for normal pages and LTI routes. Values already provided by the PHP process environment take precedence. `AR_LTI_PLATFORMS_JSON` may contain multiple Canvas registrations.
 
 ```text
-AR_LTI_PRIVATE_KEY_PATH=/private/path/audio-recorder-lti-private.pem
-AR_LTI_KEY_ID=audio-recorder-2026-01
-AR_LTI_PLATFORMS_JSON=[{"issuer":"https://canvas.example.edu","client_id":"CANVAS_CLIENT_ID","deployment_ids":["CANVAS_DEPLOYMENT_ID"],"auth_login_url":"https://canvas.example.edu/api/lti/authorize_redirect","token_url":"https://canvas.example.edu/login/oauth2/token","jwks_url":"https://canvas.example.edu/api/lti/security/jwks"}]
+AR_PUBLIC_ORIGIN=https://elctools.byu.edu
+AR_WEB_ROOT=/audioRecorder
+AR_LTI_PRIVATE_KEY_PATH=/private-config/keys/audio-recorder-lti-private.pem
+AR_LTI_KEY_ID=audio-recorder-production-2026
+AR_LTI_PLATFORMS_JSON=[{"issuer":"https://canvas.instructure.com","client_id":"CANVAS_CLIENT_ID","deployment_ids":["CANVAS_DEPLOYMENT_ID"],"auth_login_url":"https://sso.canvaslms.com/api/lti/authorize_redirect","token_url":"https://byuelc.instructure.com/login/oauth2/token","jwks_url":"https://sso.canvaslms.com/api/lti/security/jwks"}]
 ```
 
-Use the actual values shown in the Canvas Developer Key. The app requires HTTPS for Canvas authorization, token, and signing-key endpoints. `AR_PUBLIC_ORIGIN` and `AR_WEB_ROOT` must resolve to the externally reachable Audio Recorder origin and mount path so Canvas receives the same URLs that PHP uses to validate launches.
+The example assumes the production Audio Recorder URL is `https://elctools.byu.edu/audioRecorder` and the Canvas instance is `byuelc.instructure.com`; replace these values if your deployment differs. For hosted Canvas production, the issuer is `https://canvas.instructure.com` and the OIDC authorization and Canvas JWKS endpoints use `sso.canvaslms.com`. Use the Canvas instance's `/login/oauth2/token` endpoint for AGS. `AR_PUBLIC_ORIGIN` and `AR_WEB_ROOT` must resolve to the externally reachable Audio Recorder origin and mount path so Canvas receives the same URLs that PHP uses to validate launches.
 
 The public JWK route returns only the public portion of the configured key. Keep the private-key file readable by the PHP service account only. Rotate keys by coordinating the Canvas Developer Key/JWKS cache and the server key ID.
 
