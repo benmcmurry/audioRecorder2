@@ -190,14 +190,18 @@ $isLtiEmbed = isset($auth_provider) && $auth_provider === 'lti';
                 </section>
             <?php } elseif ($activityComplete) { ?>
                 <section class="dashboard-card mb-4 text-center">
-                    <p class="section-kicker">Activity complete</p>
-                    <h1 class="dashboard-title"><?php echo htmlspecialchars((string) $activityItems[0]['activity_title'], ENT_QUOTES, 'UTF-8'); ?></h1>
-                    <p class="mb-0">You have saved a response to every prompt in this activity.</p>
-                    <?php if ($canRepeatActivity) { ?>
-                        <p class="mt-2">Completing it again replaces only your previous responses. Other students’ recordings stay unchanged.</p>
-                        <a class="btn btn-primary btn-sm mt-2" href="index.php?activity_id=<?php echo rawurlencode($activityId); ?>&amp;repeat=1">Complete activity again</a>
+                    <?php if ($isLtiEmbed) { ?>
+                        <p class="mb-0 py-3" role="status">Your assignment has been completed.</p>
+                    <?php } else { ?>
+                        <p class="section-kicker">Activity complete</p>
+                        <h1 class="dashboard-title"><?php echo htmlspecialchars((string) $activityItems[0]['activity_title'], ENT_QUOTES, 'UTF-8'); ?></h1>
+                        <p class="mb-0">You have saved a response to every prompt in this activity.</p>
+                        <?php if ($canRepeatActivity) { ?>
+                            <p class="mt-2">Completing it again replaces only your previous responses. Other students’ recordings stay unchanged.</p>
+                            <a class="btn btn-primary btn-sm mt-2" href="index.php?activity_id=<?php echo rawurlencode($activityId); ?>&amp;repeat=1">Complete activity again</a>
+                        <?php } ?>
+                        <a class="btn btn-outline-primary btn-sm mt-3" href="index.php">Return to Audio Recorder</a>
                     <?php } ?>
-                    <a class="btn btn-outline-primary btn-sm mt-3" href="index.php">Return to Audio Recorder</a>
                 </section>
             <?php } elseif ($activityNotFound) { ?>
                 <section class="dashboard-card mb-4 text-center">
