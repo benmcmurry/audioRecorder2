@@ -38,12 +38,13 @@ while ($activityResult && $row = $activityResult->fetch_assoc()) {
 $_SESSION['ar_lti_picker_csrf'] = bin2hex(random_bytes(32));
 $csrf = $_SESSION['ar_lti_picker_csrf'];
 $linked = isset($_SESSION['ar_lti_identity_key']['netid']) && strpos((string) $_SESSION['ar_lti_identity_key']['netid'], 'lti_') !== 0;
+$linkHandoffToken = !$linked ? ar_lti_create_link_handoff((array) ($_SESSION['ar_lti_identity_key'] ?? array())) : '';
 ar_lti_html_start('Choose assignment content');
 ?>
 <section class="dashboard-card mb-4">
     <div class="section-heading">
         <div><p class="section-kicker">Canvas assignment setup</p><h1>Choose Audio Recorder content</h1></div>
-        <?php if (!$linked) { ?><a class="btn btn-outline-primary btn-sm" href="<?php echo htmlspecialchars(ar_lti_base_url('lti/link.php'), ENT_QUOTES, 'UTF-8'); ?>" target="_top">Link my existing account</a><?php } ?>
+        <?php if (!$linked) { ?><form method="post" action="<?php echo htmlspecialchars(ar_lti_base_url('lti/link.php'), ENT_QUOTES, 'UTF-8'); ?>" target="_top"><input type="hidden" name="handoff" value="<?php echo htmlspecialchars($linkHandoffToken, ENT_QUOTES, 'UTF-8'); ?>"><button class="btn btn-outline-primary btn-sm" type="submit">Link my existing account</button></form><?php } ?>
     </div>
     <p class="mb-0">Select one prompt or activity for this Canvas assignment. Students will record inside Canvas. Canvas remains responsible for grades.</p>
 </section>

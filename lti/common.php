@@ -235,6 +235,83 @@ function ar_lti_has_teacher_role(array $launch): bool
     return false;
 }
 
+function ar_lti_create_link_handoff(array $identity, string $return = 'picker', string $resourceKey = ''): string
+{
+    foreach (array('issuer', 'deployment_id', 'subject', 'netid') as $field) {
+        if (empty($identity[$field]) || !is_string($identity[$field])) {
+            throw new RuntimeException('The Canvas account-link identity is incomplete.');
+        }
+    }
+    if (!in_array($return, array('picker', 'resource'), true)
+        || ($return === 'resource' && !preg_match('/\A[a-f0-9]{64}\z/', $resourceKey))) {
+        throw new RuntimeException('The Canvas account-link destination is invalid.');
+    }
+    $config = ar_lti_config();
+    if (empty($config['private_key'])) {
+        throw new RuntimeException('LTI signing is not configured.');
+    }
+    $now = time();
+    $payload = json_encode(array(
+        'version' => 1,
+        'issued_at' => $now,
+        'expires_at' => $now + 300,
+        'identity' => array_intersect_key($identity, array_flip(array('issuer', 'deployment_id', 'subject', 'netid'))),
+        'return' => $return,
+        'resource_key' => $return === 'resource' ? $resourceKey : '',
+    ));
+    if (!is_string($payload)) {
+        throw new RuntimeException('The Canvas account-link handoff could not be prepared.');
+    }
+    $key = hash('sha256', "audioRecorder:lti-link-handoff:v1\0" . $config['private_key'], true);
+    $iv = random_bytes(12);
+    $tag = '';
+    $ciphertext = openssl_encrypt($payload, 'aes-256-gcm', $key, OPENSSL_RAW_DATA, $iv, $tag, 'audioRecorder:lti-link-handoff:v1');
+    if (!is_string($ciphertext) || strlen($tag) !== 16) {
+        throw new RuntimeException('The Canvas account-link handoff could not be encrypted.');
+    }
+    return ar_lti_b64url_encode($iv . $tag . $ciphertext);
+}
+
+function ar_lti_read_link_handoff(string $token): array
+{
+    if (strlen($token) > 4096) {
+        throw new RuntimeException('The Canvas account-link handoff is invalid.');
+    }
+    $packed = ar_lti_b64url_decode($token);
+    if (strlen($packed) < 29) {
+        throw new RuntimeException('The Canvas account-link handoff is invalid.');
+    }
+    $config = ar_lti_config();
+    if (empty($config['private_key'])) {
+        throw new RuntimeException('LTI signing is not configured.');
+    }
+    $key = hash('sha256', "audioRecorder:lti-link-handoff:v1\0" . $config['private_key'], true);
+    $iv = substr($packed, 0, 12);
+    $tag = substr($packed, 12, 16);
+    $ciphertext = substr($packed, 28);
+    $plaintext = openssl_decrypt($ciphertext, 'aes-256-gcm', $key, OPENSSL_RAW_DATA, $iv, $tag, 'audioRecorder:lti-link-handoff:v1');
+    $payload = is_string($plaintext) ? json_decode($plaintext, true) : null;
+    if (!is_array($payload)
+        || (int) ($payload['version'] ?? 0) !== 1
+        || (int) ($payload['issued_at'] ?? 0) > time() + 60
+        || (int) ($payload['expires_at'] ?? 0) < time()
+        || (int) ($payload['expires_at'] ?? 0) - (int) ($payload['issued_at'] ?? 0) > 300
+        || !in_array(($payload['return'] ?? ''), array('picker', 'resource'), true)
+        || !is_array($payload['identity'] ?? null)) {
+        throw new RuntimeException('The Canvas account-link handoff is invalid or expired.');
+    }
+    foreach (array('issuer', 'deployment_id', 'subject', 'netid') as $field) {
+        if (empty($payload['identity'][$field]) || !is_string($payload['identity'][$field])) {
+            throw new RuntimeException('The Canvas account-link identity is incomplete.');
+        }
+    }
+    if (($payload['return'] ?? '') === 'resource'
+        && !preg_match('/\A[a-f0-9]{64}\z/', (string) ($payload['resource_key'] ?? ''))) {
+        throw new RuntimeException('The Canvas account-link destination is invalid.');
+    }
+    return $payload;
+}
+
 /** Validate that the current Canvas assignment is authorized to submit this prompt/step. */
 function ar_lti_validate_upload_context(string $promptId, string $activityId, string $activityItemId, string $netid): bool
 {
