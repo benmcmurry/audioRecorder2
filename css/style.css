@@ -64,7 +64,12 @@ html.lti-embed .lti-recorder-container {
 .recorder-actions {
     display: grid;
     gap: .7rem;
-    margin: 1.25rem 1rem;
+    margin: 1.25rem 0;
+}
+
+.recorder-workspace .row {
+    margin-right: 0;
+    margin-left: 0;
 }
 
 .recorder-start-button {
@@ -100,7 +105,7 @@ html.lti-embed .lti-recorder-container {
 }
 
 .transcription-panel {
-    margin: .5rem 1rem;
+    margin: .5rem 0;
     padding: 1rem;
     border: 1px solid #d8dee8;
     border-radius: 8px;
@@ -191,17 +196,19 @@ div#visualizer {
 div.volume {
     display: flex;
     flex-direction: row;
-    justify-content: space-between;
+    gap: .4rem;
     align-items: center;
-    height: 20px;
-    width: 300px;
+    height: 28px;
+    width: 100%;
+    box-sizing: border-box;
     margin: 1em 0em;
 }
 
 div.volume .volbox {
     border: 1px solid lightgray;
-    height: 20px;
-    width: 20px;
+    flex: 1 1 0;
+    height: 100%;
+    min-width: 0;
     /* border-radius: 5px; */
 }
 
@@ -277,11 +284,6 @@ audio { width: 100%; }
         flex: auto;
     }
 
-    .recorder-actions {
-        margin-right: .25rem;
-        margin-left: .25rem;
-    }
-
     .recorder-prompt {
         margin-right: 0;
         margin-left: 0;
@@ -293,8 +295,6 @@ audio { width: 100%; }
     }
 
     .transcription-panel {
-        margin-right: .25rem;
-        margin-left: .25rem;
         padding: .8rem;
     }
 }
