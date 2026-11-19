@@ -57,6 +57,23 @@ html.lti-embed .lti-recorder-container {
     transition: width .2s ease;
 }
 
+.completion-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: .75rem;
+    margin-top: 1.25rem;
+}
+
+.completion-actions .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: min(100%, 16rem);
+    min-height: 3rem;
+    margin: 0;
+}
+
 .recorder-ready-button {
     min-width: min(100%, 16rem);
 }
@@ -282,6 +299,16 @@ audio { width: 100%; }
     .activity-progress {
         width: 100%;
         flex: auto;
+    }
+
+    .completion-actions {
+        display: grid;
+        grid-template-columns: minmax(0, 20rem);
+        justify-content: center;
+    }
+
+    .completion-actions .btn {
+        width: 100%;
     }
 
     .recorder-prompt {

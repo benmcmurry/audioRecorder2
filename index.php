@@ -223,9 +223,13 @@ $isLtiSession = isset($auth_provider) && $auth_provider === 'lti';
                         <p class="mb-0">You have saved a response to every prompt in this activity.</p>
                         <?php if ($canRepeatActivity) { ?>
                             <p class="mt-2">Completing it again replaces only your previous responses. Other students’ recordings stay unchanged.</p>
-                            <a class="btn btn-primary btn-sm mt-2" href="index.php?activity_id=<?php echo rawurlencode($activityId); ?>&amp;repeat=1">Complete activity again</a>
                         <?php } ?>
-                        <a class="btn btn-outline-primary btn-sm mt-3" href="index.php">Return to Audio Recorder</a>
+                        <div class="completion-actions" role="group" aria-label="Activity options">
+                            <?php if ($canRepeatActivity) { ?>
+                                <a class="btn btn-primary btn-sm" href="index.php?activity_id=<?php echo rawurlencode($activityId); ?>&amp;repeat=1">Complete activity again</a>
+                            <?php } ?>
+                            <a class="btn btn-outline-primary btn-sm" href="index.php">Return to Audio Recorder</a>
+                        </div>
                     </div>
                 </section>
             <?php } elseif ($activityNotFound) { ?>
