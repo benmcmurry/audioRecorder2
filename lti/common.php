@@ -206,6 +206,7 @@ function ar_lti_store_launch_context(array $platform, array $claims, string $tar
         'deployment_id' => (string) ($claims['https://purl.imsglobal.org/spec/lti/claim/deployment_id'] ?? ''),
         'subject' => (string) ($claims['sub'] ?? ''),
         'nonce' => (string) ($claims['nonce'] ?? ''),
+        'message_type' => (string) ($claims['https://purl.imsglobal.org/spec/lti/claim/message_type'] ?? ''),
         'roles' => $roles,
         'context_id' => is_array($context) ? (string) ($context['id'] ?? '') : '',
         'context_title' => is_array($context) ? (string) ($context['title'] ?? '') : '',
@@ -235,7 +236,7 @@ function ar_lti_has_teacher_role(array $launch): bool
     return false;
 }
 
-function ar_lti_create_link_handoff(array $identity, string $return = 'picker', string $resourceKey = ''): string
+function ar_lti_create_link_handoff(array $identity, array $launch, string $return = 'picker', string $resourceKey = ''): string
 {
     foreach (array('issuer', 'deployment_id', 'subject', 'netid') as $field) {
         if (empty($identity[$field]) || !is_string($identity[$field])) {
@@ -246,16 +247,35 @@ function ar_lti_create_link_handoff(array $identity, string $return = 'picker', 
         || ($return === 'resource' && !preg_match('/\A[a-f0-9]{64}\z/', $resourceKey))) {
         throw new RuntimeException('The Canvas account-link destination is invalid.');
     }
+    if (rtrim((string) ($launch['issuer'] ?? ''), '/') !== rtrim((string) $identity['issuer'], '/')
+        || (string) ($launch['deployment_id'] ?? '') !== (string) $identity['deployment_id']
+        || (string) ($launch['subject'] ?? '') !== (string) $identity['subject']
+        || !is_array($launch['roles'] ?? null)) {
+        throw new RuntimeException('The Canvas account-link launch context is incomplete.');
+    }
+    if ($return === 'picker') {
+        $settings = $launch['deep_link_settings'] ?? null;
+        if ((string) ($launch['message_type'] ?? '') !== 'LtiDeepLinkingRequest'
+            || !is_array($settings)
+            || empty($settings['deep_link_return_url'])
+            || !is_string($settings['deep_link_return_url'])
+            || strpos($settings['deep_link_return_url'], 'https://') !== 0
+            || !ar_lti_has_teacher_role($launch)) {
+            throw new RuntimeException('The Canvas assignment-selection launch is unavailable.');
+        }
+    }
     $config = ar_lti_config();
     if (empty($config['private_key'])) {
         throw new RuntimeException('LTI signing is not configured.');
     }
     $now = time();
+    $launchFields = array('issuer', 'client_id', 'deployment_id', 'subject', 'nonce', 'message_type', 'roles', 'context_id', 'context_title', 'resource_link_id', 'target_link_uri', 'ags_lineitem', 'ags_lineitems', 'ags_scopes', 'deep_link_settings', 'launched_at');
     $payload = json_encode(array(
         'version' => 1,
         'issued_at' => $now,
         'expires_at' => $now + 300,
         'identity' => array_intersect_key($identity, array_flip(array('issuer', 'deployment_id', 'subject', 'netid'))),
+        'launch' => array_intersect_key($launch, array_flip($launchFields)),
         'return' => $return,
         'resource_key' => $return === 'resource' ? $resourceKey : '',
     ));
@@ -274,7 +294,7 @@ function ar_lti_create_link_handoff(array $identity, string $return = 'picker', 
 
 function ar_lti_read_link_handoff(string $token): array
 {
-    if (strlen($token) > 4096) {
+    if (strlen($token) > 65536) {
         throw new RuntimeException('The Canvas account-link handoff is invalid.');
     }
     $packed = ar_lti_b64url_decode($token);
@@ -297,12 +317,31 @@ function ar_lti_read_link_handoff(string $token): array
         || (int) ($payload['expires_at'] ?? 0) < time()
         || (int) ($payload['expires_at'] ?? 0) - (int) ($payload['issued_at'] ?? 0) > 300
         || !in_array(($payload['return'] ?? ''), array('picker', 'resource'), true)
-        || !is_array($payload['identity'] ?? null)) {
+        || !is_array($payload['identity'] ?? null)
+        || !is_array($payload['launch'] ?? null)) {
         throw new RuntimeException('The Canvas account-link handoff is invalid or expired.');
     }
     foreach (array('issuer', 'deployment_id', 'subject', 'netid') as $field) {
         if (empty($payload['identity'][$field]) || !is_string($payload['identity'][$field])) {
             throw new RuntimeException('The Canvas account-link identity is incomplete.');
+        }
+    }
+    $launch = $payload['launch'];
+    if (rtrim((string) ($launch['issuer'] ?? ''), '/') !== rtrim((string) $payload['identity']['issuer'], '/')
+        || (string) ($launch['deployment_id'] ?? '') !== (string) $payload['identity']['deployment_id']
+        || (string) ($launch['subject'] ?? '') !== (string) $payload['identity']['subject']
+        || !is_array($launch['roles'] ?? null)) {
+        throw new RuntimeException('The Canvas account-link launch context is invalid.');
+    }
+    if (($payload['return'] ?? '') === 'picker') {
+        $settings = $launch['deep_link_settings'] ?? null;
+        if ((string) ($launch['message_type'] ?? '') !== 'LtiDeepLinkingRequest'
+            || !is_array($settings)
+            || empty($settings['deep_link_return_url'])
+            || !is_string($settings['deep_link_return_url'])
+            || strpos($settings['deep_link_return_url'], 'https://') !== 0
+            || !ar_lti_has_teacher_role($launch)) {
+            throw new RuntimeException('The Canvas assignment-selection launch is invalid.');
         }
     }
     if (($payload['return'] ?? '') === 'resource'

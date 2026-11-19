@@ -41,7 +41,7 @@ if ($resource['target_type'] === 'prompt') {
 if (empty($_GET['continue']) && empty($_SESSION['ar_lti_link_prompted'])) {
     $_SESSION['ar_lti_pending_resource'] = $resourceKey;
     $isSynthetic = strpos((string) $user['netid'], 'lti_') === 0;
-    $linkHandoffToken = $isSynthetic ? ar_lti_create_link_handoff((array) ($_SESSION['ar_lti_identity_key'] ?? array()), 'resource', $resourceKey) : '';
+    $linkHandoffToken = $isSynthetic ? ar_lti_create_link_handoff((array) ($_SESSION['ar_lti_identity_key'] ?? array()), (array) ($_SESSION['ar_lti_launch'] ?? array()), 'resource', $resourceKey) : '';
     ar_lti_html_start('Canvas assignment');
     ?>
     <section class="dashboard-card">

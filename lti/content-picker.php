@@ -38,7 +38,7 @@ while ($activityResult && $row = $activityResult->fetch_assoc()) {
 $_SESSION['ar_lti_picker_csrf'] = bin2hex(random_bytes(32));
 $csrf = $_SESSION['ar_lti_picker_csrf'];
 $linked = isset($_SESSION['ar_lti_identity_key']['netid']) && strpos((string) $_SESSION['ar_lti_identity_key']['netid'], 'lti_') !== 0;
-$linkHandoffToken = !$linked ? ar_lti_create_link_handoff((array) ($_SESSION['ar_lti_identity_key'] ?? array())) : '';
+$linkHandoffToken = !$linked ? ar_lti_create_link_handoff((array) ($_SESSION['ar_lti_identity_key'] ?? array()), (array) ($_SESSION['ar_lti_launch'] ?? array())) : '';
 ar_lti_html_start('Choose assignment content');
 ?>
 <section class="dashboard-card mb-4">

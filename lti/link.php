@@ -8,6 +8,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST' && $handoffToken !== '') {
         ar_lti_error(403, 'This Canvas account-link request expired. Start the link again from Canvas.');
     }
     $_SESSION['ar_lti_identity_key'] = $handoff['identity'];
+    $_SESSION['ar_lti_launch'] = $handoff['launch'];
     $_SESSION['auth_user'] = array(
         'provider' => 'lti',
         'netid' => (string) $handoff['identity']['netid'],
