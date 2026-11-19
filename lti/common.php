@@ -226,6 +226,7 @@ function ar_lti_has_teacher_role(array $launch): bool
             'http://purl.imsglobal.org/vocab/lis/v2/membership#Instructor',
             'http://purl.imsglobal.org/vocab/lis/v2/membership#ContentDeveloper',
             'http://purl.imsglobal.org/vocab/lis/v2/membership#Administrator',
+            'http://purl.imsglobal.org/vocab/lis/v2/institution/person#Administrator',
             'http://purl.imsglobal.org/vocab/lis/v2/system/person#Administrator',
         ), true)) {
             return true;
