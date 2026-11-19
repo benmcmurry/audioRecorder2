@@ -335,29 +335,24 @@ $isLtiSession = isset($auth_provider) && $auth_provider === 'lti';
 
             <!-- prepare and record display     -->
             <div id="prepareAndRecord" class="row justify-content-center">
-                <div id='timer_container' class="d-flex row flex-wrap align-items-center justify-content-between d-none">
-                    <img id='timeOrRecord' class="col-2 oscillate" src='images/lightbulb.jpg' alt='Lightbulb icon' />
-                    <div id='timer' class='col-10 text-end' aria-live="off"></div>
-
+                <div id="timer_container" class="recorder-timer d-none is-preparing">
+                    <div class="recorder-phase-icon" aria-hidden="true"><i id="phaseIcon" class="bi bi-lightbulb-fill"></i></div>
+                    <div class="recorder-phase-main">
+                        <div class="recorder-phase-heading">
+                            <div id="phaseLabel" class="recorder-phase-label" aria-live="polite">Get ready to speak</div>
+                            <div id="timer" class="recorder-time-value" role="timer" aria-live="off">0s</div>
+                        </div>
+                        <div class="recorder-countdown-track" aria-hidden="true"><span id="timerProgress"></span></div>
+                    </div>
                 </div>
             </div>
 
             <!-- visualizer display -->
-            <div id="visualizer" class="row justify-content-center">
-                <div class='volume'>
-                    <div class='volbox' id='volbox-1'></div>
-                    <div class='volbox' id='volbox-2'></div>
-                    <div class='volbox' id='volbox-3'></div>
-                    <div class='volbox' id='volbox-4'></div>
-                    <div class='volbox' id='volbox-5'></div>
-                    <div class='volbox' id='volbox-6'></div>
-                    <div class='volbox' id='volbox-7'></div>
-                    <div class='volbox' id='volbox-8'></div>
-                    <div class='volbox' id='volbox-9'></div>
-                    <div class='volbox' id='volbox-10'></div>
-                    <div class='volbox' id='volbox-11'></div>
-                    <div class='volbox' id='volbox-12'></div>
-
+            <div id="visualizer" class="row justify-content-center" role="img" aria-label="Microphone input level">
+                <div class="volume" aria-hidden="true">
+                    <?php for ($level = 1; $level <= 12; $level++) { ?>
+                        <div class="volbox" id="volbox-<?php echo $level; ?>"></div>
+                    <?php } ?>
                 </div>
             </div>
 

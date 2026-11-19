@@ -21,17 +21,20 @@ var soundMeter = null; //not in use right now
 var containerType = "audio/webm";
 var extension = "webm";
 var analyser; //variable for visualizing sound
-var scriptProcessor; //variable for visualizing sound
 var input; //variable for visualizing sound
-var recordingStatus;
+var visualizerAnimationFrame = null;
+var smoothedMicrophoneLevel = 0;
 var testButton = document.querySelector("#testButton");
 var buttons = document.querySelector("#buttons");
 var activityReadyButton = document.querySelector("#activityReadyButton");
 var prompt = document.querySelector("#prompt");
 var downloadLink = document.querySelector("#downloadLink");
 var prepareAndRecord = document.querySelector("#prepareAndRecord");
-var timerContainer = document.querySelector("#timerContainer");
-var timeOrRecord = document.querySelector("#timeOrRecord");
+var timerContainer = document.querySelector("#timer_container");
+var phaseIcon = document.querySelector("#phaseIcon");
+var phaseLabel = document.querySelector("#phaseLabel");
+var timerValue = document.querySelector("#timer");
+var timerProgress = document.querySelector("#timerProgress");
 var alreadyDoneBox = document.querySelector("#alreadyDoneBox");
 var alreadyAnswered = document.querySelector("#alreadyAnswered");
 var transcriptionBox = document.querySelector("#transcriptionBox");
@@ -243,7 +246,6 @@ async function testStartRecording() {
   testButton.innerHTML = "Please Speak";
   testButton.classList.remove("btn-success");
   testButton.classList.add("btn-danger");
-  testButton.classList.add("oscillate");
 
   record("microphoneTest");
 }
@@ -345,14 +347,14 @@ async function startRecording() {
   playbackAudioElement.src = "";
   playbackAudioElement.controls = false;
 
-  timer_container.classList.remove("d-none");
   if (typeof shouldReadPrompt === "undefined" || Number(shouldReadPrompt) === 1) {
     await speakPrompt(promptText, prepare_time, response_time);
   }
-  timer(prepare_time, "Prepare");
+  timerContainer.classList.remove("d-none");
+  timer(prepare_time, "Prepare", prepare_time);
 
   setTimeout(function () {
-    timer(response_time, "Recording");
+    timer(response_time, "Recording", response_time);
     record("recording");
   }, prepare_time * 1000 + 1000);
 }
@@ -608,8 +610,7 @@ function record(typeOfRecording) {
             response.innerHTML =
               "There was a problem saving your response. Please refresh and try again.";
           });
-      } else {
-        testButton.classList.remove("oscillate");
+  } else {
       }
     };
 
@@ -632,7 +633,6 @@ function record(typeOfRecording) {
     // pauseResBtn.textContent = "Pause";
     if (typeOfRecording === "recording") {
       recordTime = response_time * 1000 + 500;
-      timeOrRecord.src = "images/record.jpg";
     } else {
     }
     mediaRecorder.start(1000);
@@ -749,120 +749,80 @@ function saveTranscription(netid, prompt_id, options) {
 function read(prompt) {
   speakWithBrowserTts(prompt);
 }
-//this function runs the timers
-function timer(time, timerType) {
-  (function move() {
-    // this keeps the counter running in a loop based on changed information
-    if (time > -1) {
-      document.getElementById("timer").innerHTML = timerType + " " + time + "s";
-      setTimeout(move, 1000);
-      time = time - 1;
+// Show a calm preparation countdown, then a recording countdown and progress bar.
+function timer(time, timerType, totalTime) {
+  var isPreparing = timerType === "Prepare";
+  var total = Math.max(1, Number(totalTime) || Number(time) || 1);
+
+  timerContainer.classList.toggle("is-preparing", isPreparing);
+  timerContainer.classList.toggle("is-recording", !isPreparing);
+  phaseIcon.className = isPreparing ? "bi bi-lightbulb-fill" : "bi bi-mic-fill";
+  phaseLabel.textContent = isPreparing ? "Get ready to speak" : "Recording";
+
+  function updateCountdown(secondsRemaining) {
+    if (secondsRemaining < 0) {
+      return;
     }
-  })();
+
+    var progress = Math.max(0, Math.min(1, secondsRemaining / total));
+    timerValue.textContent = secondsRemaining + "s";
+    timerValue.setAttribute(
+      "aria-label",
+      (isPreparing ? "Get ready: " : "Recording: ") + secondsRemaining + " seconds remaining"
+    );
+    timerValue.style.setProperty("--countdown-progress", (progress * 100) + "%");
+    timerProgress.style.transform = "scaleX(" + progress + ")";
+    setTimeout(function () {
+      updateCountdown(secondsRemaining - 1);
+    }, 1000);
+  }
+
+  updateCountdown(Math.max(0, Number(time) || 0));
 }
 
 //this gives us the sound visualization
 function visualizationOfSound(stream) {
   analyser = window.audioContext.createAnalyser();
-  scriptProcessor = window.audioContext.createScriptProcessor(2048, 1, 1);
-  analyser.smoothingTimeConstant = 0.3;
-  analyser.fftSize = 1024;
+  analyser.fftSize = 256;
   input = window.audioContext.createMediaStreamSource(stream);
   input.connect(analyser);
-  analyser.connect(scriptProcessor);
-  scriptProcessor.connect(window.audioContext.destination);
-  scriptProcessor.onaudioprocess = processInput;
+  smoothedMicrophoneLevel = 0;
+  if (visualizerAnimationFrame !== null) {
+    cancelAnimationFrame(visualizerAnimationFrame);
+  }
+  processInput();
 }
 
 //this processes the incoming sound for the visualization
 function processInput() {
-  var recordingStatus = true;
-  if (recordingStatus) {
-    var soundArray = new Uint8Array(analyser.frequencyBinCount);
-    var volume;
-    analyser.getByteFrequencyData(soundArray);
-    length = soundArray.length;
-    let values = 0;
-    let i = 0;
-    for (; i < length; i++) {
-      values += soundArray[i];
-    }
-    volume = (values / length) * 3 + 10;
-    (function () {
-      var elements = document.getElementsByClassName("volbox");
-      for (var i = 0; i < elements.length; i++) {
-        elements[i].style.backgroundColor = "white";
-      }
-    })();
-
-    if (volume > 320) {
-      (function () {
-        document.getElementById("volbox-12").style.backgroundColor = "red";
-      })();
-    }
-    if (volume > 304) {
-      (function () {
-        document.getElementById("volbox-11").style.backgroundColor = "yellow";
-      })();
-    }
-    if (volume > 288) {
-      (function () {
-        document.getElementById("volbox-10").style.backgroundColor = "yellow";
-      })();
-    }
-    if (volume > 240) {
-      (function () {
-        document.getElementById("volbox-9").style.backgroundColor = "yellow";
-      })();
-    }
-    if (volume > 224) {
-      (function () {
-        document.getElementById("volbox-8").style.backgroundColor = "yellow";
-      })();
-    }
-    if (volume > 192) {
-      (function () {
-        document.getElementById("volbox-7").style.backgroundColor =
-          "lightgreen";
-      })();
-    }
-    if (volume > 176) {
-      (function () {
-        document.getElementById("volbox-6").style.backgroundColor =
-          "lightgreen";
-      })();
-    }
-    if (volume > 144) {
-      (function () {
-        document.getElementById("volbox-5").style.backgroundColor =
-          "lightgreen";
-      })();
-    }
-    if (volume > 128) {
-      (function () {
-        document.getElementById("volbox-4").style.backgroundColor =
-          "lightgreen";
-      })();
-    }
-    if (volume > 96) {
-      (function () {
-        document.getElementById("volbox-3").style.backgroundColor =
-          "lightgreen";
-      })();
-    }
-    if (volume > 64) {
-      (function () {
-        document.getElementById("volbox-2").style.backgroundColor =
-          "lightgreen";
-      })();
-    }
-    if (volume > 32) {
-      (function () {
-        document.getElementById("volbox-1").style.backgroundColor =
-          "lightgreen";
-      })();
-    }
+  if (!analyser) {
+    return;
   }
+
+  var samples = new Uint8Array(analyser.fftSize);
+  analyser.getByteTimeDomainData(samples);
+  var sumSquares = 0;
+  for (var i = 0; i < samples.length; i++) {
+    var sample = (samples[i] - 128) / 128;
+    sumSquares += sample * sample;
+  }
+
+  var rms = Math.sqrt(sumSquares / samples.length);
+  var targetLevel = Math.max(0, Math.min(1, (rms - 0.012) * 10));
+  var smoothing = targetLevel > smoothedMicrophoneLevel ? 0.42 : 0.2;
+  smoothedMicrophoneLevel += (targetLevel - smoothedMicrophoneLevel) * smoothing;
+
+  var bars = document.querySelectorAll(".volbox");
+  var activeBars = Math.round(smoothedMicrophoneLevel * bars.length);
+  for (var barIndex = 0; barIndex < bars.length; barIndex++) {
+    var bar = bars[barIndex];
+    var isActive = barIndex < activeBars;
+    bar.classList.toggle("is-active", isActive);
+    bar.classList.toggle("is-strong", isActive && barIndex >= 8);
+    bar.classList.toggle("is-peak", isActive && barIndex >= 10);
+  }
+
+  visualizerAnimationFrame = requestAnimationFrame(processInput);
 }
 
 //this is the callback error function

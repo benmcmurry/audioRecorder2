@@ -143,66 +143,117 @@ user-select: all; /* Standard */
 }
 
 
-/* this facilitates the animated icon */
-@-webkit-keyframes opacity_change {
-    from {
-        opacity: 0.5;
-    }
-
-    to {
-        opacity: 1.0;
-    }
-}
-
-@-moz-keyframes opacity_change {
-    from {
-        opacity: 0.5;
-    }
-
-    to {
-        opacity: 1.0;
-    }
-}
-
-@-ms-keyframes opacity_change {
-    from {
-        opacity: 0.5;
-    }
-
-    to {
-        opacity: 1.0;
-    }
-}
-
-@-o-keyframes opacity_change {
-    from {
-        opacity: 0.5;
-    }
-
-    to {
-        opacity: 1.0;
-    }
-}
-
-@keyframes opacity_change {
-    from {
-        opacity: 0.5;
-    }
-
-    to {
-        opacity: 1.0;
-        ;
-    }
-}
 .bg-byu-navy {
     background-color: #002E5D;
 }
 
-.oscillate {
-    animation-name: opacity_change;
-    animation-duration: 1s;
-    animation-iteration-count: infinite;
-    animation-direction: alternate;
+.recorder-timer {
+    --phase-accent: #a66b00;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    width: 100%;
+    margin: 1rem 0;
+    padding: 1rem 1.25rem;
+    border: 1px solid #d8dee8;
+    border-radius: 8px;
+    background: #fffaf0;
+}
+
+.recorder-timer.is-recording {
+    --phase-accent: #c83d3d;
+    background: #fff7f6;
+}
+
+.recorder-phase-icon {
+    display: grid;
+    place-items: center;
+    flex: 0 0 3.25rem;
+    width: 3.25rem;
+    height: 3.25rem;
+    border-radius: 50%;
+    color: var(--phase-accent);
+    background: color-mix(in srgb, var(--phase-accent) 12%, white);
+    font-size: 1.5rem;
+}
+
+.recorder-phase-main {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.recorder-phase-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.recorder-phase-label {
+    color: #243b53;
+    font-size: 1.1rem;
+    font-weight: 700;
+}
+
+.recorder-time-value {
+    position: relative;
+    display: grid;
+    place-items: center;
+    flex: 0 0 auto;
+    width: 4.25rem;
+    height: 4.25rem;
+    border-radius: 50%;
+    isolation: isolate;
+    background: conic-gradient(var(--phase-accent) var(--countdown-progress, 100%), #dfe7ef 0);
+    color: #243b53;
+    font-size: 1.1rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+
+.recorder-time-value::before {
+    position: absolute;
+    z-index: -1;
+    inset: 4px;
+    border-radius: inherit;
+    background: #fff;
+    content: "";
+}
+
+.is-recording .recorder-time-value {
+    width: auto;
+    height: auto;
+    border-radius: 0;
+    background: none;
+    color: var(--phase-accent);
+    font-size: 1.8rem;
+}
+
+.is-recording .recorder-time-value::before {
+    content: none;
+}
+
+.recorder-countdown-track {
+    height: .55rem;
+    margin-top: .8rem;
+    overflow: hidden;
+    border-radius: 999px;
+    background: #e4e9ef;
+}
+
+.recorder-countdown-track span {
+    display: block;
+    width: 100%;
+    height: 100%;
+    border-radius: inherit;
+    background: var(--phase-accent);
+    transform: scaleX(1);
+    transform-origin: left center;
+    transition: transform .25s linear;
+}
+
+.is-preparing .recorder-countdown-track {
+    display: none;
 }
 
 /* These two are for the volume meter */
@@ -222,21 +273,34 @@ div.volume {
 }
 
 div.volume .volbox {
-    border: 1px solid lightgray;
+    border: 1px solid #cbd5df;
     flex: 1 1 0;
     height: 100%;
     min-width: 0;
-    /* border-radius: 5px; */
+    border-radius: 999px;
+    background: #fff;
+    transition: background-color .12s ease, border-color .12s ease;
+}
+
+div.volume .volbox.is-active {
+    border-color: #2a9d66;
+    background: #2a9d66;
+}
+
+div.volume .volbox.is-active.is-strong {
+    border-color: #e0a52b;
+    background: #e0a52b;
+}
+
+div.volume .volbox.is-active.is-peak {
+    border-color: #d5534f;
+    background: #d5534f;
 }
 
 
 .row {
     margin: 1em;
     /* outline: 1px red solid; */
-}
-
-#timeOrRecord {
-    width: 64px;
 }
 
 /* Teacher view styles */
@@ -299,6 +363,17 @@ audio { width: 100%; }
     .activity-progress {
         width: 100%;
         flex: auto;
+    }
+
+    .recorder-timer {
+        gap: .75rem;
+        padding: .8rem;
+    }
+
+    .recorder-phase-icon {
+        flex-basis: 2.75rem;
+        width: 2.75rem;
+        height: 2.75rem;
     }
 
     .completion-actions {
