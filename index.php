@@ -109,6 +109,7 @@ function ar_js($value)
 
 $clientPrompt = ($prompt_id && isset($result) && is_array($result)) ? $result : null;
 $clientResponse = ($alreadyDone && isset($result2) && is_array($result2)) ? $result2 : null;
+$isLtiEmbed = isset($auth_provider) && $auth_provider === 'lti';
 	?>
 <!DOCTYPE html>
 <html lang="en">
@@ -150,10 +151,10 @@ $clientResponse = ($alreadyDone && isset($result2) && is_array($result2)) ? $res
     </script>
 </head>
 
-<body>
-    <?php require_once __DIR__ . '/includes/shared-shell.php'; audio_recorder_render_header(); ?>
+<body class="<?php echo $isLtiEmbed ? 'lti-embed' : ''; ?>">
+    <?php if (!$isLtiEmbed) { require_once __DIR__ . '/includes/shared-shell.php'; audio_recorder_render_header(); } ?>
     <main role="main">
-        <div id="mainContainer" class="container mt-5 mb-5 pb-3">
+        <div id="mainContainer" class="<?php echo $isLtiEmbed ? 'container-fluid lti-recorder-container' : 'container mt-5 mb-5 pb-3'; ?>">
 
             <?php if ($activityItems && !$activityComplete) { ?>
                 <section class="dashboard-card mb-4" aria-live="polite">
@@ -347,7 +348,7 @@ $clientResponse = ($alreadyDone && isset($result2) && is_array($result2)) ? $res
        <?php } ?>
      
     </main>
-    <?php audio_recorder_render_footer(); ?>
+    <?php if (!$isLtiEmbed) { audio_recorder_render_footer(); } ?>
     <script>
         if (archiveStatus === 1) {
             var message = document.querySelector('#mainContainer');
