@@ -72,6 +72,17 @@ if ($activityId !== '' && preg_match('/\\A[a-f0-9]{32}\\z/i', $activityId)) {
     $requestedActivityStep = isset($_GET['step']) && ctype_digit((string) $_GET['step'])
         ? (int) $_GET['step']
         : null;
+    $requestedActivityItemId = isset($_GET['activity_item_id']) && ctype_digit((string) $_GET['activity_item_id'])
+        ? (int) $_GET['activity_item_id']
+        : 0;
+    if ($activityReplaceMode && $requestedActivityItemId > 0) {
+        foreach ($activityItems as $stepIndex => $item) {
+            if ((int) $item['item_id'] === $requestedActivityItemId) {
+                $requestedActivityStep = $stepIndex;
+                break;
+            }
+        }
+    }
 
     if ($activityItems) {
         $showRecordingHistory = false;
@@ -282,7 +293,8 @@ $isLtiSession = isset($auth_provider) && $auth_provider === 'lti';
                         $activityNextUrl = 'index.php?activity_id=' . rawurlencode($activityId);
                         $activityHasNextPrompt = $activityPosition + 1 < count($activityItems);
                         if ($activityReplaceMode && $activityHasNextPrompt) {
-                            $activityNextUrl .= '&repeat=1&step=' . ($activityPosition + 1);
+                            $nextActivityItem = $activityItems[$activityPosition + 1];
+                            $activityNextUrl .= '&repeat=1&activity_item_id=' . (int) $nextActivityItem['item_id'];
                         }
                         ?>
                         <a id="activityContinueButton" class="btn btn-primary d-none" href="<?php echo htmlspecialchars($activityNextUrl, ENT_QUOTES, 'UTF-8'); ?>"><?php echo $activityHasNextPrompt ? 'Save &amp; Continue' : 'Finish activity'; ?></a>
@@ -308,7 +320,7 @@ $isLtiSession = isset($auth_provider) && $auth_provider === 'lti';
             </div>
 
             <!-- prompt display -->
-            <div id="prompt" class="recorder-prompt row d-none">
+            <div id="prompt" class="recorder-prompt d-none">
                 <?php
                 if ($clientPrompt) {
                     echo "<p>" . htmlspecialchars($clientPrompt['text'], ENT_QUOTES, 'UTF-8') . "<br /> <br />";
