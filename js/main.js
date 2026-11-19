@@ -26,6 +26,7 @@ var input; //variable for visualizing sound
 var recordingStatus;
 var testButton = document.querySelector("#testButton");
 var buttons = document.querySelector("#buttons");
+var activityReadyButton = document.querySelector("#activityReadyButton");
 var prompt = document.querySelector("#prompt");
 var downloadLink = document.querySelector("#downloadLink");
 var prepareAndRecord = document.querySelector("#prepareAndRecord");
@@ -176,66 +177,54 @@ if (loadRecordingsButton && allRecordingsResults) {
   });
 }
 
-//this initializes (is that the right word?) the mediaRecorder
-if (!navigator.mediaDevices.getUserMedia) {
-  alert(
-    "navigator.mediaDevices.getUserMedia not supported on your browser, use the latest version of Firefox or Chrome"
-  );
-} else {
-  if (window.MediaRecorder == undefined) {
-    alert(
-      "MediaRecorder not supported on your browser, use the latest version of Firefox or Chrome"
-    );
-  } else {
-    navigator.mediaDevices
-      .getUserMedia(constraints)
-      .then(function (stream) {
-        localStream = stream;
-
-        localStream.getTracks().forEach(function (track) {
-          if (track.kind == "audio") {
-            track.onended = function (event) {
-              console.log(
-                "audio track.onended Audio track.readyState=" +
-                  track.readyState +
-                  ", track.muted=" +
-                  track.muted
-              );
-            };
-          }
-          if (track.kind == "video") {
-            track.onended = function (event) {
-              console.log(
-                "video track.onended Audio track.readyState=" +
-                  track.readyState +
-                  ", track.muted=" +
-                  track.muted
-              );
-            };
-          }
-        });
-
-        liveAudioElement.srcObject = localStream;
-        liveAudioElement.play();
-
-        try {
-          window.AudioContext =
-            window.AudioContext || window.webkitAudioContext;
-          window.audioContext = new AudioContext();
-          visualizationOfSound(stream);
-        } catch (e) {
-          console.log("Web Audio API not supported." + e);
-        }
-      })
-      .catch(function (err) {
-        /* handle the error */
-        console.log("navigator.getUserMedia error: " + err);
-      });
+function ensureMicrophoneStream() {
+  if (localStream) {
+    return Promise.resolve(localStream);
   }
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    return Promise.reject(new Error("Microphone access is not supported by this browser."));
+  }
+  if (window.MediaRecorder == undefined) {
+    return Promise.reject(new Error("Audio recording is not supported by this browser."));
+  }
+
+  return navigator.mediaDevices.getUserMedia(constraints).then(function (stream) {
+    localStream = stream;
+    localStream.getTracks().forEach(function (track) {
+      track.onended = function () {
+        console.log(
+          track.kind + " track.onended; readyState=" +
+            track.readyState + ", muted=" + track.muted
+        );
+      };
+    });
+
+    liveAudioElement.srcObject = localStream;
+    var playback = liveAudioElement.play();
+    if (playback && typeof playback.catch === "function") {
+      playback.catch(function () {});
+    }
+
+    try {
+      window.AudioContext = window.AudioContext || window.webkitAudioContext;
+      window.audioContext = new AudioContext();
+      visualizationOfSound(stream);
+    } catch (e) {
+      console.log("Web Audio API not supported." + e);
+    }
+    return localStream;
+  });
 }
 
 //this function starts when test Microphone in pressed
-function testStartRecording() {
+async function testStartRecording() {
+  try {
+    await ensureMicrophoneStream();
+  } catch (error) {
+    alert("Allow microphone access to test your microphone. " + error.message);
+    return;
+  }
+
   testButton.innerHTML = "Please Speak";
   testButton.classList.remove("btn-success");
   testButton.classList.add("btn-danger");
@@ -317,6 +306,20 @@ function pickPreferredVoice() {
 
 //this function starts recording when the Begin button is pressed
 async function startRecording() {
+  if (activityReadyButton) {
+    activityReadyButton.classList.add("d-none");
+  }
+
+  try {
+    await ensureMicrophoneStream();
+  } catch (error) {
+    if (activityReadyButton) {
+      activityReadyButton.classList.remove("d-none");
+    }
+    alert("Allow microphone access to begin recording. " + error.message);
+    return;
+  }
+
   pendingUploadPromise = null;
   pendingTranscriptionSavePromise = null;
   activeSubmissionId = createSubmissionId();
@@ -643,6 +646,13 @@ function uploadRecording(blob, submissionId, attempt) {
   fd.append("prompt_id", prompt_id);
   fd.append("submission_id", submissionId);
   fd.append("csrf_token", arCsrfToken);
+  if (typeof activityMode !== "undefined" && activityMode && activityId && activityItemId) {
+    fd.append("activity_id", activityId);
+    fd.append("activity_item_id", activityItemId);
+    if (typeof activityReplaceMode !== "undefined" && activityReplaceMode) {
+      fd.append("activity_replace", "1");
+    }
+  }
   return new Promise(function (resolve, reject) {
     var xmlHttp = new XMLHttpRequest();
     xmlHttp.timeout = 120000;
@@ -915,6 +925,13 @@ function showCompletedRecording(uploadResponseData) {
   }
 
   alreadyDoneBox.classList.remove("d-none");
+  if (typeof activityMode !== "undefined" && activityMode) {
+    var activityContinueButton = document.querySelector("#activityContinueButton");
+    if (activityContinueButton) {
+      activityContinueButton.classList.remove("d-none");
+      activityContinueButton.focus();
+    }
+  }
   var transcriptionStatus = uploadResponseData ? uploadResponseData.transcription_status : "complete";
   if (transcriptionStatus === "complete" || (uploadResponseData && uploadResponseData.transcription_text)) {
     showTranscriptionComplete(

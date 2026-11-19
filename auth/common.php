@@ -78,13 +78,18 @@ function ar_session_cookie_secure(): bool {
 }
 
 if (session_status() !== PHP_SESSION_ACTIVE) {
+    $scriptPath = isset($_SERVER['SCRIPT_NAME']) ? str_replace('\\', '/', (string) $_SERVER['SCRIPT_NAME']) : '';
+    $ltiEmbeddedRequest = strpos($scriptPath, '/lti/') !== false;
     session_set_cookie_params(array(
         'lifetime' => 0,
         'path' => '/',
         'domain' => '',
-        'secure' => ar_session_cookie_secure(),
+        'secure' => $ltiEmbeddedRequest ? true : ar_session_cookie_secure(),
         'httponly' => true,
-        'samesite' => 'Lax',
+        // Canvas posts the signed LTI launch back from a different site, and
+        // subsequent recorder requests may run inside the Canvas iframe.
+        // Keep the Lax default for normal app requests.
+        'samesite' => $ltiEmbeddedRequest ? 'None' : 'Lax',
     ));
     session_start();
 }

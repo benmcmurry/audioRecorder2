@@ -32,13 +32,14 @@ $server = ar_public_origin() . ar_web_root() . '/index.php';
     <nav class="container mt-5 dashboard-shell">
         <div class="d-flex flex-wrap align-items-center justify-content-between gap-2">
             <div>
-                <p class="section-kicker">Teacher Dashboard</p>
-                <h1 class="dashboard-title">Prompts</h1>
+                <p class="section-kicker">Your workspace</p>
+                <h1 class="dashboard-title">Prompt Library</h1>
             </div>
             <div class="d-flex flex-wrap gap-2">
+                <a href="../activities/" class="btn btn-outline-primary btn-sm">Multi-Prompt Activities</a>
                 <button id="createPrompt" class='btn btn-primary btn-sm' onclick='createPrompt()'>New Prompt</button>
                 <button id="archiveToggleButton" class='btn btn-outline-primary btn-sm' onclick="archiveToggle();">Show Archived Prompts</button>
-                <button id="multipleViewer" class='btn btn-outline-primary btn-sm' onclick="multipleViewer();">View Multiple Responses</button>
+                <button id="multipleViewer" class='btn btn-outline-primary btn-sm' onclick="multipleViewer();">Compare Selected Prompts</button>
             </div>
         </div>
         <div class="row" id='response'></div>
@@ -47,7 +48,11 @@ $server = ar_public_origin() . ar_web_root() . '/index.php';
         <div class="container-sm dashboard-shell mt-4 mb-5 pb-3">
             <?php
 
-            $query = $elc_db->prepare("SELECT Prompts.prompt_id, Prompts.title, Prompts.text, Prompts.prepare_time, Prompts.response_time, Prompts.archive, Prompts.date_created, COUNT(Audio_files.id) AS response_count FROM Prompts LEFT JOIN Audio_files ON Prompts.prompt_id = Audio_files.prompt_id WHERE Prompts.netid=? GROUP BY Prompts.prompt_id, Prompts.title, Prompts.text, Prompts.prepare_time, Prompts.response_time, Prompts.archive, Prompts.date_created ORDER BY Prompts.date_created DESC");
+            $activityItemsTable = $elc_db->query("SHOW TABLES LIKE 'Activity_items'");
+            $activitySnapshotsFilter = $activityItemsTable && $activityItemsTable->num_rows > 0
+                ? " AND Prompts.prompt_id NOT IN (SELECT Activity_items.prompt_id FROM Activity_items)"
+                : '';
+            $query = $elc_db->prepare("SELECT Prompts.prompt_id, Prompts.title, Prompts.text, Prompts.prepare_time, Prompts.response_time, Prompts.archive, Prompts.date_created, COUNT(Audio_files.id) AS response_count FROM Prompts LEFT JOIN Audio_files ON Prompts.prompt_id = Audio_files.prompt_id WHERE Prompts.netid=?" . $activitySnapshotsFilter . " GROUP BY Prompts.prompt_id, Prompts.title, Prompts.text, Prompts.prepare_time, Prompts.response_time, Prompts.archive, Prompts.date_created ORDER BY Prompts.date_created DESC");
             $query->bind_param("s", $netid);
             $query->execute();
             $result = $query->get_result();

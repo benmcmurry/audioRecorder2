@@ -2,12 +2,26 @@
 include_once(__DIR__ . '/cas-go.php');
 include_once((getenv('APP_PRIVATE_ROOT') ? rtrim(trim((string) getenv('APP_PRIVATE_ROOT')), '/') : dirname(__DIR__, 2) . '/private-config') . '/connectFiles/connect_ar.php');
 include_once(__DIR__ . '/phpScripts/audioProcessingCommon.php');
+require_once(__DIR__ . '/lti/ags.php');
 
 ob_start();
 error_reporting(E_ALL);
 ini_set('display_errors', '0');
 
 define('SITE_ROOT', realpath(dirname(__FILE__)));
+
+function ar_delete_replaced_audio_file($relativePath)
+{
+    $appRoot = realpath(SITE_ROOT);
+    if (!$appRoot || !is_string($relativePath) || trim($relativePath) === '') {
+        return;
+    }
+    $audioPath = realpath($appRoot . DIRECTORY_SEPARATOR . ltrim($relativePath, '/\\'));
+    if (!$audioPath || strpos($audioPath, $appRoot . DIRECTORY_SEPARATOR) !== 0 || !is_file($audioPath)) {
+        return;
+    }
+    @unlink($audioPath);
+}
 
 if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') {
     ar_json_response(405, array('ok' => false, 'message' => 'Method not allowed.'));
@@ -45,6 +59,10 @@ register_shutdown_function(function () {
 $targetdir = '/uploads/';
 $submissionId = isset($_POST['submission_id']) ? (string) $_POST['submission_id'] : '';
 $promptId = isset($_POST['prompt_id']) ? (string) $_POST['prompt_id'] : '';
+$activityId = isset($_POST['activity_id']) ? trim((string) $_POST['activity_id']) : '';
+$activityItemId = isset($_POST['activity_item_id']) ? (int) $_POST['activity_item_id'] : 0;
+$activityReplacementRequested = isset($_POST['activity_replace']) && (string) $_POST['activity_replace'] === '1';
+$replaceActivityResponse = false;
 $extension = isset($_POST['extension']) ? (string) $_POST['extension'] : '';
 $netid = isset($netid) ? trim((string) $netid) : '';
 $uploadedFile = isset($_FILES['myBlob']) && is_array($_FILES['myBlob']) ? $_FILES['myBlob'] : null;
@@ -70,7 +88,48 @@ if (!preg_match('/\A[0-9]+\z/', $promptId)
     ));
 }
 
-$promptQuery = $elc_db->prepare("SELECT prompt_id, transcription, archive FROM Prompts WHERE prompt_id = ? LIMIT 1");
+if (!ar_lti_validate_upload_context($promptId, $activityId, (string) $activityItemId, $netid)) {
+    ar_json_response(403, array('ok' => false, 'message' => 'This recording does not match the active Canvas assignment.'));
+}
+
+$activityItemId = max(0, $activityItemId);
+if ($activityId !== '' || $activityItemId > 0) {
+    if (!preg_match('/\A[a-f0-9]{32}\z/i', $activityId) || $activityItemId <= 0) {
+        ar_json_response(400, array('ok' => false, 'message' => 'The activity step is invalid.'));
+    }
+    $activityItemQuery = $elc_db->prepare("SELECT Activity_items.item_id, Activities.netid AS activity_owner, Prompts.netid AS prompt_owner FROM Activities JOIN Activity_items ON Activity_items.activity_id = Activities.activity_id JOIN Prompts ON Prompts.prompt_id = Activity_items.prompt_id WHERE Activities.activity_id = ? AND Activities.archive = 0 AND Activity_items.item_id = ? AND Activity_items.prompt_id = ? LIMIT 1");
+    if (!$activityItemQuery) {
+        ar_json_response(500, array('ok' => false, 'message' => 'Could not validate the activity step.'));
+    }
+    $activityItemQuery->bind_param('sis', $activityId, $activityItemId, $promptId);
+    $activityItemQuery->execute();
+    $activityItemResult = $activityItemQuery->get_result();
+    $activityItem = $activityItemResult ? $activityItemResult->fetch_assoc() : null;
+    if (!$activityItem) {
+        ar_json_response(404, array('ok' => false, 'message' => 'This activity step is unavailable.'));
+    }
+    $creatorOwnsActivityAndPrompt = (string) $activityItem['activity_owner'] === $netid
+        && (string) $activityItem['prompt_owner'] === $netid;
+    if ($activityReplacementRequested && !$creatorOwnsActivityAndPrompt) {
+        ar_json_response(403, array('ok' => false, 'message' => 'Only the creator of this activity and its prompt can replace an earlier response.'));
+    }
+    $replaceActivityResponse = $activityReplacementRequested && $creatorOwnsActivityAndPrompt;
+} else {
+    if ($activityReplacementRequested) {
+        ar_json_response(403, array('ok' => false, 'message' => 'An activity is required to replace an earlier response.'));
+    }
+    $activityPromptQuery = $elc_db->prepare("SELECT item_id FROM Activity_items WHERE prompt_id = ? LIMIT 1");
+    if ($activityPromptQuery) {
+        $activityPromptQuery->bind_param('s', $promptId);
+        $activityPromptQuery->execute();
+        $activityPromptResult = $activityPromptQuery->get_result();
+        if ($activityPromptResult && $activityPromptResult->fetch_assoc()) {
+            ar_json_response(403, array('ok' => false, 'message' => 'This prompt must be answered through its activity link.'));
+        }
+    }
+}
+
+$promptQuery = $elc_db->prepare("SELECT prompt_id, netid, transcription, archive FROM Prompts WHERE prompt_id = ? LIMIT 1");
 if (!$promptQuery) {
     ar_json_response(500, array('ok' => false, 'message' => 'Could not validate the prompt.'));
 }
@@ -80,6 +139,9 @@ $promptResult = $promptQuery->get_result();
 $promptRow = $promptResult ? $promptResult->fetch_assoc() : null;
 if (!$promptRow || (int) $promptRow['archive'] !== 0) {
     ar_json_response(404, array('ok' => false, 'message' => 'This prompt is unavailable.'));
+}
+if ($replaceActivityResponse && (string) $promptRow['netid'] !== $netid) {
+    ar_json_response(403, array('ok' => false, 'message' => 'Only the prompt creator can replace this response.'));
 }
 $promptTranscriptionRequired = isset($promptRow['transcription']) ? (int) $promptRow['transcription'] : 0;
 
@@ -120,6 +182,7 @@ if ($existingQuery) {
             'existing_transcription_status' => isset($existingRow['transcription_status']) ? $existingRow['transcription_status'] : null,
         ));
         ar_kick_audio_worker($submissionId);
+        ar_lti_publish_completed_submission($activityId !== '' ? 'activity' : 'prompt', $activityId !== '' ? $activityId : $promptId, $netid);
         ar_json_response(200, array(
             'ok' => true,
             'message' => 'Your response was already saved.',
@@ -131,6 +194,23 @@ if ($existingQuery) {
             'transcription_error' => isset($existingRow['transcription_error']) ? $existingRow['transcription_error'] : '',
             'transcription_source' => isset($existingRow['transcription_source']) ? $existingRow['transcription_source'] : 'queue'
         ));
+    }
+}
+
+$priorResponses = array();
+if (!$replaceActivityResponse) {
+    $priorResponseQuery = $elc_db->prepare("SELECT id FROM Audio_files WHERE prompt_id = ? AND netid = ? ORDER BY id DESC LIMIT 1");
+    if (!$priorResponseQuery) {
+        ar_json_response(500, array('ok' => false, 'message' => 'Could not check for a previous response.'));
+    }
+    $priorResponseQuery->bind_param('ss', $promptId, $netid);
+    $priorResponseQuery->execute();
+    $priorResponseResult = $priorResponseQuery->get_result();
+    if (!$priorResponseResult) {
+        ar_json_response(500, array('ok' => false, 'message' => 'Could not check for a previous response.'));
+    }
+    if ($priorResponseResult->fetch_assoc()) {
+        ar_json_response(409, array('ok' => false, 'message' => 'A response has already been saved for this prompt.'));
     }
 }
 
@@ -178,22 +258,65 @@ if (move_uploaded_file($uploadedFile['tmp_name'], $targetFile)) {
             'details' => $elc_db->error
         ));
     }
-    if (!$query || !$query->execute()) {
+    $newResponseId = 0;
+    try {
+        $elc_db->begin_transaction();
+        if (!$query->execute()) {
+            throw new RuntimeException('Could not save recording metadata to the database.');
+        }
+        $newResponseId = (int) $query->insert_id;
+
+        if ($replaceActivityResponse) {
+            $oldResponsesQuery = $elc_db->prepare('SELECT id, filename FROM Audio_files WHERE prompt_id = ? AND netid = ? AND id <> ? FOR UPDATE');
+            if (!$oldResponsesQuery) {
+                throw new RuntimeException('Could not find the previous activity response.');
+            }
+            $oldResponsesQuery->bind_param('ssi', $promptId, $netid, $newResponseId);
+            if (!$oldResponsesQuery->execute()) {
+                throw new RuntimeException('Could not find the previous activity response.');
+            }
+            $oldResponsesResult = $oldResponsesQuery->get_result();
+            if (!$oldResponsesResult) {
+                throw new RuntimeException('Could not read the previous activity responses.');
+            }
+            while ($oldResponsesResult && $oldResponse = $oldResponsesResult->fetch_assoc()) {
+                $priorResponses[] = $oldResponse;
+            }
+
+            $deletePriorResponses = $elc_db->prepare('DELETE FROM Audio_files WHERE prompt_id = ? AND netid = ? AND id <> ?');
+            if (!$deletePriorResponses) {
+                throw new RuntimeException('Could not replace the previous activity response.');
+            }
+            $deletePriorResponses->bind_param('ssi', $promptId, $netid, $newResponseId);
+            if (!$deletePriorResponses->execute()) {
+                throw new RuntimeException('Could not replace the previous activity response.');
+            }
+        }
+
+        if (!$elc_db->commit()) {
+            throw new RuntimeException('Could not commit the saved response.');
+        }
+    } catch (Throwable $error) {
+        $elc_db->rollback();
         ar_audio_log('upload_db_insert_failed', array(
             'submission_id' => $submissionId,
             'prompt_id' => $promptId,
             'netid' => $netid,
-            'db_error' => $elc_db->error,
+            'db_error' => $error->getMessage(),
         ));
         @unlink($targetFile);
         ar_json_response(500, array(
             'ok' => false,
             'message' => 'Could not save recording metadata to the database.',
-            'details' => $elc_db->error
         ));
     }
 
+    foreach ($priorResponses as $priorResponse) {
+        ar_delete_replaced_audio_file(isset($priorResponse['filename']) ? (string) $priorResponse['filename'] : '');
+    }
+
     ar_kick_audio_worker($submissionId);
+    ar_lti_publish_completed_submission($activityId !== '' ? 'activity' : 'prompt', $activityId !== '' ? $activityId : $promptId, $netid);
     ar_audio_log('upload_db_insert_success', array(
         'submission_id' => $submissionId,
         'prompt_id' => $promptId,
@@ -205,7 +328,7 @@ if (move_uploaded_file($uploadedFile['tmp_name'], $targetFile)) {
     $response = array(
         'ok' => true,
         'message' => 'Your response has been saved. Transcription is processing in the background.',
-        'response_id' => (int) $query->insert_id,
+        'response_id' => $newResponseId,
         'submission_id' => $submissionId,
         'status' => $status,
         'transcription_status' => $transcriptionStatus,

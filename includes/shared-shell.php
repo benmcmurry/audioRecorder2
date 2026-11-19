@@ -35,7 +35,7 @@ if (!function_exists('audio_recorder_render_header')) {
         $context = audio_recorder_shell_context();
         $menuItems = array(
             array('label' => 'Home', 'href' => $context['app_root'] . '/index.php'),
-            array('label' => 'Teacher Area', 'href' => $context['app_root'] . '/teacher/index.php'),
+            array('label' => 'Workspace', 'href' => $context['app_root'] . '/teacher/index.php'),
         );
 
         if ($context['current_user']) {
@@ -75,7 +75,7 @@ if (!function_exists('audio_recorder_render_footer')) {
                     'title' => 'Audio Recorder',
                     'items' => array(
                         array('label' => 'Home', 'href' => $context['app_root'] . '/index.php'),
-                        array('label' => 'Teacher Area', 'href' => $context['app_root'] . '/teacher/index.php'),
+                        array('label' => 'Workspace', 'href' => $context['app_root'] . '/teacher/index.php'),
                     ),
                 ),
                 array(
