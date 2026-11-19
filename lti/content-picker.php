@@ -1,7 +1,15 @@
 <?php
 require_once __DIR__ . '/common.php';
 $launch = $_SESSION['ar_lti_launch'] ?? null;
-if (!is_array($launch) || !ar_lti_has_teacher_role($launch) || !ar_lti_launch_user()) {
+$hasLaunch = is_array($launch);
+$hasAllowedRole = $hasLaunch && ar_lti_has_teacher_role($launch);
+$hasLtiUser = ar_lti_launch_user() !== null;
+if (!$hasLaunch || !$hasAllowedRole || !$hasLtiUser) {
+    $roles = $hasLaunch && isset($launch['roles']) && is_array($launch['roles']) ? $launch['roles'] : array();
+    error_log('[audioRecorder-lti] Content picker access denied: launch=' . ($hasLaunch ? 'yes' : 'no')
+        . '; allowed_role=' . ($hasAllowedRole ? 'yes' : 'no')
+        . '; lti_user=' . ($hasLtiUser ? 'yes' : 'no')
+        . '; roles=' . json_encode(array_values(array_map('strval', $roles))));
     ar_lti_error(403, 'Only a Canvas teacher can select assignment content.');
 }
 $settings = $launch['deep_link_settings'] ?? array();
