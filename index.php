@@ -69,27 +69,49 @@ if ($activityId !== '' && preg_match('/\\A[a-f0-9]{32}\\z/i', $activityId)) {
     }
     $canRepeatActivity = $activityItems && $canRepeatActivity;
     $activityReplaceMode = $canRepeatActivity && isset($_GET['repeat']) && (string) $_GET['repeat'] === '1';
+    $requestedActivityStep = isset($_GET['step']) && ctype_digit((string) $_GET['step'])
+        ? (int) $_GET['step']
+        : null;
 
     if ($activityItems) {
         $showRecordingHistory = false;
-        foreach ($activityItems as $stepIndex => $item) {
-            if ($activityReplaceMode || !$item['response_id']) {
-                $activityPosition = $stepIndex;
-                $prompt_id = (int) $item['prompt_id'];
-                $result = array(
-                    'prompt_id' => $item['prompt_id'],
-                    'netid' => '',
-                    'title' => $item['prompt_title'],
-                    'text' => $item['text'],
-                    'prepare_time' => $item['prepare_time'],
-                    'response_time' => $item['response_time'],
-                    'archive' => (int) $item['archive'],
-                    'read_prompt' => (int) $item['read_prompt'],
-                    'transcription' => (int) $item['transcription'],
-                );
-                $isPromptOwner = false;
-                $alreadyDone = false;
-                break;
+        if ($activityReplaceMode && $requestedActivityStep !== null && isset($activityItems[$requestedActivityStep])) {
+            $activityPosition = $requestedActivityStep;
+            $item = $activityItems[$activityPosition];
+            $prompt_id = (int) $item['prompt_id'];
+            $result = array(
+                'prompt_id' => $item['prompt_id'],
+                'netid' => '',
+                'title' => $item['prompt_title'],
+                'text' => $item['text'],
+                'prepare_time' => $item['prepare_time'],
+                'response_time' => $item['response_time'],
+                'archive' => (int) $item['archive'],
+                'read_prompt' => (int) $item['read_prompt'],
+                'transcription' => (int) $item['transcription'],
+            );
+            $isPromptOwner = false;
+            $alreadyDone = false;
+        } else {
+            foreach ($activityItems as $stepIndex => $item) {
+                if ($activityReplaceMode || !$item['response_id']) {
+                    $activityPosition = $stepIndex;
+                    $prompt_id = (int) $item['prompt_id'];
+                    $result = array(
+                        'prompt_id' => $item['prompt_id'],
+                        'netid' => '',
+                        'title' => $item['prompt_title'],
+                        'text' => $item['text'],
+                        'prepare_time' => $item['prepare_time'],
+                        'response_time' => $item['response_time'],
+                        'archive' => (int) $item['archive'],
+                        'read_prompt' => (int) $item['read_prompt'],
+                        'transcription' => (int) $item['transcription'],
+                    );
+                    $isPromptOwner = false;
+                    $alreadyDone = false;
+                    break;
+                }
             }
         }
         if ($prompt_id === 0) {
@@ -242,7 +264,7 @@ $isLtiEmbed = isset($auth_provider) && $auth_provider === 'lti';
                         $activityNextUrl = 'index.php?activity_id=' . rawurlencode($activityId);
                         $activityHasNextPrompt = $activityPosition + 1 < count($activityItems);
                         if ($activityReplaceMode && $activityHasNextPrompt) {
-                            $activityNextUrl .= '&repeat=1';
+                            $activityNextUrl .= '&repeat=1&step=' . ($activityPosition + 1);
                         }
                         ?>
                         <a id="activityContinueButton" class="btn btn-primary d-none" href="<?php echo htmlspecialchars($activityNextUrl, ENT_QUOTES, 'UTF-8'); ?>"><?php echo $activityHasNextPrompt ? 'Save &amp; Continue' : 'Finish activity'; ?></a>
