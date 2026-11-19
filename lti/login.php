@@ -1,13 +1,15 @@
 <?php
 require_once __DIR__ . '/common.php';
 
-if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'GET') {
+$requestMethod = strtoupper((string) ($_SERVER['REQUEST_METHOD'] ?? ''));
+if (!in_array($requestMethod, array('GET', 'POST'), true)) {
     ar_lti_error(405, 'Method not allowed.');
 }
-$issuer = trim((string) ($_GET['iss'] ?? ''));
-$clientId = trim((string) ($_GET['client_id'] ?? ''));
-$loginHint = trim((string) ($_GET['login_hint'] ?? ''));
-$targetUri = trim((string) ($_GET['target_link_uri'] ?? ''));
+$loginRequest = $requestMethod === 'POST' ? $_POST : $_GET;
+$issuer = trim((string) ($loginRequest['iss'] ?? ''));
+$clientId = trim((string) ($loginRequest['client_id'] ?? ''));
+$loginHint = trim((string) ($loginRequest['login_hint'] ?? ''));
+$targetUri = trim((string) ($loginRequest['target_link_uri'] ?? ''));
 $platform = ar_lti_platform_for_issuer($issuer, $clientId);
 $config = ar_lti_config();
 $target = parse_url($targetUri);
@@ -54,11 +56,11 @@ $params = array(
     'state' => $state,
     'nonce' => $nonce,
 );
-if (isset($_GET['lti_message_hint']) && (string) $_GET['lti_message_hint'] !== '') {
-    $params['lti_message_hint'] = (string) $_GET['lti_message_hint'];
+if (isset($loginRequest['lti_message_hint']) && (string) $loginRequest['lti_message_hint'] !== '') {
+    $params['lti_message_hint'] = (string) $loginRequest['lti_message_hint'];
 }
-if (isset($_GET['lti_deployment_id'])) {
-    $params['lti_deployment_id'] = (string) $_GET['lti_deployment_id'];
+if (isset($loginRequest['lti_deployment_id'])) {
+    $params['lti_deployment_id'] = (string) $loginRequest['lti_deployment_id'];
 }
 $separator = strpos((string) $platform['auth_login_url'], '?') === false ? '?' : '&';
 header('Location: ' . $platform['auth_login_url'] . $separator . http_build_query($params, '', '&', PHP_QUERY_RFC3986), true, 302);
